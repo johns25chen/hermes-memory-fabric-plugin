@@ -2,23 +2,61 @@
 
 from __future__ import annotations
 
-from typing import Any
+from copy import deepcopy
+from typing import Any, Iterable, Mapping
 
 try:
     from agent.memory_provider import MemoryProvider
 except Exception:  # pragma: no cover - standalone test fallback
     from .memory_provider import MemoryProvider
 
+from .memory_active_context_composer import (
+    DEFAULT_CONTEXT_BUDGET_CHARS,
+    DEFAULT_MAX_ACTIVE_SUBSPACES,
+    DEFAULT_MEMORY_LIMIT,
+    compose_active_context,
+    explain_active_context_packet,
+    summarize_active_context_packet,
+    validate_active_context_packet,
+)
+
+
+PROVIDER_RUNTIME_INTEGRATION_POLICY = {
+    "read_only": True,
+    "would_write_memory": False,
+    "would_modify_config": False,
+    "would_write_graph": False,
+    "writes_proposal_files": False,
+    "writes_operation_ledger": False,
+    "writes_token_files": False,
+    "writes_approval_audit": False,
+    "invokes_real_token_write_executor": False,
+    "implements_real_token_write_executor": False,
+    "exposes_provider_tools": False,
+}
+
+DEFAULT_PROVIDER_RUNTIME_CONFIG = {
+    "max_active_subspaces": DEFAULT_MAX_ACTIVE_SUBSPACES,
+    "memory_limit": DEFAULT_MEMORY_LIMIT,
+    "context_budget_chars": DEFAULT_CONTEXT_BUDGET_CHARS,
+    "include_archived": False,
+    "allowed_risk_levels": None,
+    "required_tags": None,
+}
+PROVIDER_RUNTIME_CONFIG_FIELDS = tuple(DEFAULT_PROVIDER_RUNTIME_CONFIG)
+
 
 class MemoryFabricProvider(MemoryProvider):
     """Read-only Memory Fabric provider shell for standalone plugin loading."""
 
     name = "memory-fabric"
+    runtime_integration_policy = PROVIDER_RUNTIME_INTEGRATION_POLICY
 
-    def __init__(self) -> None:
+    def __init__(self, **runtime_config: Any) -> None:
         self.session_id = ""
         self.hermes_home = ""
         self.initialized_kwargs: dict[str, Any] = {}
+        self.runtime_config = _normalize_provider_runtime_config(runtime_config)
 
     def is_available(self) -> bool:
         return True
@@ -26,14 +64,78 @@ class MemoryFabricProvider(MemoryProvider):
     def initialize(self, session_id: str, **kwargs: Any) -> None:
         self.session_id = session_id
         self.hermes_home = str(kwargs.get("hermes_home", ""))
-        self.initialized_kwargs = dict(kwargs)
+        self.initialized_kwargs = deepcopy(dict(kwargs))
+        runtime_overrides = _extract_provider_runtime_config(kwargs)
+        if runtime_overrides:
+            self.runtime_config = _normalize_provider_runtime_config(
+                {**self.runtime_config, **runtime_overrides}
+            )
 
     def system_prompt_block(self) -> str:
         return (
             "Memory Fabric is available in read-only standalone plugin mode. "
-            "It preserves governed recall and evidence-repair boundaries, "
-            "does not write durable memory, and does not invoke token write executors."
+            "The provider can prepare bounded active context packets, performs "
+            "no durable writes or token executor invocation, and exposes no "
+            "tools by default."
         )
+
+    def build_active_context(
+        self,
+        *,
+        query: str,
+        memory_candidates: Iterable[Mapping[str, Any]],
+        subspace_registry: Mapping[str, Any] | None = None,
+        context: Mapping[str, Any] | None = None,
+        project_scope: str | None = None,
+        agent_scope: str | None = None,
+        entity_ids: Iterable[str] | None = None,
+        now: Any | None = None,
+        max_active_subspaces: int | None = None,
+        memory_limit: int | None = None,
+        context_budget_chars: int | None = None,
+        include_archived: bool | None = None,
+        allowed_risk_levels: Iterable[str] | None = None,
+        required_tags: Iterable[str] | None = None,
+        include_rejected: bool = False,
+    ) -> dict[str, Any]:
+        """Build a deterministic, read-only active context packet."""
+        runtime_config = self._active_context_runtime_config(
+            max_active_subspaces=max_active_subspaces,
+            memory_limit=memory_limit,
+            context_budget_chars=context_budget_chars,
+            include_archived=include_archived,
+            allowed_risk_levels=allowed_risk_levels,
+            required_tags=required_tags,
+        )
+        return compose_active_context(
+            query=query,
+            memory_candidates=memory_candidates,
+            subspace_registry=subspace_registry,
+            context=context,
+            project_scope=project_scope,
+            agent_scope=agent_scope,
+            entity_ids=entity_ids,
+            now=now,
+            max_active_subspaces=runtime_config["max_active_subspaces"],
+            memory_limit=runtime_config["memory_limit"],
+            context_budget_chars=runtime_config["context_budget_chars"],
+            include_archived=runtime_config["include_archived"],
+            allowed_risk_levels=runtime_config["allowed_risk_levels"],
+            required_tags=runtime_config["required_tags"],
+            include_rejected=include_rejected,
+        )
+
+    def summarize_active_context(self, packet: Mapping[str, Any]) -> dict[str, Any]:
+        """Summarize an active context packet without side effects."""
+        return summarize_active_context_packet(packet)
+
+    def explain_active_context(self, packet: Mapping[str, Any]) -> dict[str, Any]:
+        """Explain selected and rejected active context items without side effects."""
+        return explain_active_context_packet(packet)
+
+    def validate_active_context(self, packet: Mapping[str, Any]) -> dict[str, Any]:
+        """Validate an active context packet without side effects."""
+        return validate_active_context_packet(packet)
 
     def prefetch(self, query: str, *, session_id: str = "") -> str:
         return ""
@@ -70,9 +172,82 @@ class MemoryFabricProvider(MemoryProvider):
     def save_config(self, values: dict[str, Any], hermes_home: str) -> None:
         return None
 
+    def _active_context_runtime_config(
+        self,
+        *,
+        max_active_subspaces: int | None,
+        memory_limit: int | None,
+        context_budget_chars: int | None,
+        include_archived: bool | None,
+        allowed_risk_levels: Iterable[str] | None,
+        required_tags: Iterable[str] | None,
+    ) -> dict[str, Any]:
+        overrides = {
+            "max_active_subspaces": max_active_subspaces,
+            "memory_limit": memory_limit,
+            "context_budget_chars": context_budget_chars,
+            "include_archived": include_archived,
+            "allowed_risk_levels": allowed_risk_levels,
+            "required_tags": required_tags,
+        }
+        effective = dict(self.runtime_config)
+        effective.update({key: value for key, value in overrides.items() if value is not None})
+        return _normalize_provider_runtime_config(effective)
+
 
 def register(ctx: Any) -> None:
     """Register the Memory Fabric provider with a Hermes plugin context."""
 
     ctx.register_memory_provider(MemoryFabricProvider())
 
+
+def _extract_provider_runtime_config(values: Mapping[str, Any]) -> dict[str, Any]:
+    extracted: dict[str, Any] = {}
+    for nested_key in ("runtime_config", "provider_runtime_config", "active_context_config"):
+        nested = values.get(nested_key)
+        if isinstance(nested, Mapping):
+            extracted.update(
+                {field: deepcopy(nested[field]) for field in PROVIDER_RUNTIME_CONFIG_FIELDS if field in nested}
+            )
+    extracted.update(
+        {field: deepcopy(values[field]) for field in PROVIDER_RUNTIME_CONFIG_FIELDS if field in values}
+    )
+    return extracted
+
+
+def _normalize_provider_runtime_config(values: Mapping[str, Any] | None) -> dict[str, Any]:
+    raw = dict(DEFAULT_PROVIDER_RUNTIME_CONFIG)
+    if isinstance(values, Mapping):
+        raw.update({field: deepcopy(values[field]) for field in PROVIDER_RUNTIME_CONFIG_FIELDS if field in values})
+    return {
+        "max_active_subspaces": _non_negative_int(
+            raw.get("max_active_subspaces"),
+            DEFAULT_PROVIDER_RUNTIME_CONFIG["max_active_subspaces"],
+        ),
+        "memory_limit": _non_negative_int(raw.get("memory_limit"), DEFAULT_PROVIDER_RUNTIME_CONFIG["memory_limit"]),
+        "context_budget_chars": _non_negative_int(
+            raw.get("context_budget_chars"),
+            DEFAULT_PROVIDER_RUNTIME_CONFIG["context_budget_chars"],
+        ),
+        "include_archived": bool(raw.get("include_archived", DEFAULT_PROVIDER_RUNTIME_CONFIG["include_archived"])),
+        "allowed_risk_levels": _optional_list(raw.get("allowed_risk_levels")),
+        "required_tags": _optional_list(raw.get("required_tags")),
+    }
+
+
+def _optional_list(value: Any) -> list[Any] | None:
+    if value is None:
+        return None
+    if isinstance(value, (str, bytes, bytearray)):
+        return [str(value)]
+    try:
+        return deepcopy(list(value))
+    except TypeError:
+        return [deepcopy(value)]
+
+
+def _non_negative_int(value: Any, default: int) -> int:
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return default

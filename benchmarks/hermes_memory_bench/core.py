@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -149,6 +150,10 @@ from hermes_memory_fabric.memory_active_context_composer import (
     compose_active_context,
     validate_active_context_packet,
 )
+from hermes_memory_fabric.provider import (
+    PROVIDER_RUNTIME_INTEGRATION_POLICY,
+    MemoryFabricProvider,
+)
 from hermes_memory_fabric.memory_subspace_index import (
     MEMORY_SUBSPACE_INDEX_POLICY,
     create_subspace_descriptor,
@@ -169,6 +174,7 @@ DIMENSIONS = (
     "hybrid_retrieval_fusion",
     "memory_recall_fusion_v2",
     "memory_active_context_composer",
+    "memory_provider_runtime_integration",
     "bitemporal_fact_graph",
     "contradiction_engine",
     "memory_compiler",
@@ -211,6 +217,7 @@ V02_DIMENSIONS = (
     "temporal_validity_resolution",
     "contradiction_review_routing",
     "memory_active_context_composer",
+    "memory_provider_runtime_integration",
     "no_write_policy_safety",
     "latency_ms",
 )
@@ -263,6 +270,7 @@ V02_OPERATION_BY_DIMENSION = {
     "temporal_validity_resolution": "bitemporal_fact_graph",
     "contradiction_review_routing": "contradiction_engine",
     "memory_active_context_composer": "active_context_composer",
+    "memory_provider_runtime_integration": "provider_runtime_integration",
     "no_write_policy_safety": "policy_safety",
 }
 
@@ -392,6 +400,8 @@ def _answer_v02_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         passed, evidence = _run_v02_contradiction_case(case)
     elif operation == "active_context_composer":
         passed, evidence = _run_v02_active_context_composer_case(case)
+    elif operation == "provider_runtime_integration":
+        passed, evidence = _run_v02_provider_runtime_integration_case(case)
     elif operation == "policy_safety":
         passed, evidence = _run_v02_policy_safety_case(case)
     else:
@@ -495,6 +505,14 @@ def _run_v02_active_context_composer_case(case: dict[str, Any]) -> tuple[bool, d
     return passed, evidence
 
 
+def _run_v02_provider_runtime_integration_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    registry = _v02_subspace_registry(case.get("subspaces", []))
+    passed, evidence = _run_provider_runtime_integration_case(case, registry)
+    passed = passed and _v02_expected_ids_ok(case, evidence)
+    passed = passed and _v02_active_context_expectations_ok(case, evidence)
+    return passed, evidence
+
+
 def _run_v02_subspace_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
     registry = _v02_subspace_registry(case.get("subspaces", []))
     selection = select_subspaces_for_context(registry, case.get("context", {}))
@@ -585,6 +603,99 @@ def _run_v02_policy_safety_case(case: dict[str, Any]) -> tuple[bool, dict[str, A
     passed, evidence = _run_v02_recall_fusion_case(case)
     evidence["policy_safety_checked"] = True
     return passed and _v02_policy_safety_ok(evidence), evidence
+
+
+def _run_provider_runtime_integration_case(
+    case: dict[str, Any],
+    subspace_registry: Mapping[str, Any],
+) -> tuple[bool, dict[str, Any]]:
+    provider = MemoryFabricProvider()
+    init_kwargs = {}
+    provider_runtime_config = case.get("provider_runtime_config")
+    if isinstance(provider_runtime_config, Mapping):
+        init_kwargs["provider_runtime_config"] = dict(provider_runtime_config)
+    provider_initialize_kwargs = case.get("provider_initialize_kwargs")
+    if isinstance(provider_initialize_kwargs, Mapping):
+        init_kwargs.update(dict(provider_initialize_kwargs))
+    provider.initialize(str(case.get("session_id") or "bench-provider-runtime"), **init_kwargs)
+
+    build_kwargs: dict[str, Any] = {
+        "query": case["query"],
+        "memory_candidates": case.get("memories", []),
+        "subspace_registry": subspace_registry,
+        "context": case.get("context", {}),
+        "project_scope": case.get("project_scope"),
+        "agent_scope": case.get("agent_scope"),
+        "entity_ids": case.get("entity_ids"),
+        "now": case.get("now"),
+    }
+    for field in (
+        "max_active_subspaces",
+        "memory_limit",
+        "context_budget_chars",
+        "include_archived",
+        "allowed_risk_levels",
+        "required_tags",
+        "include_rejected",
+    ):
+        if field in case:
+            build_kwargs[field] = case[field]
+    if "limit" in case and "memory_limit" not in build_kwargs:
+        build_kwargs["memory_limit"] = case["limit"]
+
+    packet = provider.build_active_context(**build_kwargs)
+    validation = provider.validate_active_context(packet)
+    summary = provider.summarize_active_context(packet)
+    explanation = provider.explain_active_context(packet)
+    provider_tools = provider.get_tool_schemas()
+    selected_memory_ids = [item["id"] for item in packet["selected_memories"]]
+    rejected_memory_ids = [item["id"] for item in packet["rejected_memories"]]
+    selected_subspace_ids = [item["subspace_id"] for item in packet["selected_subspaces"]]
+    rejected_subspace_ids = [item["subspace_id"] for item in packet["rejected_subspaces"]]
+    rejection_reasons = {item["id"]: item["reason"] for item in packet["rejected_memories"]}
+    fusion_explanation = packet.get("explanation", {}).get("fusion_explanation", {})
+    if isinstance(fusion_explanation, Mapping):
+        rejection_reasons.update(fusion_explanation.get("subspace_rejected_reasons", {}))
+
+    evidence = _v02_base_evidence(PROVIDER_RUNTIME_INTEGRATION_POLICY)
+    evidence.update(
+        {
+            "selected_memory_ids": selected_memory_ids,
+            "rejected_memory_ids": rejected_memory_ids,
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "rejection_reasons": rejection_reasons,
+            "explanation_present": (
+                _v02_explanation_present(packet.get("explanation"))
+                and bool(explanation.get("selected_memory_ids") is not None)
+                and bool(explanation.get("rejected_memory_ids") is not None)
+            ),
+            "packet_valid": validation["valid"],
+            "validation": validation,
+            "summary": summary,
+            "explanation": explanation,
+            "compact_context_text": packet["compact_context_text"],
+            "active_context_packet": packet,
+            "provider_name": provider.name,
+            "provider_available": provider.is_available(),
+            "provider_tools": provider_tools,
+            "provider_runtime_config": deepcopy(provider.runtime_config),
+            "provider_runtime_policy": dict(PROVIDER_RUNTIME_INTEGRATION_POLICY),
+            "packet_policy": dict(packet["policy"]),
+            "created_durable_memory_write": False,
+            "created_graph_write": False,
+        }
+    )
+    passed = (
+        provider.name == "memory-fabric"
+        and provider.is_available() is True
+        and provider_tools == []
+        and validation["valid"] is True
+        and _v02_expected_ids_ok(case, evidence)
+        and _v02_active_context_expectations_ok(case, evidence)
+        and _v02_policy_safety_ok(evidence)
+    )
+    return passed, evidence
 
 
 def _v02_subspace_registry(subspaces: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1053,6 +1164,15 @@ def _answer_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             "exposes_provider_tools": False,
             "policy": dict(ACTIVE_CONTEXT_COMPOSER_POLICY),
         }
+
+    if dimension == "memory_provider_runtime_integration":
+        registry = create_subspace_registry(case.get("subspaces", []))
+        passed, evidence = _run_provider_runtime_integration_case(case, registry)
+        return (
+            "memory_provider_runtime_integration_passed"
+            if passed
+            else "memory_provider_runtime_integration_failed"
+        ), evidence
 
     if dimension == "memory_subspace_index":
         registry = create_subspace_registry(case.get("subspaces", []))
