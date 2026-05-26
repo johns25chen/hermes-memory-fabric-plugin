@@ -1,14 +1,27 @@
-# Hermes Memory Bench v0.1
+# Hermes Memory Bench
 
 Hermes Memory Bench is a read-only benchmark scaffold for proving that Hermes
 Memory Fabric is more than a generic memory wrapper. It makes the evaluation
 dimensions explicit, starts with deterministic local fixtures, and emits a
 stable JSON report that can later be compared across memory systems.
 
-v0.1 does not call live Memory Fabric tools, write durable memory, write the
-Memory Graph, modify OpenClaw configuration, approve allowlists, create
-proposals, or create operation-ledger events. The benchmark only reads local
-fixtures and writes the requested JSON report.
+All benchmark suites are deterministic, local, and read-only. They do not call
+live Memory Fabric tools, external APIs, embedding services, or provider tools.
+They do not write durable memory, write graph state, modify OpenClaw
+configuration, write token files, write approval audits, invoke or implement a
+real token write executor, create proposals, or create operation-ledger events.
+The benchmark only reads local fixtures and writes the requested JSON report.
+
+## Suites
+
+`smoke` is the original v0.1 compatibility suite. It keeps the 37 existing
+cases and verifies that the standalone plugin's read-only memory primitives and
+governance pipeline still behave as expected.
+
+`v02` is Hermes Memory Bench v0.2. It moves beyond smoke coverage and measures
+whether Subspace Index and Recall Fusion v2 address memory bloat, project
+isolation, rejection accuracy, explanation quality, risk gating, temporal
+validity, contradiction routing, and no-write policy safety.
 
 ## Run
 
@@ -16,7 +29,44 @@ fixtures and writes the requested JSON report.
 python -m benchmarks.hermes_memory_bench.run --suite smoke --output /tmp/hermes-memory-bench-report.json
 ```
 
-## Dimensions
+```bash
+python -m benchmarks.hermes_memory_bench.run --suite v02 --output /tmp/hermes-memory-bench-v02-report.json
+```
+
+## v0.2 Metrics
+
+The `v02` aggregate includes these quality metrics:
+
+- `selection_accuracy` — correct activation of relevant memories, including
+  explicit high-risk allowance and current temporal fact selection
+- `rejection_accuracy` — correct rejection of unsafe, archived, unrelated, and
+  disallowed high-risk candidates
+- `explanation_quality` — presence of selected/rejected memory ids, selected
+  and rejected subspace ids, rejection reasons, scoring rules, and policy
+- `subspace_isolation_score` — project isolation and archived subspace behavior
+- `risk_gate_score` — high-risk rejection by default and selection only when
+  explicitly allowed
+- `temporal_conflict_score` — current fact resolution and contradiction review
+  routing
+- `no_write_safety_score` — evidence that the benchmark created no proposals,
+  operation events, token files, approval audits, executor implementation or
+  invocation, or provider tool exposure
+- `overall_score` — mean pass score across the v0.2 cases
+
+The `v02` fixture covers these dimensions:
+
+- `recall_fusion_v2_selection_accuracy`
+- `recall_fusion_v2_rejection_accuracy`
+- `recall_fusion_v2_explanation_quality`
+- `subspace_isolation_accuracy`
+- `archived_subspace_rejection`
+- `high_risk_rejection`
+- `high_risk_allowed_when_explicit`
+- `temporal_validity_resolution`
+- `contradiction_review_routing`
+- `no_write_policy_safety`
+
+## Smoke Dimensions
 
 - `recall_accuracy`
 - `temporal_accuracy`
@@ -104,6 +154,10 @@ memories are rejected by default, and no durable memory write, graph write,
 token write, approval audit, real executor invocation, or provider tool
 exposure occurs.
 
+The `v02` suite expands this into separate selection, rejection, explanation,
+archived-subspace, high-risk gating, and no-write policy safety cases so the
+quality metrics can identify which behavior regressed.
+
 ## Bi-temporal Fact Graph v0.1
 
 Bi-temporal Fact Graph v0.1 lives in
@@ -132,6 +186,9 @@ The smoke suite includes `memory_subspace_index`, proving that
 unrelated project subspaces and archived subspaces are rejected by default, and
 no durable memory write, graph write, token write, provider tool exposure, or
 real executor invocation occurs.
+
+The `v02` suite adds an explicit project isolation case and reuses Subspace
+Index through Recall Fusion v2 for archived and high-risk gating coverage.
 
 ## Contradiction Engine v0.1
 

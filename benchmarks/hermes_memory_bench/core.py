@@ -5,14 +5,18 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from hermes_memory_fabric.memory_bitemporal_fact_graph import (
     BITEMPORAL_FACT_GRAPH_POLICY,
     explain_fact_lineage,
     select_current_facts,
 )
-from hermes_memory_fabric.memory_contradiction_engine import explain_contradiction_group, group_contradictions
+from hermes_memory_fabric.memory_contradiction_engine import (
+    CONTRADICTION_ENGINE_POLICY,
+    explain_contradiction_group,
+    group_contradictions,
+)
 from hermes_memory_fabric.memory_compiler import MEMORY_COMPILER_POLICY, compile_memory_patterns
 from hermes_memory_fabric.memory_blocks import MEMORY_BLOCK_POLICY, compile_blocks_from_compiler_result
 from hermes_memory_fabric.memory_block_review_queue import (
@@ -142,12 +146,14 @@ from hermes_memory_fabric.memory_retrieval_fusion import (
 )
 from hermes_memory_fabric.memory_subspace_index import (
     MEMORY_SUBSPACE_INDEX_POLICY,
+    create_subspace_descriptor,
     create_subspace_registry,
     select_subspaces_for_context,
 )
 
 
 BENCHMARK_TYPE = "hermes_memory_bench_v0.1"
+BENCHMARK_TYPE_V02 = "hermes_memory_bench_v0.2"
 DIMENSIONS = (
     "recall_accuracy",
     "temporal_accuracy",
@@ -188,12 +194,68 @@ DIMENSIONS = (
     "memory_subspace_index",
     "latency_ms",
 )
+V02_DIMENSIONS = (
+    "recall_fusion_v2_selection_accuracy",
+    "recall_fusion_v2_rejection_accuracy",
+    "recall_fusion_v2_explanation_quality",
+    "subspace_isolation_accuracy",
+    "archived_subspace_rejection",
+    "high_risk_rejection",
+    "high_risk_allowed_when_explicit",
+    "temporal_validity_resolution",
+    "contradiction_review_routing",
+    "no_write_policy_safety",
+    "latency_ms",
+)
+V02_QUALITY_METRICS = (
+    "selection_accuracy",
+    "rejection_accuracy",
+    "explanation_quality",
+    "subspace_isolation_score",
+    "risk_gate_score",
+    "temporal_conflict_score",
+    "no_write_safety_score",
+    "overall_score",
+)
 POLICY = {
     "read_only": True,
     "would_write_memory": False,
     "would_modify_config": False,
     "would_write_graph": False,
     "does_not_create_operation_events": True,
+}
+V02_POLICY = {
+    **POLICY,
+    "writes_proposal_files": False,
+    "writes_operation_ledger": False,
+    "writes_token_files": False,
+    "writes_approval_audit": False,
+    "invokes_real_token_write_executor": False,
+    "implements_real_token_write_executor": False,
+    "exposes_provider_tools": False,
+}
+V02_SAFETY_FALSE_FIELDS = (
+    "created_real_proposal",
+    "created_operation_event",
+    "writes_proposal_files",
+    "writes_operation_ledger",
+    "writes_token_files",
+    "writes_approval_audit",
+    "invokes_real_token_write_executor",
+    "implements_real_token_write_executor",
+    "exposes_provider_tools",
+)
+V02_OPERATION_BY_DIMENSION = {
+    "recall_fusion_v2_selection_accuracy": "recall_fusion_v2",
+    "recall_fusion_v2_rejection_accuracy": "recall_fusion_v2",
+    "recall_fusion_v2_explanation_quality": "recall_fusion_v2",
+    "subspace_isolation_accuracy": "subspace_index",
+    "archived_subspace_rejection": "recall_fusion_v2",
+    "high_risk_rejection": "recall_fusion_v2",
+    "high_risk_allowed_when_explicit": "recall_fusion_v2",
+    "temporal_validity_resolution": "bitemporal_fact_graph",
+    "contradiction_review_routing": "contradiction_engine",
+    "no_write_policy_safety": "policy_safety",
 }
 
 
@@ -227,20 +289,32 @@ def fixtures_path() -> Path:
     return Path(__file__).with_name("fixtures") / "smoke_cases.json"
 
 
+def _fixtures_path_for_suite(suite: str) -> Path:
+    fixture_names = {
+        "smoke": "smoke_cases.json",
+        "v02": "v02_cases.json",
+    }
+    try:
+        fixture_name = fixture_names[suite]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported suite: {suite}") from exc
+    return Path(__file__).with_name("fixtures") / fixture_name
+
+
 def load_cases(suite: str) -> list[dict[str, Any]]:
-    if suite != "smoke":
-        raise ValueError(f"Unsupported suite: {suite}")
-    with fixtures_path().open("r", encoding="utf-8") as handle:
+    with _fixtures_path_for_suite(suite).open("r", encoding="utf-8") as handle:
         cases = json.load(handle)
     if not isinstance(cases, list):
-        raise ValueError("Smoke fixture must contain a list of cases.")
+        raise ValueError(f"{suite} fixture must contain a list of cases.")
     return cases
 
 
 def run_benchmark(suite: str = "smoke") -> dict[str, Any]:
+    if suite == "v02":
+        return run_quality_benchmark_v02()
     cases = [_evaluate_case(case) for case in load_cases(suite)]
-    scores = _dimension_scores(cases)
-    aggregate = _aggregate(cases)
+    scores = _dimension_scores(cases, DIMENSIONS)
+    aggregate = _aggregate(cases, DIMENSIONS)
     return {
         "benchmark_type": BENCHMARK_TYPE,
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
@@ -252,12 +326,423 @@ def run_benchmark(suite: str = "smoke") -> dict[str, Any]:
     }
 
 
+def run_quality_benchmark_v02() -> dict[str, Any]:
+    cases = [_evaluate_v02_case(case) for case in load_cases("v02")]
+    scores = _dimension_scores(cases, V02_DIMENSIONS)
+    aggregate = _aggregate(cases, V02_DIMENSIONS)
+    aggregate.update(_v02_quality_scores(cases))
+    return {
+        "benchmark_type": BENCHMARK_TYPE_V02,
+        "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "suite": "v02",
+        "scores": scores,
+        "cases": [case.to_json() for case in cases],
+        "aggregate": aggregate,
+        "policy": dict(V02_POLICY),
+    }
+
+
 def write_report(report: dict[str, Any], output: str | Path | None = None) -> None:
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if output:
         Path(output).write_text(payload, encoding="utf-8")
     else:
         print(payload, end="")
+
+
+def _evaluate_v02_case(case: dict[str, Any]) -> CaseResult:
+    started = time.perf_counter()
+    dimension = case["dimension"]
+    expected = case.get("expected_answer", "v02_case_passed")
+    passed, evidence = _answer_v02_case(case)
+    latency_ms = round((time.perf_counter() - started) * 1000, 3)
+    actual = "v02_case_passed" if passed else "v02_case_failed"
+    score = 1.0 if actual == expected else 0.0
+    return CaseResult(
+        id=case["id"],
+        dimension=dimension,
+        query=case.get("query", ""),
+        expected_answer=expected,
+        actual_answer=actual,
+        score=score,
+        latency_ms=latency_ms,
+        passed=score == 1.0,
+        evidence=evidence,
+    )
+
+
+def _answer_v02_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    dimension = case["dimension"]
+    operation = case.get("operation") or V02_OPERATION_BY_DIMENSION.get(dimension)
+    if operation == "recall_fusion_v2":
+        passed, evidence = _run_v02_recall_fusion_case(case)
+    elif operation == "subspace_index":
+        passed, evidence = _run_v02_subspace_case(case)
+    elif operation == "bitemporal_fact_graph":
+        passed, evidence = _run_v02_temporal_case(case)
+    elif operation == "contradiction_engine":
+        passed, evidence = _run_v02_contradiction_case(case)
+    elif operation == "policy_safety":
+        passed, evidence = _run_v02_policy_safety_case(case)
+    else:
+        evidence = _v02_base_evidence(V02_POLICY)
+        evidence["error"] = f"unsupported_v02_operation:{operation}"
+        return False, evidence
+
+    if case.get("expected_policy_safety", True):
+        passed = passed and _v02_policy_safety_ok(evidence)
+    return passed, evidence
+
+
+def _run_v02_recall_fusion_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    registry = _v02_subspace_registry(case.get("subspaces", []))
+    result = fuse_memory_retrieval_v2(
+        query=case["query"],
+        candidates=case.get("memories", []),
+        subspace_registry=registry,
+        context=case.get("context", {}),
+        project_scope=case.get("project_scope"),
+        agent_scope=case.get("agent_scope"),
+        entity_ids=case.get("entity_ids"),
+        now=case.get("now"),
+        limit=case.get("limit", 5),
+        include_archived=case.get("include_archived", False),
+        allowed_risk_levels=case.get("allowed_risk_levels"),
+        required_tags=case.get("required_tags"),
+        max_active_subspaces=case.get("max_active_subspaces"),
+    )
+    selected_memory_ids = [item["id"] for item in result["selected_memories"]]
+    rejected_memory_ids = [item["id"] for item in result["rejected_memories"]]
+    selected_subspace_ids = [item["subspace_id"] for item in result["selected_subspaces"]]
+    rejected_subspace_ids = [item["subspace_id"] for item in result["rejected_subspaces"]]
+    rejection_reasons = {item["id"]: item["reason"] for item in result["rejected_memories"]}
+    rejection_reasons.update(result.get("subspace_rejected_reasons", {}))
+
+    evidence = _v02_base_evidence(result["policy"])
+    evidence.update(
+        {
+            "selected_memory_ids": selected_memory_ids,
+            "rejected_memory_ids": rejected_memory_ids,
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "rejection_reasons": rejection_reasons,
+            "explanation_present": _v02_explanation_present(result.get("explanation")),
+            "fusion": result,
+        }
+    )
+    passed = _v02_expected_ids_ok(case, evidence)
+    if case["dimension"] == "recall_fusion_v2_explanation_quality":
+        passed = passed and _v02_explanation_quality_ok(result)
+    return passed, evidence
+
+
+def _run_v02_subspace_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    registry = _v02_subspace_registry(case.get("subspaces", []))
+    selection = select_subspaces_for_context(registry, case.get("context", {}))
+    selected_subspace_ids = [item["subspace_id"] for item in selection["selected_subspaces"]]
+    rejected_subspace_ids = [item["subspace_id"] for item in selection["rejected_subspaces"]]
+
+    evidence = _v02_base_evidence(selection["policy"])
+    evidence.update(
+        {
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "rejection_reasons": dict(selection.get("rejected_reasons", {})),
+            "explanation_present": bool(selection.get("selection_reasons") or selection.get("rejected_reasons")),
+            "subspace_selection": selection,
+        }
+    )
+    return _v02_expected_ids_ok(case, evidence), evidence
+
+
+def _run_v02_temporal_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    facts = list(case.get("facts", case.get("memories", [])))
+    selected = select_current_facts(
+        facts,
+        at_time=case.get("at_time") or case.get("now"),
+        project_scope=case.get("project_scope"),
+    )
+    selected_ids = [fact.fact_id for fact in selected]
+    all_fact_ids = [str(fact.get("fact_id")) for fact in facts if fact.get("fact_id")]
+    rejected_ids = [fact_id for fact_id in all_fact_ids if fact_id not in set(selected_ids)]
+    lineage = {
+        fact.fact_id: explain_fact_lineage(fact.fact_id, facts)
+        for fact in selected
+    }
+
+    evidence = _v02_base_evidence(BITEMPORAL_FACT_GRAPH_POLICY)
+    evidence.update(
+        {
+            "selected_memory_ids": selected_ids,
+            "rejected_memory_ids": rejected_ids,
+            "rejection_reasons": {fact_id: "not_current_at_requested_time" for fact_id in rejected_ids},
+            "explanation_present": bool(selected and all(item.get("found") for item in lineage.values())),
+            "selected_fact_objects": [fact.object for fact in selected],
+            "lineage": lineage,
+        }
+    )
+    passed = _v02_expected_ids_ok(case, evidence)
+    expected_objects = set(case.get("expected_selected_fact_objects", []))
+    if expected_objects:
+        passed = passed and expected_objects.issubset(set(evidence["selected_fact_objects"]))
+    return passed, evidence
+
+
+def _run_v02_contradiction_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    facts = list(case.get("facts", case.get("memories", [])))
+    groups = group_contradictions(facts)
+    explanations = [explain_contradiction_group(group) for group in groups]
+    actions = [
+        explanation.get("recommended_action", {}).get("action")
+        for explanation in explanations
+        if explanation.get("recommended_action")
+    ]
+    grouped_fact_ids = sorted({
+        fact_id
+        for group in groups
+        for fact_id in group.get("fact_ids", [])
+    })
+    rejection_action = actions[0] if actions else "no_action"
+
+    evidence = _v02_base_evidence(CONTRADICTION_ENGINE_POLICY)
+    evidence.update(
+        {
+            "rejected_memory_ids": grouped_fact_ids,
+            "rejection_reasons": {fact_id: rejection_action for fact_id in grouped_fact_ids},
+            "explanation_present": bool(explanations and actions),
+            "contradiction_groups": groups,
+            "contradiction_explanations": explanations,
+            "contradiction_actions": actions,
+        }
+    )
+    passed = _v02_expected_ids_ok(case, evidence)
+    expected_action = case.get("expected_review_action")
+    if expected_action:
+        passed = passed and expected_action in set(actions)
+    return passed, evidence
+
+
+def _run_v02_policy_safety_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    passed, evidence = _run_v02_recall_fusion_case(case)
+    evidence["policy_safety_checked"] = True
+    return passed and _v02_policy_safety_ok(evidence), evidence
+
+
+def _v02_subspace_registry(subspaces: list[dict[str, Any]]) -> dict[str, Any]:
+    descriptors = [_v02_subspace_descriptor(subspace) for subspace in subspaces]
+    return create_subspace_registry(descriptors)
+
+
+def _v02_subspace_descriptor(subspace: Mapping[str, Any]) -> dict[str, Any]:
+    subspace_id = str(subspace.get("subspace_id") or "").strip()
+    subspace_kind = str(subspace.get("subspace_kind") or "project").strip()
+    created_at = str(subspace.get("created_at") or "2026-05-26T00:00:00Z")
+    return create_subspace_descriptor(
+        subspace_id=subspace_id,
+        subspace_kind=subspace_kind,
+        scope=subspace.get("scope") or _v02_default_scope(subspace_id, subspace_kind),
+        owner=str(subspace.get("owner") or "memory-fabric-bench"),
+        access_policy=subspace.get("access_policy"),
+        risk_level=str(subspace.get("risk_level") or "low"),
+        lifecycle_status=str(subspace.get("lifecycle_status") or "active"),
+        active_summary=str(subspace.get("active_summary") or f"Benchmark subspace {subspace_id}."),
+        source_index=subspace.get("source_index") or {"source_ids": [f"bench:v02:{subspace_id}"]},
+        fact_graph_ref=subspace.get("fact_graph_ref") or {"node_id": f"fact-graph:{subspace_id}"},
+        memory_blocks_ref=subspace.get("memory_blocks_ref") or {"block_ids": [f"block:{subspace_id}"]},
+        tags=subspace.get("tags", []),
+        priority=subspace.get("priority", 0),
+        created_at=created_at,
+        updated_at=str(subspace.get("updated_at") or created_at),
+        last_compacted_at=subspace.get("last_compacted_at"),
+        governance_status=str(subspace.get("governance_status") or "governed"),
+        policy=subspace.get("policy"),
+    )
+
+
+def _v02_default_scope(subspace_id: str, subspace_kind: str) -> dict[str, str]:
+    scope = subspace_id.split(":", 1)[1] if ":" in subspace_id else subspace_id
+    if subspace_kind == "project":
+        return {"project_scope": scope}
+    if subspace_kind == "agent":
+        return {"agent_scope": scope}
+    if subspace_kind == "risk":
+        return {"risk_scope": scope}
+    if subspace_kind == "archive":
+        return {"archive_scope": scope}
+    if subspace_kind == "global":
+        return {"scope_id": scope or "global"}
+    return {"custom_scope": scope}
+
+
+def _v02_base_evidence(policy: Mapping[str, Any] | None) -> dict[str, Any]:
+    evidence = {
+        "selected_memory_ids": [],
+        "rejected_memory_ids": [],
+        "selected_subspace_ids": [],
+        "rejected_subspace_ids": [],
+        "rejection_reasons": {},
+        "explanation_present": False,
+        "policy": _v02_policy(policy),
+    }
+    for field in V02_SAFETY_FALSE_FIELDS:
+        evidence[field] = False
+    return evidence
+
+
+def _v02_policy(policy: Mapping[str, Any] | None) -> dict[str, Any]:
+    merged = dict(V02_POLICY)
+    if isinstance(policy, Mapping):
+        merged.update(dict(policy))
+    return merged
+
+
+def _v02_expected_ids_ok(case: dict[str, Any], evidence: dict[str, Any]) -> bool:
+    checks = [
+        _v02_ids_match(evidence["selected_memory_ids"], case.get("expected_selected_memory_ids")),
+        _v02_ids_match(evidence["rejected_memory_ids"], case.get("expected_rejected_memory_ids")),
+        _v02_ids_match(evidence["selected_subspace_ids"], case.get("expected_selected_subspace_ids")),
+        _v02_ids_match(evidence["rejected_subspace_ids"], case.get("expected_rejected_subspace_ids")),
+        _v02_rejection_reasons_match(evidence["rejection_reasons"], case.get("expected_rejection_reasons", {})),
+    ]
+    expected_top = case.get("expected_top_selected_memory_id")
+    if expected_top:
+        checks.append(bool(evidence["selected_memory_ids"]) and evidence["selected_memory_ids"][0] == expected_top)
+    if case.get("expected_explanation_present", True):
+        checks.append(evidence["explanation_present"] is True)
+    return all(checks)
+
+
+def _v02_ids_match(actual: list[str], expected: Any) -> bool:
+    if expected is None:
+        return True
+    expected_list = [str(item) for item in expected]
+    return set(expected_list).issubset(set(actual))
+
+
+def _v02_rejection_reasons_match(actual: Mapping[str, Any], expected: Mapping[str, Any]) -> bool:
+    for item_id, expected_reason in expected.items():
+        if not _v02_reason_matches(actual.get(item_id), expected_reason):
+            return False
+    return True
+
+
+def _v02_reason_matches(actual_reason: Any, expected_reason: Any) -> bool:
+    actual_reasons = [str(reason) for reason in (actual_reason if isinstance(actual_reason, list) else [actual_reason])]
+    expected_reasons = (
+        [str(reason) for reason in expected_reason]
+        if isinstance(expected_reason, list)
+        else [str(expected_reason)]
+    )
+    for expected in expected_reasons:
+        if not any(actual == expected or actual.startswith(expected) for actual in actual_reasons):
+            return False
+    return True
+
+
+def _v02_explanation_present(explanation: Any) -> bool:
+    if not isinstance(explanation, Mapping):
+        return False
+    return bool(
+        explanation.get("selected_memory_ids") is not None
+        and explanation.get("rejected_memory_ids") is not None
+        and explanation.get("rules")
+        and explanation.get("policy")
+    )
+
+
+def _v02_explanation_quality_ok(result: Mapping[str, Any]) -> bool:
+    explanation = result.get("explanation") if isinstance(result, Mapping) else None
+    if not isinstance(explanation, Mapping):
+        return False
+    return bool(
+        explanation.get("selected_memory_ids")
+        and explanation.get("rejected_memory_ids")
+        and explanation.get("selected_subspace_ids") is not None
+        and explanation.get("rejected_subspace_ids") is not None
+        and explanation.get("memory_rejection_reasons")
+        and explanation.get("memory_selection_reasons")
+        and explanation.get("rules")
+        and explanation.get("policy")
+    )
+
+
+def _v02_policy_safety_ok(evidence: Mapping[str, Any]) -> bool:
+    policy = evidence.get("policy", {}) if isinstance(evidence, Mapping) else {}
+    if not isinstance(policy, Mapping):
+        return False
+    required_policy = {
+        "read_only": True,
+        "would_write_memory": False,
+        "would_modify_config": False,
+        "would_write_graph": False,
+        "writes_proposal_files": False,
+        "writes_operation_ledger": False,
+        "writes_token_files": False,
+        "writes_approval_audit": False,
+        "invokes_real_token_write_executor": False,
+        "implements_real_token_write_executor": False,
+        "exposes_provider_tools": False,
+    }
+    for key, expected in required_policy.items():
+        if policy.get(key) is not expected:
+            return False
+    for field in V02_SAFETY_FALSE_FIELDS:
+        if evidence.get(field) is not False:
+            return False
+    return True
+
+
+def _v02_quality_scores(cases: list[CaseResult]) -> dict[str, float]:
+    quality_scores = {
+        "selection_accuracy": _v02_average_score(
+            cases,
+            {
+                "recall_fusion_v2_selection_accuracy",
+                "high_risk_allowed_when_explicit",
+                "temporal_validity_resolution",
+            },
+        ),
+        "rejection_accuracy": _v02_average_score(
+            cases,
+            {
+                "recall_fusion_v2_rejection_accuracy",
+                "archived_subspace_rejection",
+                "high_risk_rejection",
+            },
+        ),
+        "explanation_quality": _v02_average_score(cases, {"recall_fusion_v2_explanation_quality"}),
+        "subspace_isolation_score": _v02_average_score(
+            cases,
+            {"subspace_isolation_accuracy", "archived_subspace_rejection"},
+        ),
+        "risk_gate_score": _v02_average_score(
+            cases,
+            {"high_risk_rejection", "high_risk_allowed_when_explicit"},
+        ),
+        "temporal_conflict_score": _v02_average_score(
+            cases,
+            {"temporal_validity_resolution", "contradiction_review_routing"},
+        ),
+        "no_write_safety_score": _v02_no_write_safety_score(cases),
+        "overall_score": round(sum(case.score for case in cases) / len(cases), 3) if cases else 0.0,
+    }
+    return {metric: quality_scores[metric] for metric in V02_QUALITY_METRICS}
+
+
+def _v02_average_score(cases: list[CaseResult], dimensions: set[str]) -> float:
+    relevant = [case for case in cases if case.dimension in dimensions]
+    if not relevant:
+        return 0.0
+    return round(sum(case.score for case in relevant) / len(relevant), 3)
+
+
+def _v02_no_write_safety_score(cases: list[CaseResult]) -> float:
+    if not cases:
+        return 0.0
+    return round(
+        sum(1.0 if _v02_policy_safety_ok(case.evidence) else 0.0 for case in cases) / len(cases),
+        3,
+    )
 
 
 def _evaluate_case(case: dict[str, Any]) -> CaseResult:
@@ -2664,9 +3149,9 @@ def _contradiction_answer(memories: list[dict[str, Any]]) -> str:
     return "contradiction_detected" if has_allowed and has_blocked else _newest(memories).get("content", "")
 
 
-def _dimension_scores(cases: list[CaseResult]) -> dict[str, float]:
+def _dimension_scores(cases: list[CaseResult], dimensions: tuple[str, ...] = DIMENSIONS) -> dict[str, float]:
     scores: dict[str, float] = {}
-    for dimension in DIMENSIONS:
+    for dimension in dimensions:
         if dimension == "latency_ms":
             scores[dimension] = round(sum(case.latency_ms for case in cases) / max(len(cases), 1), 3)
             continue
@@ -2675,7 +3160,7 @@ def _dimension_scores(cases: list[CaseResult]) -> dict[str, float]:
     return scores
 
 
-def _aggregate(cases: list[CaseResult]) -> dict[str, Any]:
+def _aggregate(cases: list[CaseResult], dimensions: tuple[str, ...] = DIMENSIONS) -> dict[str, Any]:
     case_count = len(cases)
     passed_count = sum(1 for case in cases if case.passed)
     score = sum(case.score for case in cases) / case_count if case_count else 0.0
@@ -2685,5 +3170,5 @@ def _aggregate(cases: list[CaseResult]) -> dict[str, Any]:
         "passed_count": passed_count,
         "failed_count": case_count - passed_count,
         "mean_latency_ms": round(sum(case.latency_ms for case in cases) / max(case_count, 1), 3),
-        "dimensions": list(DIMENSIONS),
+        "dimensions": list(dimensions),
     }

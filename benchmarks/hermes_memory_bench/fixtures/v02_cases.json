@@ -1,0 +1,485 @@
+[
+  {
+    "id": "v02_recall_fusion_v2_selects_compact_subspace_memory",
+    "dimension": "recall_fusion_v2_selection_accuracy",
+    "description": "Recall Fusion v2 selects the compact, scoped Subspace Index memory over stale and unrelated candidates.",
+    "query": "Hermes Memory Fabric Recall Fusion v2 Subspace Index bloat fix",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-26T00:00:00Z",
+    "limit": 1,
+    "expected_answer": "v02_case_passed",
+    "expected_top_selected_memory_id": "rfv2-target",
+    "expected_selected_memory_ids": ["rfv2-target"],
+    "expected_rejected_memory_ids": ["rfv2-stale", "rfv2-lovart"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejection_reasons": {
+      "rfv2-lovart": "project_scope_mismatch"
+    },
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "Recall Fusion v2 Subspace Index memory bloat",
+      "max_active_subspaces": 2
+    },
+    "memories": [
+      {
+        "id": "rfv2-target",
+        "content": "Hermes Memory Fabric Recall Fusion v2 Subspace Index bloat fix activates compact governed context.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:selection:target",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "rfv2-stale",
+        "content": "Hermes Memory Fabric Recall Fusion v1 keeps broad memory context.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-10T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:selection:stale",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "rfv2-lovart",
+        "content": "Lovart Recall Fusion v2 uses a separate creative asset subspace.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "entity_ids": ["lovart"],
+        "created_at": "2026-05-25T09:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:selection:lovart",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "tags": ["memory-fabric", "recall-fusion-v2"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "tags": ["lovart"],
+        "priority": 10
+      }
+    ]
+  },
+  {
+    "id": "v02_recall_fusion_v2_rejects_unsafe_and_unrelated_candidates",
+    "dimension": "recall_fusion_v2_rejection_accuracy",
+    "description": "Recall Fusion v2 rejects unsafe governance and unrelated project candidates while keeping the safe scoped memory.",
+    "query": "governed Recall Fusion v2 rejection accuracy",
+    "project_scope": "hermes-memory-fabric",
+    "now": "2026-05-26T00:00:00Z",
+    "limit": 1,
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": ["rfv2-safe"],
+    "expected_rejected_memory_ids": ["rfv2-unsafe", "rfv2-rejection-lovart"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejection_reasons": {
+      "rfv2-unsafe": "unsafe_governance:would_write_memory",
+      "rfv2-rejection-lovart": "project_scope_mismatch"
+    },
+    "context": {"project_scope": "hermes-memory-fabric", "query": "Recall Fusion v2 rejection"},
+    "memories": [
+      {
+        "id": "rfv2-safe",
+        "content": "Governed Recall Fusion v2 rejection accuracy keeps safe read-only memory.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v02:rejection:safe",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "rfv2-unsafe",
+        "content": "Governed Recall Fusion v2 rejection accuracy should write memory directly.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "created_at": "2026-05-25T11:00:00Z",
+        "source": "chat",
+        "provenance": "bench:v02:rejection:unsafe",
+        "risk_level": "low",
+        "governance": {"would_write_memory": true}
+      },
+      {
+        "id": "rfv2-rejection-lovart",
+        "content": "Lovart rejection accuracy belongs to a different project.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "created_at": "2026-05-25T09:00:00Z",
+        "source": "chat",
+        "provenance": "bench:v02:rejection:lovart",
+        "risk_level": "low",
+        "governance": {"read_only": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "tags": ["memory-fabric"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "tags": ["lovart"],
+        "priority": 10
+      }
+    ]
+  },
+  {
+    "id": "v02_recall_fusion_v2_explains_selection_and_rejection",
+    "dimension": "recall_fusion_v2_explanation_quality",
+    "description": "Recall Fusion v2 output explains selected and rejected memories, subspaces, scoring rules, and policy.",
+    "query": "Recall Fusion v2 explanation quality selected rejected memory",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-26T00:00:00Z",
+    "limit": 1,
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": ["rfv2-explain-selected"],
+    "expected_rejected_memory_ids": ["rfv2-explain-rejected"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_explanation_present": true,
+    "context": {"project_scope": "hermes-memory-fabric", "query": "Recall Fusion v2 explanation quality"},
+    "memories": [
+      {
+        "id": "rfv2-explain-selected",
+        "content": "Recall Fusion v2 explanation quality selected rejected memory is covered by read-only evidence.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:explanation:selected",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "rfv2-explain-rejected",
+        "content": "Calendar sync release note unrelated reminder.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "created_at": "2026-05-25T09:00:00Z",
+        "source": "chat",
+        "risk_level": "low",
+        "governance": {"read_only": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "tags": ["memory-fabric", "explanation"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v02_subspace_index_isolates_project_context",
+    "dimension": "subspace_isolation_accuracy",
+    "description": "Subspace Index selects only the matching project subspace and rejects unrelated project domains.",
+    "query": "Activate Hermes Memory Fabric project subspace only",
+    "expected_answer": "v02_case_passed",
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": ["project:lovart", "project:openclaw"],
+    "expected_rejection_reasons": {
+      "project:lovart": ["project_scope_mismatch"],
+      "project:openclaw": ["project_scope_mismatch"]
+    },
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "memory fabric project isolation"
+    },
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "tags": ["memory-fabric"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "tags": ["lovart"],
+        "priority": 30
+      },
+      {
+        "subspace_id": "project:openclaw",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "openclaw"},
+        "tags": ["openclaw"],
+        "priority": 25
+      }
+    ]
+  },
+  {
+    "id": "v02_archived_subspace_rejected_by_default",
+    "dimension": "archived_subspace_rejection",
+    "description": "Archived subspace memory is rejected by default even when the project scope matches.",
+    "query": "Recall archived Hermes Memory Fabric guidance",
+    "project_scope": "hermes-memory-fabric",
+    "now": "2026-05-26T00:00:00Z",
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": [],
+    "expected_rejected_memory_ids": ["archived-guidance"],
+    "expected_rejected_subspace_ids": ["project:hermes-memory-fabric:archive"],
+    "expected_rejection_reasons": {
+      "archived-guidance": "archived_subspace_excluded",
+      "project:hermes-memory-fabric:archive": ["archived_excluded"]
+    },
+    "context": {"project_scope": "hermes-memory-fabric", "query": "archived guidance"},
+    "memories": [
+      {
+        "id": "archived-guidance",
+        "content": "Archived Hermes Memory Fabric guidance should stay inactive by default.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "created_at": "2026-05-01T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:archive",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "lifecycle_status": "archived",
+        "tags": ["memory-fabric", "archive"],
+        "priority": 50
+      }
+    ]
+  },
+  {
+    "id": "v02_high_risk_rejected_without_explicit_allowance",
+    "dimension": "high_risk_rejection",
+    "description": "High-risk memory and subspace candidates are blocked unless the context explicitly allows high risk.",
+    "query": "high risk write pathway analysis",
+    "project_scope": "hermes-memory-fabric",
+    "now": "2026-05-26T00:00:00Z",
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": [],
+    "expected_rejected_memory_ids": ["risk-high-memory"],
+    "expected_rejected_subspace_ids": ["risk:high-memory"],
+    "expected_rejection_reasons": {
+      "risk-high-memory": "risk_level_not_allowed:high",
+      "risk:high-memory": ["risk_level_not_allowed:high"]
+    },
+    "context": {"project_scope": "hermes-memory-fabric", "query": "high risk write pathway"},
+    "memories": [
+      {
+        "id": "risk-high-memory",
+        "content": "High risk write pathway analysis must require explicit allowance.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "risk:high-memory",
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v02:risk:blocked",
+        "risk_level": "high",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "risk:high-memory",
+        "subspace_kind": "risk",
+        "risk_level": "high",
+        "tags": ["risk", "memory-fabric"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v02_high_risk_allowed_when_explicit",
+    "dimension": "high_risk_allowed_when_explicit",
+    "description": "High-risk memory is selectable only when high risk is explicitly allowed by context.",
+    "query": "high risk write pathway analysis",
+    "project_scope": "hermes-memory-fabric",
+    "allowed_risk_levels": ["low", "medium", "high"],
+    "now": "2026-05-26T00:00:00Z",
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": ["risk-high-memory-allowed"],
+    "expected_selected_subspace_ids": ["risk:high-memory"],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "high risk write pathway",
+      "allowed_risk_levels": ["low", "medium", "high"]
+    },
+    "memories": [
+      {
+        "id": "risk-high-memory-allowed",
+        "content": "High risk write pathway analysis is visible after explicit high risk allowance.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "risk:high-memory",
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v02:risk:allowed",
+        "risk_level": "high",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "risk:high-memory",
+        "subspace_kind": "risk",
+        "risk_level": "high",
+        "tags": ["risk", "memory-fabric"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v02_temporal_validity_selects_current_fact",
+    "dimension": "temporal_validity_resolution",
+    "description": "Bi-temporal Fact Graph selects the current valid fact and preserves the superseded prior fact in lineage.",
+    "query": "Which recall algorithm is current for Hermes Memory Fabric?",
+    "project_scope": "hermes-memory-fabric",
+    "at_time": "2026-05-26T00:00:00Z",
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": ["temporal-current"],
+    "expected_rejected_memory_ids": ["temporal-old"],
+    "expected_selected_fact_objects": ["Recall Fusion v2 with Subspace Index"],
+    "facts": [
+      {
+        "fact_id": "temporal-old",
+        "subject": "Hermes Memory Fabric",
+        "predicate": "current_recall_algorithm",
+        "object": "Hybrid Retrieval Fusion v0.1",
+        "project_id": "hermes-memory-fabric",
+        "source_episode_id": "episode:hybrid-retrieval",
+        "provenance": "bench:v02:temporal:old",
+        "confidence": 0.9,
+        "valid_from": "2026-05-01T00:00:00Z",
+        "valid_until": "2026-05-25T00:00:00Z",
+        "system_created_at": "2026-05-01T10:00:00Z",
+        "system_invalidated_at": "2026-05-25T00:00:00Z"
+      },
+      {
+        "fact_id": "temporal-current",
+        "subject": "Hermes Memory Fabric",
+        "predicate": "current_recall_algorithm",
+        "object": "Recall Fusion v2 with Subspace Index",
+        "project_id": "hermes-memory-fabric",
+        "source_episode_id": "episode:recall-fusion-v2",
+        "provenance": "bench:v02:temporal:current",
+        "confidence": 0.95,
+        "valid_from": "2026-05-25T00:00:00Z",
+        "system_created_at": "2026-05-25T08:00:00Z",
+        "supersedes": ["temporal-old"]
+      }
+    ]
+  },
+  {
+    "id": "v02_contradiction_routes_to_review",
+    "dimension": "contradiction_review_routing",
+    "description": "Contradictory current facts are routed to review instead of being merged or written.",
+    "query": "Is external-channel memory exposure allowed?",
+    "expected_answer": "v02_case_passed",
+    "expected_rejected_memory_ids": ["contradiction-allow", "contradiction-block"],
+    "expected_review_action": "review_contradiction",
+    "expected_rejection_reasons": {
+      "contradiction-allow": "review_contradiction",
+      "contradiction-block": "review_contradiction"
+    },
+    "facts": [
+      {
+        "fact_id": "contradiction-allow",
+        "subject": "external-channel memory exposure",
+        "predicate": "policy",
+        "object": "allowed",
+        "project_id": "hermes-memory-fabric",
+        "source_episode_id": "episode:external-allowed",
+        "provenance": "bench:v02:contradiction:allow",
+        "confidence": 0.84,
+        "valid_from": "2026-05-20T00:00:00Z",
+        "system_created_at": "2026-05-20T08:00:00Z"
+      },
+      {
+        "fact_id": "contradiction-block",
+        "subject": "external-channel memory exposure",
+        "predicate": "policy",
+        "object": "blocked_until_review",
+        "project_id": "hermes-memory-fabric",
+        "source_episode_id": "episode:external-blocked",
+        "provenance": "bench:v02:contradiction:block",
+        "confidence": 0.92,
+        "valid_from": "2026-05-21T00:00:00Z",
+        "system_created_at": "2026-05-21T08:00:00Z"
+      }
+    ]
+  },
+  {
+    "id": "v02_no_write_policy_safety",
+    "dimension": "no_write_policy_safety",
+    "description": "Benchmark evidence proves no proposals, operation events, token files, approval audits, token executor, or provider tools are created or exposed.",
+    "query": "no write token executor provider policy",
+    "project_scope": "hermes-memory-fabric",
+    "now": "2026-05-26T00:00:00Z",
+    "limit": 1,
+    "expected_answer": "v02_case_passed",
+    "expected_selected_memory_ids": ["policy-safe"],
+    "expected_rejected_memory_ids": ["policy-unsafe-token"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejection_reasons": {
+      "policy-unsafe-token": "unsafe_governance:writes_token_files"
+    },
+    "context": {"project_scope": "hermes-memory-fabric", "query": "no write token executor provider policy"},
+    "memories": [
+      {
+        "id": "policy-safe",
+        "content": "No write token executor provider policy remains read-only and local.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "created_at": "2026-05-25T10:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v02:policy:safe",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "policy-unsafe-token",
+        "content": "No write token executor provider policy must not write token files or expose provider tools.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "created_at": "2026-05-25T11:00:00Z",
+        "source": "chat",
+        "provenance": "bench:v02:policy:unsafe",
+        "risk_level": "low",
+        "governance": {"writes_token_files": true, "exposes_provider_tools": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "tags": ["memory-fabric", "policy"],
+        "priority": 20
+      }
+    ]
+  }
+]
