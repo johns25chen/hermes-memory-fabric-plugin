@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import importlib
 from copy import deepcopy
 
 import pytest
 
-from hermes_memory_fabric import MemoryFabricProvider, register
+from hermes_memory_fabric import MemoryFabricProvider
 from hermes_memory_fabric.provider import PROVIDER_RUNTIME_INTEGRATION_POLICY
 from hermes_memory_fabric.memory_subspace_index import create_subspace_descriptor, create_subspace_registry
 
@@ -275,7 +276,9 @@ def test_provider_runtime_config_supplies_active_context_defaults():
     assert packet["budget"]["context_budget_chars"] == 180
 
 
-def test_register_adds_memory_provider():
+def test_top_level_module_register_adds_memory_provider_without_tools():
+    module = importlib.import_module("hermes_memory_fabric")
+
     class Context:
         def __init__(self) -> None:
             self.providers = []
@@ -285,7 +288,18 @@ def test_register_adds_memory_provider():
 
     ctx = Context()
 
-    register(ctx)
+    assert callable(module.register)
+
+    module.register(ctx)
 
     assert len(ctx.providers) == 1
     assert isinstance(ctx.providers[0], MemoryFabricProvider)
+    assert ctx.providers[0].get_tool_schemas() == []
+    assert callable(ctx.providers[0].build_active_context)
+    assert callable(ctx.providers[0].summarize_active_context)
+    assert callable(ctx.providers[0].explain_active_context)
+    assert callable(ctx.providers[0].validate_active_context)
+    assert callable(ctx.providers[0].prefetch)
+    assert callable(ctx.providers[0].queue_prefetch)
+    assert callable(ctx.providers[0].sync_turn)
+    assert callable(ctx.providers[0].shutdown)
