@@ -33,6 +33,12 @@ Version 0.1 is intentionally read-only. The provider lifecycle is available, but
 
 `MemoryFabricProvider.get_tool_schemas()` returns an empty list in v0.1. The copied tool modules use a local registry shim for standalone tests and future adapter work, but the provider does not publish those tools until the standalone adapter boundary is reviewed.
 
+Civilization Core / Memory Fabric Subspace Index v0.1 adds deterministic,
+read-only project, agent, risk, archive, global, and custom memory domains.
+The index validates subspace descriptors and registries, resolves subspaces by
+id, selects only context-relevant subspaces, and reports explicit no-write,
+no-graph-write, no-token-write, no-executor, and no-provider-tool policy flags.
+
 ## Layout
 
 - `src/hermes_memory_fabric/`: extracted Memory Fabric and evidence-repair modules.
@@ -47,4 +53,3 @@ Version 0.1 is intentionally read-only. The provider lifecycle is available, but
 - No provider tools are exposed in v0.1.
 - Registry registration is local to this package and does not import Hermes core `tools.registry`.
 - Hermes core provider-manager and third-party provider tests are copied for reference but excluded from standalone pytest collection.
-

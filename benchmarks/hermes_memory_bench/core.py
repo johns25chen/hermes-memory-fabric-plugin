@@ -136,6 +136,11 @@ from hermes_memory_fabric.memory_human_approval_token_real_write_executor_code_r
     summarize_human_approval_token_real_write_executor_code_review_plans,
 )
 from hermes_memory_fabric.memory_retrieval_fusion import fuse_memory_retrieval
+from hermes_memory_fabric.memory_subspace_index import (
+    MEMORY_SUBSPACE_INDEX_POLICY,
+    create_subspace_registry,
+    select_subspaces_for_context,
+)
 
 
 BENCHMARK_TYPE = "hermes_memory_bench_v0.1"
@@ -175,6 +180,7 @@ DIMENSIONS = (
     "memory_human_approval_token_real_write_executor_implementation_plan",
     "memory_human_approval_token_real_write_executor_implementation_dry_run",
     "memory_human_approval_token_real_write_executor_code_review_plan",
+    "memory_subspace_index",
     "latency_ms",
 )
 POLICY = {
@@ -331,6 +337,47 @@ def _answer_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             "fusion": result,
             "selected_id": selected.get("id"),
             "candidate_count": len(memories),
+        }
+
+    if dimension == "memory_subspace_index":
+        registry = create_subspace_registry(case.get("subspaces", []))
+        selection = select_subspaces_for_context(registry, case.get("context", {}))
+        selected_ids = [item["subspace_id"] for item in selection["selected_subspaces"]]
+        rejected_ids = [item["subspace_id"] for item in selection["rejected_subspaces"]]
+        expected_selected = set(case.get("expected_selected_subspace_ids", []))
+        expected_rejected = set(case.get("expected_rejected_subspace_ids", []))
+        policy = selection["policy"]
+        safety_ok = (
+            policy == MEMORY_SUBSPACE_INDEX_POLICY
+            and policy["read_only"] is True
+            and policy["would_write_memory"] is False
+            and policy["would_write_graph"] is False
+            and policy["writes_token_files"] is False
+            and policy["invokes_real_token_write_executor"] is False
+            and policy["implements_real_token_write_executor"] is False
+            and policy["exposes_provider_tools"] is False
+        )
+        passed = (
+            expected_selected.issubset(set(selected_ids))
+            and expected_rejected.issubset(set(rejected_ids))
+            and safety_ok
+        )
+        return "subspace_index_selection_passed" if passed else "subspace_index_selection_failed", {
+            "selection": selection,
+            "selected_subspace_ids": selected_ids,
+            "rejected_subspace_ids": rejected_ids,
+            "expected_selected_subspace_ids": sorted(expected_selected),
+            "expected_rejected_subspace_ids": sorted(expected_rejected),
+            "candidate_count": len(case.get("subspaces", [])),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "policy": dict(MEMORY_SUBSPACE_INDEX_POLICY),
         }
 
     if dimension == "bitemporal_fact_graph":

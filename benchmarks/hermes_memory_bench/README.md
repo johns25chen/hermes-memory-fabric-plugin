@@ -53,6 +53,7 @@ python -m benchmarks.hermes_memory_bench.run --suite smoke --output /tmp/hermes-
 - `memory_human_approval_token_real_write_executor_implementation_plan`
 - `memory_human_approval_token_real_write_executor_implementation_dry_run`
 - `memory_human_approval_token_real_write_executor_code_review_plan`
+- `memory_subspace_index`
 - `latency_ms`
 
 ## Hybrid Retrieval Fusion v0.1
@@ -96,6 +97,19 @@ claims, and explain fact lineage so superseded historical facts remain visible.
 
 The smoke suite includes `bitemporal_fact_graph`, proving that a newer valid
 fact wins while the older historical fact remains explainable through lineage.
+
+## Memory Subspace Index v0.1
+
+Memory Subspace Index v0.1 lives in
+`hermes_memory_fabric.memory_subspace_index`. It partitions Memory Fabric into
+governed read-only domains for project, agent, risk, archive, global, and
+custom scopes so future context composition can activate only relevant memory.
+
+The smoke suite includes `memory_subspace_index`, proving that
+`project:hermes-memory-fabric` is selected for a matching project context,
+unrelated project subspaces and archived subspaces are rejected by default, and
+no durable memory write, graph write, token write, provider tool exposure, or
+real executor invocation occurs.
 
 ## Contradiction Engine v0.1
 
