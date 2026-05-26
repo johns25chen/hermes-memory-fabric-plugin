@@ -144,6 +144,11 @@ from hermes_memory_fabric.memory_retrieval_fusion import (
     fuse_memory_retrieval,
     fuse_memory_retrieval_v2,
 )
+from hermes_memory_fabric.memory_active_context_composer import (
+    ACTIVE_CONTEXT_COMPOSER_POLICY,
+    compose_active_context,
+    validate_active_context_packet,
+)
 from hermes_memory_fabric.memory_subspace_index import (
     MEMORY_SUBSPACE_INDEX_POLICY,
     create_subspace_descriptor,
@@ -163,6 +168,7 @@ DIMENSIONS = (
     "contradiction_handling",
     "hybrid_retrieval_fusion",
     "memory_recall_fusion_v2",
+    "memory_active_context_composer",
     "bitemporal_fact_graph",
     "contradiction_engine",
     "memory_compiler",
@@ -204,6 +210,7 @@ V02_DIMENSIONS = (
     "high_risk_allowed_when_explicit",
     "temporal_validity_resolution",
     "contradiction_review_routing",
+    "memory_active_context_composer",
     "no_write_policy_safety",
     "latency_ms",
 )
@@ -255,6 +262,7 @@ V02_OPERATION_BY_DIMENSION = {
     "high_risk_allowed_when_explicit": "recall_fusion_v2",
     "temporal_validity_resolution": "bitemporal_fact_graph",
     "contradiction_review_routing": "contradiction_engine",
+    "memory_active_context_composer": "active_context_composer",
     "no_write_policy_safety": "policy_safety",
 }
 
@@ -382,6 +390,8 @@ def _answer_v02_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
         passed, evidence = _run_v02_temporal_case(case)
     elif operation == "contradiction_engine":
         passed, evidence = _run_v02_contradiction_case(case)
+    elif operation == "active_context_composer":
+        passed, evidence = _run_v02_active_context_composer_case(case)
     elif operation == "policy_safety":
         passed, evidence = _run_v02_policy_safety_case(case)
     else:
@@ -433,6 +443,55 @@ def _run_v02_recall_fusion_case(case: dict[str, Any]) -> tuple[bool, dict[str, A
     passed = _v02_expected_ids_ok(case, evidence)
     if case["dimension"] == "recall_fusion_v2_explanation_quality":
         passed = passed and _v02_explanation_quality_ok(result)
+    return passed, evidence
+
+
+def _run_v02_active_context_composer_case(case: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    registry = _v02_subspace_registry(case.get("subspaces", []))
+    packet = compose_active_context(
+        query=case["query"],
+        memory_candidates=case.get("memories", []),
+        subspace_registry=registry,
+        context=case.get("context", {}),
+        project_scope=case.get("project_scope"),
+        agent_scope=case.get("agent_scope"),
+        entity_ids=case.get("entity_ids"),
+        now=case.get("now"),
+        max_active_subspaces=case.get("max_active_subspaces", 3),
+        memory_limit=case.get("limit", case.get("memory_limit", 5)),
+        context_budget_chars=case.get("context_budget_chars", 4000),
+        include_archived=case.get("include_archived", False),
+        allowed_risk_levels=case.get("allowed_risk_levels"),
+        required_tags=case.get("required_tags"),
+        include_rejected=case.get("include_rejected", False),
+    )
+    selected_memory_ids = [item["id"] for item in packet["selected_memories"]]
+    rejected_memory_ids = [item["id"] for item in packet["rejected_memories"]]
+    selected_subspace_ids = [item["subspace_id"] for item in packet["selected_subspaces"]]
+    rejected_subspace_ids = [item["subspace_id"] for item in packet["rejected_subspaces"]]
+    rejection_reasons = {item["id"]: item["reason"] for item in packet["rejected_memories"]}
+    fusion_explanation = packet.get("explanation", {}).get("fusion_explanation", {})
+    if isinstance(fusion_explanation, Mapping):
+        rejection_reasons.update(fusion_explanation.get("subspace_rejected_reasons", {}))
+    validation = validate_active_context_packet(packet)
+
+    evidence = _v02_base_evidence(packet["policy"])
+    evidence.update(
+        {
+            "selected_memory_ids": selected_memory_ids,
+            "rejected_memory_ids": rejected_memory_ids,
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "rejection_reasons": rejection_reasons,
+            "explanation_present": _v02_explanation_present(packet.get("explanation")),
+            "packet_valid": validation["valid"],
+            "compact_context_text": packet["compact_context_text"],
+            "active_context_packet": packet,
+        }
+    )
+    passed = _v02_expected_ids_ok(case, evidence)
+    passed = passed and validation["valid"]
+    passed = passed and _v02_active_context_expectations_ok(case, evidence)
     return passed, evidence
 
 
@@ -666,6 +725,27 @@ def _v02_explanation_quality_ok(result: Mapping[str, Any]) -> bool:
     )
 
 
+def _v02_active_context_expectations_ok(case: Mapping[str, Any], evidence: Mapping[str, Any]) -> bool:
+    compact_text = str(evidence.get("compact_context_text", ""))
+    packet = evidence.get("active_context_packet", {})
+    budget = packet.get("budget", {}) if isinstance(packet, Mapping) else {}
+    checks = [
+        evidence.get("packet_valid") is True,
+        bool(evidence.get("explanation_present")),
+    ]
+    for expected in case.get("expected_compact_contains", []):
+        checks.append(str(expected) in compact_text)
+    for expected in case.get("expected_compact_absent", []):
+        checks.append(str(expected) not in compact_text)
+    expected_budget = case.get("context_budget_chars")
+    if expected_budget is not None:
+        checks.append(len(compact_text) <= int(expected_budget))
+        checks.append(budget.get("context_budget_chars") == int(expected_budget))
+    if case.get("expected_packet_valid", True):
+        checks.append(evidence.get("packet_valid") is True)
+    return all(checks)
+
+
 def _v02_policy_safety_ok(evidence: Mapping[str, Any]) -> bool:
     policy = evidence.get("policy", {}) if isinstance(evidence, Mapping) else {}
     if not isinstance(policy, Mapping):
@@ -895,6 +975,83 @@ def _answer_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             "implements_real_token_write_executor": False,
             "exposes_provider_tools": False,
             "policy": dict(FUSION_POLICY_V2),
+        }
+
+    if dimension == "memory_active_context_composer":
+        registry = create_subspace_registry(case.get("subspaces", []))
+        packet = compose_active_context(
+            query=case["query"],
+            memory_candidates=memories,
+            subspace_registry=registry,
+            context=case.get("context", {}),
+            project_scope=case.get("project_scope"),
+            agent_scope=case.get("agent_scope"),
+            entity_ids=case.get("entity_ids"),
+            now=case.get("now"),
+            max_active_subspaces=case.get("max_active_subspaces", 3),
+            memory_limit=case.get("limit", case.get("memory_limit", 5)),
+            context_budget_chars=case.get("context_budget_chars", 4000),
+            include_archived=case.get("include_archived", False),
+            allowed_risk_levels=case.get("allowed_risk_levels"),
+            required_tags=case.get("required_tags"),
+            include_rejected=case.get("include_rejected", False),
+        )
+        selected_memory_ids = [item["id"] for item in packet["selected_memories"]]
+        rejected_memory_ids = [item["id"] for item in packet["rejected_memories"]]
+        selected_subspace_ids = [item["subspace_id"] for item in packet["selected_subspaces"]]
+        rejected_subspace_ids = [item["subspace_id"] for item in packet["rejected_subspaces"]]
+        expected_selected_memory = case.get("expected_top_selected_memory_id")
+        expected_rejected_memories = set(case.get("expected_rejected_memory_ids", []))
+        expected_selected_subspaces = set(case.get("expected_selected_subspace_ids", []))
+        expected_rejected_subspaces = set(case.get("expected_rejected_subspace_ids", []))
+        expected_compact_contains = [str(item) for item in case.get("expected_compact_contains", [])]
+        validation = validate_active_context_packet(packet)
+        policy = packet["policy"]
+        safety_ok = (
+            policy == ACTIVE_CONTEXT_COMPOSER_POLICY
+            and policy["read_only"] is True
+            and policy["would_write_memory"] is False
+            and policy["would_write_graph"] is False
+            and policy["writes_token_files"] is False
+            and policy["writes_approval_audit"] is False
+            and policy["invokes_real_token_write_executor"] is False
+            and policy["implements_real_token_write_executor"] is False
+            and policy["exposes_provider_tools"] is False
+        )
+        passed = (
+            validation["valid"]
+            and (not expected_selected_memory or selected_memory_ids[:1] == [expected_selected_memory])
+            and expected_rejected_memories.issubset(set(rejected_memory_ids))
+            and expected_selected_subspaces.issubset(set(selected_subspace_ids))
+            and expected_rejected_subspaces.issubset(set(rejected_subspace_ids))
+            and all(item in packet["compact_context_text"] for item in expected_compact_contains)
+            and safety_ok
+        )
+        return "active_context_composer_passed" if passed else "active_context_composer_failed", {
+            "active_context_packet": packet,
+            "packet_valid": validation["valid"],
+            "selected_memory_ids": selected_memory_ids,
+            "rejected_memory_ids": rejected_memory_ids,
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "expected_top_selected_memory_id": expected_selected_memory,
+            "expected_rejected_memory_ids": sorted(expected_rejected_memories),
+            "expected_selected_subspace_ids": sorted(expected_selected_subspaces),
+            "expected_rejected_subspace_ids": sorted(expected_rejected_subspaces),
+            "compact_context_text": packet["compact_context_text"],
+            "candidate_count": len(memories),
+            "created_durable_memory_write": False,
+            "created_graph_write": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "exposes_provider_tools": False,
+            "policy": dict(ACTIVE_CONTEXT_COMPOSER_POLICY),
         }
 
     if dimension == "memory_subspace_index":

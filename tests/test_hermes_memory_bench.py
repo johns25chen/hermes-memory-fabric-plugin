@@ -11,6 +11,7 @@ V02_REQUIRED_DIMENSIONS = {
     "high_risk_allowed_when_explicit",
     "temporal_validity_resolution",
     "contradiction_review_routing",
+    "memory_active_context_composer",
     "no_write_policy_safety",
 }
 
@@ -34,12 +35,12 @@ V02_REQUIRED_EVIDENCE_FIELDS = {
 }
 
 
-def test_smoke_suite_still_passes_37_cases():
+def test_smoke_suite_still_passes_38_cases():
     report = run_benchmark("smoke")
 
     assert report["suite"] == "smoke"
-    assert report["aggregate"]["case_count"] == 37
-    assert report["aggregate"]["passed_count"] == 37
+    assert report["aggregate"]["case_count"] == 38
+    assert report["aggregate"]["passed_count"] == 38
     assert report["aggregate"]["failed_count"] == 0
     assert report["aggregate"]["overall_score"] == 1.0
 
@@ -49,7 +50,7 @@ def test_v02_suite_loads_separately_with_required_dimensions():
     v02_cases = load_cases("v02")
     v02_dimensions = {case["dimension"] for case in v02_cases}
 
-    assert len(smoke_cases) == 37
+    assert len(smoke_cases) == 38
     assert len(v02_cases) >= 10
     assert v02_cases != smoke_cases
     assert V02_REQUIRED_DIMENSIONS.issubset(v02_dimensions)
@@ -90,6 +91,14 @@ def test_v02_includes_temporal_and_contradiction_cases():
 
     assert cases["temporal_validity_resolution"]["expected_selected_memory_ids"] == ["temporal-current"]
     assert cases["contradiction_review_routing"]["expected_review_action"] == "review_contradiction"
+
+
+def test_v02_includes_active_context_composer_case():
+    cases = {case["dimension"]: case for case in load_cases("v02")}
+
+    assert "memory_active_context_composer" in cases
+    assert cases["memory_active_context_composer"]["expected_top_selected_memory_id"] == "active-context-target"
+    assert "active-context-unrelated" in cases["memory_active_context_composer"]["expected_rejected_memory_ids"]
 
 
 def test_v02_policy_safety_evidence_proves_no_writes_or_executor_or_provider_tools():
