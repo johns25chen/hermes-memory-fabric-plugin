@@ -56,6 +56,13 @@ v2 selection and rejection quality, Subspace Index isolation, archived and
 high-risk gating, temporal/conflict handling, explanation quality, and no-write
 safety without network calls or durable memory side effects.
 
+Civilization Core / Hermes Memory Fabric Active Context Composer v0.1 adds a
+deterministic context-packet layer over Recall Fusion v2. It composes selected
+subspace summaries and the highest-value selected memories into a bounded
+`active_context_packet`, explains selected and rejected memories/subspaces, and
+keeps the same read-only/no-write/no-token/no-executor/no-provider-tool policy
+surface.
+
 ## Layout
 
 - `src/hermes_memory_fabric/`: extracted Memory Fabric and evidence-repair modules.

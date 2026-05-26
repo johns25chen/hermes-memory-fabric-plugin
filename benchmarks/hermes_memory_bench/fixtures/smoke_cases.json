@@ -2144,5 +2144,208 @@
         }
       }
     ]
+  },
+  {
+    "id": "memory_active_context_composer_packet",
+    "dimension": "memory_active_context_composer",
+    "description": "Active Context Composer builds a bounded read-only packet from selected subspace and memory.",
+    "query": "Hermes Memory Fabric Active Context Composer bounded packet",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-26T00:00:00Z",
+    "limit": 1,
+    "context_budget_chars": 1000,
+    "expected_answer": "active_context_composer_passed",
+    "expected_top_selected_memory_id": "active-context-current",
+    "expected_rejected_memory_ids": ["active-context-unrelated", "active-context-archived"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": ["project:lovart", "project:hermes-memory-fabric:archive"],
+    "expected_compact_contains": ["Active Context Composer v0.1 composes bounded read-only context."],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "Active Context Composer bounded packet",
+      "max_active_subspaces": 2
+    },
+    "memories": [
+      {
+        "id": "active-context-current",
+        "content": "Active Context Composer v0.1 composes bounded read-only context.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T09:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:active-context:current",
+        "risk_level": "low",
+        "governance": {
+          "read_only": true,
+          "proposal_governed": true
+        }
+      },
+      {
+        "id": "active-context-unrelated",
+        "content": "Lovart active context belongs to a different project.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "entity_ids": ["lovart"],
+        "created_at": "2026-05-26T09:05:00Z",
+        "source": "design_doc",
+        "provenance": "bench:active-context:lovart",
+        "risk_level": "low",
+        "governance": {
+          "read_only": true,
+          "proposal_governed": true
+        }
+      },
+      {
+        "id": "active-context-archived",
+        "content": "Archived active context should stay out of compact context by default.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-01T09:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:active-context:archive",
+        "risk_level": "low",
+        "governance": {
+          "read_only": true,
+          "proposal_governed": true
+        }
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {
+          "project_scope": "hermes-memory-fabric"
+        },
+        "owner": "memory-fabric-team",
+        "access_policy": {
+          "read": "allowed",
+          "write": "forbidden",
+          "proposal_required_for_writes": true
+        },
+        "risk_level": "low",
+        "lifecycle_status": "active",
+        "active_summary": "Hermes Memory Fabric active context composer project subspace.",
+        "source_index": {
+          "source_ids": ["bench:active-context:subspace"]
+        },
+        "fact_graph_ref": {
+          "node_id": "fact-graph:active-context"
+        },
+        "memory_blocks_ref": {
+          "block_ids": ["block:active-context"]
+        },
+        "tags": ["memory-fabric", "active-context"],
+        "priority": 10,
+        "created_at": "2026-05-26T00:00:00Z",
+        "updated_at": "2026-05-26T00:00:00Z",
+        "last_compacted_at": null,
+        "governance_status": "governed",
+        "policy": {
+          "read_only": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false,
+          "writes_proposal_files": false,
+          "writes_operation_ledger": false,
+          "writes_token_files": false,
+          "writes_approval_audit": false,
+          "invokes_real_token_write_executor": false,
+          "implements_real_token_write_executor": false,
+          "exposes_provider_tools": false
+        }
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {
+          "project_scope": "lovart"
+        },
+        "owner": "memory-fabric-team",
+        "access_policy": {
+          "read": "allowed",
+          "write": "forbidden",
+          "proposal_required_for_writes": true
+        },
+        "risk_level": "low",
+        "lifecycle_status": "active",
+        "active_summary": "Lovart unrelated active context subspace.",
+        "source_index": {
+          "source_ids": ["bench:active-context:lovart"]
+        },
+        "fact_graph_ref": {
+          "node_id": "fact-graph:lovart"
+        },
+        "memory_blocks_ref": {
+          "block_ids": ["block:lovart"]
+        },
+        "tags": ["lovart"],
+        "priority": 9,
+        "created_at": "2026-05-26T00:00:00Z",
+        "updated_at": "2026-05-26T00:00:00Z",
+        "last_compacted_at": null,
+        "governance_status": "governed",
+        "policy": {
+          "read_only": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false,
+          "writes_proposal_files": false,
+          "writes_operation_ledger": false,
+          "writes_token_files": false,
+          "writes_approval_audit": false,
+          "invokes_real_token_write_executor": false,
+          "implements_real_token_write_executor": false,
+          "exposes_provider_tools": false
+        }
+      },
+      {
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "subspace_kind": "project",
+        "scope": {
+          "project_scope": "hermes-memory-fabric"
+        },
+        "owner": "memory-fabric-team",
+        "access_policy": {
+          "read": "allowed",
+          "write": "forbidden",
+          "proposal_required_for_writes": true
+        },
+        "risk_level": "low",
+        "lifecycle_status": "archived",
+        "active_summary": "Archived active context subspace.",
+        "source_index": {
+          "source_ids": ["bench:active-context:archive"]
+        },
+        "fact_graph_ref": {
+          "node_id": "fact-graph:active-context:archive"
+        },
+        "memory_blocks_ref": {
+          "block_ids": ["block:active-context:archive"]
+        },
+        "tags": ["memory-fabric", "archive"],
+        "priority": 8,
+        "created_at": "2026-05-26T00:00:00Z",
+        "updated_at": "2026-05-26T00:00:00Z",
+        "last_compacted_at": null,
+        "governance_status": "governed",
+        "policy": {
+          "read_only": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false,
+          "writes_proposal_files": false,
+          "writes_operation_ledger": false,
+          "writes_token_files": false,
+          "writes_approval_audit": false,
+          "invokes_real_token_write_executor": false,
+          "implements_real_token_write_executor": false,
+          "exposes_provider_tools": false
+        }
+      }
+    ]
   }
 ]

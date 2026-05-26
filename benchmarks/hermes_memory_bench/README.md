@@ -14,7 +14,7 @@ The benchmark only reads local fixtures and writes the requested JSON report.
 
 ## Suites
 
-`smoke` is the original v0.1 compatibility suite. It keeps the 37 existing
+`smoke` is the original v0.1 compatibility suite. It keeps the existing
 cases and verifies that the standalone plugin's read-only memory primitives and
 governance pipeline still behave as expected.
 
@@ -64,6 +64,7 @@ The `v02` fixture covers these dimensions:
 - `high_risk_allowed_when_explicit`
 - `temporal_validity_resolution`
 - `contradiction_review_routing`
+- `memory_active_context_composer`
 - `no_write_policy_safety`
 
 ## Smoke Dimensions
@@ -76,6 +77,7 @@ The `v02` fixture covers these dimensions:
 - `contradiction_handling`
 - `hybrid_retrieval_fusion`
 - `memory_recall_fusion_v2`
+- `memory_active_context_composer`
 - `bitemporal_fact_graph`
 - `contradiction_engine`
 - `memory_compiler`
@@ -157,6 +159,21 @@ exposure occurs.
 The `v02` suite expands this into separate selection, rejection, explanation,
 archived-subspace, high-risk gating, and no-write policy safety cases so the
 quality metrics can identify which behavior regressed.
+
+## Active Context Composer v0.1
+
+Active Context Composer v0.1 lives in
+`hermes_memory_fabric.memory_active_context_composer`. It exposes
+`compose_active_context(...)`, `validate_active_context_packet(...)`,
+`explain_active_context_packet(...)`, and
+`summarize_active_context_packet(...)`.
+
+The composer delegates selection to Recall Fusion v2, then builds a bounded
+`active_context_packet` from selected subspace summaries and selected memories.
+Rejected memories stay out of `compact_context_text` by default, every selected
+or rejected memory/subspace remains explainable, and the policy proves no
+durable memory, graph, token, approval-audit, executor, or provider-tool side
+effects.
 
 ## Bi-temporal Fact Graph v0.1
 
