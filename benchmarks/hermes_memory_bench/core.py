@@ -135,7 +135,11 @@ from hermes_memory_fabric.memory_human_approval_token_real_write_executor_code_r
     create_human_approval_token_real_write_executor_code_review_plan,
     summarize_human_approval_token_real_write_executor_code_review_plans,
 )
-from hermes_memory_fabric.memory_retrieval_fusion import fuse_memory_retrieval
+from hermes_memory_fabric.memory_retrieval_fusion import (
+    FUSION_POLICY_V2,
+    fuse_memory_retrieval,
+    fuse_memory_retrieval_v2,
+)
 from hermes_memory_fabric.memory_subspace_index import (
     MEMORY_SUBSPACE_INDEX_POLICY,
     create_subspace_registry,
@@ -152,6 +156,7 @@ DIMENSIONS = (
     "project_scope_isolation",
     "contradiction_handling",
     "hybrid_retrieval_fusion",
+    "memory_recall_fusion_v2",
     "bitemporal_fact_graph",
     "contradiction_engine",
     "memory_compiler",
@@ -337,6 +342,74 @@ def _answer_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
             "fusion": result,
             "selected_id": selected.get("id"),
             "candidate_count": len(memories),
+        }
+
+    if dimension == "memory_recall_fusion_v2":
+        registry = create_subspace_registry(case.get("subspaces", []))
+        result = fuse_memory_retrieval_v2(
+            query=case["query"],
+            candidates=memories,
+            subspace_registry=registry,
+            context=case.get("context", {}),
+            project_scope=case.get("project_scope"),
+            agent_scope=case.get("agent_scope"),
+            entity_ids=case.get("entity_ids"),
+            now=case.get("now"),
+            limit=case.get("limit", 5),
+            include_archived=case.get("include_archived", False),
+            allowed_risk_levels=case.get("allowed_risk_levels"),
+            required_tags=case.get("required_tags"),
+            max_active_subspaces=case.get("max_active_subspaces"),
+        )
+        selected = result["selected_memories"][0] if result["selected_memories"] else {}
+        selected_memory_ids = [item["id"] for item in result["selected_memories"]]
+        rejected_memory_ids = [item["id"] for item in result["rejected_memories"]]
+        selected_subspace_ids = [item["subspace_id"] for item in result["selected_subspaces"]]
+        rejected_subspace_ids = [item["subspace_id"] for item in result["rejected_subspaces"]]
+        expected_selected_memory = case.get("expected_top_selected_memory_id")
+        expected_rejected_memories = set(case.get("expected_rejected_memory_ids", []))
+        expected_selected_subspaces = set(case.get("expected_selected_subspace_ids", []))
+        expected_rejected_subspaces = set(case.get("expected_rejected_subspace_ids", []))
+        policy = result["policy"]
+        safety_ok = (
+            policy == FUSION_POLICY_V2
+            and policy["read_only"] is True
+            and policy["would_write_memory"] is False
+            and policy["would_write_graph"] is False
+            and policy["writes_token_files"] is False
+            and policy["writes_approval_audit"] is False
+            and policy["invokes_real_token_write_executor"] is False
+            and policy["implements_real_token_write_executor"] is False
+            and policy["exposes_provider_tools"] is False
+        )
+        passed = (
+            (not expected_selected_memory or selected.get("id") == expected_selected_memory)
+            and expected_rejected_memories.issubset(set(rejected_memory_ids))
+            and expected_selected_subspaces.issubset(set(selected_subspace_ids))
+            and expected_rejected_subspaces.issubset(set(rejected_subspace_ids))
+            and safety_ok
+        )
+        return "memory_recall_fusion_v2_passed" if passed else "memory_recall_fusion_v2_failed", {
+            "fusion": result,
+            "selected_memory_ids": selected_memory_ids,
+            "rejected_memory_ids": rejected_memory_ids,
+            "selected_subspace_ids": selected_subspace_ids,
+            "rejected_subspace_ids": rejected_subspace_ids,
+            "expected_top_selected_memory_id": expected_selected_memory,
+            "expected_rejected_memory_ids": sorted(expected_rejected_memories),
+            "expected_selected_subspace_ids": sorted(expected_selected_subspaces),
+            "expected_rejected_subspace_ids": sorted(expected_rejected_subspaces),
+            "candidate_count": len(memories),
+            "created_durable_memory_write": False,
+            "created_graph_write": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "exposes_provider_tools": False,
+            "policy": dict(FUSION_POLICY_V2),
         }
 
     if dimension == "memory_subspace_index":

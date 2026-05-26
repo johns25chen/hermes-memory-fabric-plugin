@@ -39,6 +39,17 @@ The index validates subspace descriptors and registries, resolves subspaces by
 id, selects only context-relevant subspaces, and reports explicit no-write,
 no-graph-write, no-token-write, no-executor, and no-provider-tool policy flags.
 
+Hermes Memory Fabric Recall Fusion v2 adds a read-only, deterministic recall
+layer over Subspace Index. `fuse_memory_retrieval_v2(...)` activates governed
+subspaces when a registry is provided, boosts memories that match selected
+subspace ids or project/agent scopes, and explains selected and rejected
+memories. Public helpers `explain_memory_retrieval_v2_result(...)` and
+`summarize_memory_retrieval_v2_result(...)` expose selection reasons, rejected
+subspaces, score components, and no-write/no-executor policy flags. v2 uses
+local lexical scoring only; it does not call external APIs, write durable
+memory, write graph state, write token files, write approval audits, or expose
+provider tools.
+
 ## Layout
 
 - `src/hermes_memory_fabric/`: extracted Memory Fabric and evidence-repair modules.

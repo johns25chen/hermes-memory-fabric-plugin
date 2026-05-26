@@ -25,6 +25,7 @@ python -m benchmarks.hermes_memory_bench.run --suite smoke --output /tmp/hermes-
 - `project_scope_isolation`
 - `contradiction_handling`
 - `hybrid_retrieval_fusion`
+- `memory_recall_fusion_v2`
 - `bitemporal_fact_graph`
 - `contradiction_engine`
 - `memory_compiler`
@@ -81,6 +82,27 @@ Scoring dimensions:
 - `governance_score` — read-only and proposal-governed records score highest;
   unsafe write/config/graph/allowlist indicators are rejected
 - `final_score` — deterministic weighted total
+
+## Memory Recall Fusion v2
+
+Memory Recall Fusion v2 lives in
+`hermes_memory_fabric.memory_retrieval_fusion`. It exposes
+`fuse_memory_retrieval_v2(...)`, `explain_memory_retrieval_v2_result(...)`,
+and `summarize_memory_retrieval_v2_result(...)`.
+
+v2 integrates Memory Subspace Index when a registry is provided: selected
+subspaces boost matching candidates by subspace id, project scope, or agent
+scope; rejected subspaces remain visible in the explanation. Unsafe governance,
+unrelated project scope, archived subspace, and disallowed high-risk candidates
+are rejected with component scores. Scoring dimensions are semantic, keyword,
+entity, temporal, project scope, subspace, source trust, governance, risk, and
+final score.
+
+The smoke suite includes `memory_recall_fusion_v2`, proving that a matching
+project subspace is selected, the matching memory wins, unrelated and archived
+memories are rejected by default, and no durable memory write, graph write,
+token write, approval audit, real executor invocation, or provider tool
+exposure occurs.
 
 ## Bi-temporal Fact Graph v0.1
 
