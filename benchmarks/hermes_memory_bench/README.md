@@ -21,7 +21,8 @@ governance pipeline still behave as expected.
 `v02` is Hermes Memory Bench v0.2. It moves beyond smoke coverage and measures
 whether Subspace Index and Recall Fusion v2 address memory bloat, project
 isolation, rejection accuracy, explanation quality, risk gating, temporal
-validity, contradiction routing, and no-write policy safety.
+validity, contradiction routing, provider runtime context integration, and
+no-write policy safety.
 
 ## Run
 
@@ -65,6 +66,7 @@ The `v02` fixture covers these dimensions:
 - `temporal_validity_resolution`
 - `contradiction_review_routing`
 - `memory_active_context_composer`
+- `memory_provider_runtime_integration`
 - `no_write_policy_safety`
 
 ## Smoke Dimensions
@@ -174,6 +176,15 @@ Rejected memories stay out of `compact_context_text` by default, every selected
 or rejected memory/subspace remains explainable, and the policy proves no
 durable memory, graph, token, approval-audit, executor, or provider-tool side
 effects.
+
+## Provider Runtime Integration v0.1
+
+Provider Runtime Integration v0.1 exposes the Active Context Composer through
+`MemoryFabricProvider` methods while keeping `get_tool_schemas()` empty by
+default. The benchmark dimension `memory_provider_runtime_integration` verifies
+valid bounded packets, selected/rejected memory behavior, explanation presence,
+and no durable memory, graph, token, approval-audit, ledger, config, executor,
+or provider-tool side effects.
 
 ## Bi-temporal Fact Graph v0.1
 

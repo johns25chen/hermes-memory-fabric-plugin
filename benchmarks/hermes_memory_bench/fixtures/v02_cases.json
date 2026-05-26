@@ -577,5 +577,108 @@
         "priority": 8
       }
     ]
+  },
+  {
+    "id": "v02_provider_runtime_integration_bounded_packet",
+    "dimension": "memory_provider_runtime_integration",
+    "description": "Provider Runtime Integration emits a valid bounded active context packet without provider tools or write side effects.",
+    "query": "Hermes Memory Fabric Provider Runtime Integration bounded packet",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-26T00:00:00Z",
+    "context_budget_chars": 320,
+    "provider_runtime_config": {
+      "max_active_subspaces": 2,
+      "memory_limit": 1,
+      "context_budget_chars": 320,
+      "include_archived": false
+    },
+    "expected_answer": "v02_case_passed",
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "provider-runtime-v02-target",
+    "expected_selected_memory_ids": ["provider-runtime-v02-target"],
+    "expected_rejected_memory_ids": ["provider-runtime-v02-unrelated", "provider-runtime-v02-archived"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": ["project:lovart", "project:hermes-memory-fabric:archive"],
+    "expected_rejection_reasons": {
+      "provider-runtime-v02-unrelated": "project_scope_mismatch",
+      "provider-runtime-v02-archived": "archived_subspace_excluded",
+      "project:hermes-memory-fabric:archive": ["archived_excluded"]
+    },
+    "expected_compact_contains": [
+      "Provider Runtime Integration v0.1 places selected project memory inside the context packet."
+    ],
+    "expected_compact_absent": [
+      "Lovart provider runtime v02 memory should be rejected.",
+      "Archived provider runtime v02 memory should be rejected."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "Provider Runtime Integration bounded packet",
+      "max_active_subspaces": 2
+    },
+    "memories": [
+      {
+        "id": "provider-runtime-v02-target",
+        "content": "Provider Runtime Integration v0.1 places selected project memory inside the context packet.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:provider-runtime:target",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "provider-runtime-v02-unrelated",
+        "content": "Lovart provider runtime v02 memory should be rejected.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "entity_ids": ["lovart"],
+        "created_at": "2026-05-26T10:05:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:provider-runtime:lovart",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "provider-runtime-v02-archived",
+        "content": "Archived provider runtime v02 memory should be rejected.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-01T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v02:provider-runtime:archive",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "active_summary": "Provider runtime selected project summary.",
+        "tags": ["memory-fabric", "provider-runtime"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "tags": ["lovart"],
+        "priority": 10
+      },
+      {
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "lifecycle_status": "archived",
+        "tags": ["memory-fabric", "archive"],
+        "priority": 8
+      }
+    ]
   }
 ]

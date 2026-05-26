@@ -63,6 +63,13 @@ subspace summaries and the highest-value selected memories into a bounded
 keeps the same read-only/no-write/no-token/no-executor/no-provider-tool policy
 surface.
 
+Provider Runtime Integration v0.1 wires Active Context Composer into
+`MemoryFabricProvider` through provider-level `build_active_context(...)`,
+`summarize_active_context(...)`, `explain_active_context(...)`, and
+`validate_active_context(...)` methods. The provider keeps conservative local
+defaults, exposes no tools by default, and performs no durable memory, graph,
+token, approval-audit, config, ledger, or executor writes.
+
 ## Layout
 
 - `src/hermes_memory_fabric/`: extracted Memory Fabric and evidence-repair modules.
