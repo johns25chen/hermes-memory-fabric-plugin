@@ -1,0 +1,2569 @@
+from __future__ import annotations
+
+import json
+import time
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from hermes_memory_fabric.memory_bitemporal_fact_graph import (
+    BITEMPORAL_FACT_GRAPH_POLICY,
+    explain_fact_lineage,
+    select_current_facts,
+)
+from hermes_memory_fabric.memory_contradiction_engine import explain_contradiction_group, group_contradictions
+from hermes_memory_fabric.memory_compiler import MEMORY_COMPILER_POLICY, compile_memory_patterns
+from hermes_memory_fabric.memory_blocks import MEMORY_BLOCK_POLICY, compile_blocks_from_compiler_result
+from hermes_memory_fabric.memory_block_review_queue import (
+    MEMORY_BLOCK_REVIEW_QUEUE_POLICY,
+    build_review_queue,
+    summarize_review_queue,
+)
+from hermes_memory_fabric.memory_review_decision_gate import (
+    MEMORY_REVIEW_DECISION_GATE_POLICY,
+    evaluate_review_queue_item,
+    summarize_review_decisions,
+)
+from hermes_memory_fabric.memory_proposal_draft_builder import (
+    MEMORY_PROPOSAL_DRAFT_POLICY,
+    create_memory_proposal_draft,
+    summarize_memory_proposal_drafts,
+)
+from hermes_memory_fabric.memory_proposal_governance_gate import (
+    MEMORY_PROPOSAL_GOVERNANCE_GATE_POLICY,
+    create_governance_submission_candidate,
+    summarize_governance_submission_candidates,
+)
+from hermes_memory_fabric.memory_governance_submission_packet import (
+    MEMORY_GOVERNANCE_SUBMISSION_PACKET_POLICY,
+    create_governance_submission_packet,
+    summarize_governance_submission_packets,
+)
+from hermes_memory_fabric.memory_human_review_outcome_gate import (
+    MEMORY_HUMAN_REVIEW_OUTCOME_GATE_POLICY,
+    create_human_review_outcome_candidate,
+    summarize_human_review_outcomes,
+)
+from hermes_memory_fabric.memory_real_proposal_creation_plan import (
+    MEMORY_REAL_PROPOSAL_CREATION_PLAN_POLICY,
+    create_real_proposal_creation_plan,
+    summarize_real_proposal_creation_plans,
+)
+from hermes_memory_fabric.memory_real_proposal_dry_run import (
+    MEMORY_REAL_PROPOSAL_DRY_RUN_POLICY,
+    create_real_proposal_dry_run,
+    summarize_real_proposal_dry_runs,
+)
+from hermes_memory_fabric.memory_real_proposal_write_lock_gate import (
+    MEMORY_REAL_PROPOSAL_WRITE_LOCK_GATE_POLICY,
+    create_real_proposal_write_lock_gate,
+    summarize_real_proposal_write_lock_gates,
+)
+from hermes_memory_fabric.memory_human_approval_token_request import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REQUEST_POLICY,
+    create_human_approval_token_request,
+    summarize_human_approval_token_requests,
+)
+from hermes_memory_fabric.memory_human_approval_token_review_gate import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REVIEW_GATE_POLICY,
+    create_human_approval_token_review_outcome,
+    summarize_human_approval_token_review_outcomes,
+)
+from hermes_memory_fabric.memory_human_approval_token_issuance_plan import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_ISSUANCE_PLAN_POLICY,
+    create_human_approval_token_issuance_plan,
+    summarize_human_approval_token_issuance_plans,
+)
+from hermes_memory_fabric.memory_human_approval_token_issuance_dry_run import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_ISSUANCE_DRY_RUN_POLICY,
+    create_human_approval_token_issuance_dry_run,
+    summarize_human_approval_token_issuance_dry_runs,
+)
+from hermes_memory_fabric.memory_human_approval_token_write_lock_gate import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_LOCK_GATE_POLICY,
+    create_human_approval_token_write_lock_gate,
+    summarize_human_approval_token_write_lock_gates,
+)
+from hermes_memory_fabric.memory_human_approval_token_final_confirmation_request import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_FINAL_CONFIRMATION_REQUEST_POLICY,
+    create_human_approval_token_final_confirmation_request,
+    summarize_human_approval_token_final_confirmation_requests,
+)
+from hermes_memory_fabric.memory_human_approval_token_final_confirmation_review_gate import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_FINAL_CONFIRMATION_REVIEW_POLICY,
+    create_human_approval_token_final_confirmation_review_outcome,
+    summarize_human_approval_token_final_confirmation_review_outcomes,
+)
+from hermes_memory_fabric.memory_human_approval_token_write_execution_plan import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_EXECUTION_PLAN_POLICY,
+    create_human_approval_token_write_execution_plan,
+    summarize_human_approval_token_write_execution_plans,
+)
+from hermes_memory_fabric.memory_human_approval_token_write_execution_dry_run import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_EXECUTION_DRY_RUN_POLICY,
+    create_human_approval_token_write_execution_dry_run,
+    summarize_human_approval_token_write_execution_dry_runs,
+)
+from hermes_memory_fabric.memory_human_approval_token_write_final_gate import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_FINAL_GATE_POLICY,
+    create_human_approval_token_write_final_gate,
+    summarize_human_approval_token_write_final_gates,
+)
+from hermes_memory_fabric.memory_human_approval_token_real_write_executor_contract import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CONTRACT_POLICY,
+    create_human_approval_token_real_write_executor_contract,
+    summarize_human_approval_token_real_write_executor_contracts,
+)
+from hermes_memory_fabric.memory_human_approval_token_real_write_executor_contract_review_gate import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CONTRACT_REVIEW_POLICY,
+    create_human_approval_token_real_write_executor_contract_review_outcome,
+    summarize_human_approval_token_real_write_executor_contract_review_outcomes,
+)
+from hermes_memory_fabric.memory_human_approval_token_real_write_executor_implementation_plan import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_IMPLEMENTATION_PLAN_POLICY,
+    create_human_approval_token_real_write_executor_implementation_plan,
+    summarize_human_approval_token_real_write_executor_implementation_plans,
+)
+from hermes_memory_fabric.memory_human_approval_token_real_write_executor_implementation_dry_run import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_IMPLEMENTATION_DRY_RUN_POLICY,
+    create_human_approval_token_real_write_executor_implementation_dry_run,
+    summarize_human_approval_token_real_write_executor_implementation_dry_runs,
+)
+from hermes_memory_fabric.memory_human_approval_token_real_write_executor_code_review_plan import (
+    MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CODE_REVIEW_PLAN_POLICY,
+    create_human_approval_token_real_write_executor_code_review_plan,
+    summarize_human_approval_token_real_write_executor_code_review_plans,
+)
+from hermes_memory_fabric.memory_retrieval_fusion import fuse_memory_retrieval
+
+
+BENCHMARK_TYPE = "hermes_memory_bench_v0.1"
+DIMENSIONS = (
+    "recall_accuracy",
+    "temporal_accuracy",
+    "source_provenance_accuracy",
+    "governance_write_safety",
+    "project_scope_isolation",
+    "contradiction_handling",
+    "hybrid_retrieval_fusion",
+    "bitemporal_fact_graph",
+    "contradiction_engine",
+    "memory_compiler",
+    "memory_blocks",
+    "memory_block_review_queue",
+    "memory_review_decision_gate",
+    "memory_proposal_draft_builder",
+    "memory_proposal_governance_gate",
+    "memory_governance_submission_packet",
+    "memory_human_review_outcome_gate",
+    "memory_real_proposal_creation_plan",
+    "memory_real_proposal_dry_run",
+    "memory_real_proposal_write_lock_gate",
+    "memory_human_approval_token_request",
+    "memory_human_approval_token_review_gate",
+    "memory_human_approval_token_issuance_plan",
+    "memory_human_approval_token_issuance_dry_run",
+    "memory_human_approval_token_write_lock_gate",
+    "memory_human_approval_token_final_confirmation_request",
+    "memory_human_approval_token_final_confirmation_review_gate",
+    "memory_human_approval_token_write_execution_plan",
+    "memory_human_approval_token_write_execution_dry_run",
+    "memory_human_approval_token_write_final_gate",
+    "memory_human_approval_token_real_write_executor_contract",
+    "memory_human_approval_token_real_write_executor_contract_review_gate",
+    "memory_human_approval_token_real_write_executor_implementation_plan",
+    "memory_human_approval_token_real_write_executor_implementation_dry_run",
+    "memory_human_approval_token_real_write_executor_code_review_plan",
+    "latency_ms",
+)
+POLICY = {
+    "read_only": True,
+    "would_write_memory": False,
+    "would_modify_config": False,
+    "would_write_graph": False,
+    "does_not_create_operation_events": True,
+}
+
+
+@dataclass(frozen=True)
+class CaseResult:
+    id: str
+    dimension: str
+    query: str
+    expected_answer: str
+    actual_answer: str
+    score: float
+    latency_ms: float
+    passed: bool
+    evidence: dict[str, Any]
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "dimension": self.dimension,
+            "query": self.query,
+            "expected_answer": self.expected_answer,
+            "actual_answer": self.actual_answer,
+            "score": self.score,
+            "latency_ms": self.latency_ms,
+            "passed": self.passed,
+            "evidence": self.evidence,
+        }
+
+
+def fixtures_path() -> Path:
+    return Path(__file__).with_name("fixtures") / "smoke_cases.json"
+
+
+def load_cases(suite: str) -> list[dict[str, Any]]:
+    if suite != "smoke":
+        raise ValueError(f"Unsupported suite: {suite}")
+    with fixtures_path().open("r", encoding="utf-8") as handle:
+        cases = json.load(handle)
+    if not isinstance(cases, list):
+        raise ValueError("Smoke fixture must contain a list of cases.")
+    return cases
+
+
+def run_benchmark(suite: str = "smoke") -> dict[str, Any]:
+    cases = [_evaluate_case(case) for case in load_cases(suite)]
+    scores = _dimension_scores(cases)
+    aggregate = _aggregate(cases)
+    return {
+        "benchmark_type": BENCHMARK_TYPE,
+        "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "suite": suite,
+        "scores": scores,
+        "cases": [case.to_json() for case in cases],
+        "aggregate": aggregate,
+        "policy": dict(POLICY),
+    }
+
+
+def write_report(report: dict[str, Any], output: str | Path | None = None) -> None:
+    payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if output:
+        Path(output).write_text(payload, encoding="utf-8")
+    else:
+        print(payload, end="")
+
+
+def _evaluate_case(case: dict[str, Any]) -> CaseResult:
+    started = time.perf_counter()
+    dimension = case["dimension"]
+    expected = case["expected_answer"]
+    actual, evidence = _answer_case(case)
+    latency_ms = round((time.perf_counter() - started) * 1000, 3)
+    score = 1.0 if actual == expected else 0.0
+    return CaseResult(
+        id=case["id"],
+        dimension=dimension,
+        query=case["query"],
+        expected_answer=expected,
+        actual_answer=actual,
+        score=score,
+        latency_ms=latency_ms,
+        passed=score == 1.0,
+        evidence=evidence,
+    )
+
+
+def _answer_case(case: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    dimension = case["dimension"]
+    memories = list(case.get("memories", []))
+
+    if dimension == "governance_write_safety":
+        return "blocked", {
+            "blocked_operation": case.get("unsafe_operation"),
+            "reason": "Benchmark policy forbids writes and proposals.",
+            "policy": dict(POLICY),
+        }
+
+    if dimension == "project_scope_isolation":
+        scope = case.get("project_scope")
+        scoped = [memory for memory in memories if memory.get("project_id") == scope]
+        selected = _newest(scoped)
+        return selected.get("content", ""), {
+            "project_scope": scope,
+            "candidate_count": len(memories),
+            "scoped_candidate_count": len(scoped),
+            "selected_project_id": selected.get("project_id"),
+        }
+
+    if dimension == "temporal_accuracy":
+        selected = _newest(memories)
+        return selected.get("content", ""), {
+            "selected_created_at": selected.get("created_at"),
+            "candidate_count": len(memories),
+            "temporal_rule": "newest_matching_preference_wins",
+        }
+
+    if dimension == "source_provenance_accuracy":
+        selected = _newest(memories)
+        source_ok = selected.get("source") == case.get("required_source")
+        provenance_ok = selected.get("provenance") == case.get("required_provenance")
+        return selected.get("content", ""), {
+            "source": selected.get("source"),
+            "provenance": selected.get("provenance"),
+            "source_ok": source_ok,
+            "provenance_ok": provenance_ok,
+        }
+
+    if dimension == "contradiction_handling":
+        return _contradiction_answer(memories), {
+            "candidate_count": len(memories),
+            "claim_keys": sorted({memory.get("claim_key") for memory in memories if memory.get("claim_key")}),
+            "handling": "flag_candidate_for_review",
+        }
+
+    if dimension == "hybrid_retrieval_fusion":
+        result = fuse_memory_retrieval(
+            query=case["query"],
+            candidates=memories,
+            project_scope=case.get("project_scope"),
+            entity_ids=case.get("entity_ids"),
+            now=case.get("now"),
+            limit=case.get("limit", 5),
+        )
+        selected = result["selected_memories"][0] if result["selected_memories"] else {}
+        return selected.get("text", ""), {
+            "fusion": result,
+            "selected_id": selected.get("id"),
+            "candidate_count": len(memories),
+        }
+
+    if dimension == "bitemporal_fact_graph":
+        selected = select_current_facts(
+            memories,
+            at_time=case.get("at_time") or case.get("now"),
+            project_scope=case.get("project_scope"),
+        )
+        winner = selected[0] if selected else None
+        lineage = explain_fact_lineage(winner.fact_id, memories) if winner else {}
+        return (winner.object if winner else ""), {
+            "selected_fact_id": winner.fact_id if winner else None,
+            "selected_fact": winner.to_json() if winner else None,
+            "lineage": lineage,
+            "candidate_count": len(memories),
+            "policy": dict(BITEMPORAL_FACT_GRAPH_POLICY),
+        }
+
+    if dimension == "contradiction_engine":
+        groups = group_contradictions(memories)
+        explanation = explain_contradiction_group(groups[0]) if groups else {}
+        recommendation = explanation.get("recommended_action", {})
+        return recommendation.get("action", "no_action"), {
+            "contradiction_groups": groups,
+            "explanation": explanation,
+            "review_recommendation": recommendation,
+            "candidate_count": len(memories),
+        }
+
+    if dimension == "memory_compiler":
+        result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        procedure = result["procedure_block_candidate"]
+        return procedure.get("status", ""), {
+            "compiler": result,
+            "procedure_block_candidate": procedure,
+            "candidate_count": len(memories),
+            "policy": dict(MEMORY_COMPILER_POLICY),
+        }
+
+    if dimension == "memory_blocks":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        block = blocks[0] if blocks else {}
+        return block.get("block_type", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "candidate_count": len(memories),
+            "policy": dict(MEMORY_BLOCK_POLICY),
+        }
+
+    if dimension == "memory_block_review_queue":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        item = queue[0] if queue else {}
+        return item.get("status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "summary": summarize_review_queue(queue),
+            "candidate_count": len(memories),
+            "policy": dict(MEMORY_BLOCK_REVIEW_QUEUE_POLICY),
+        }
+
+    if dimension == "memory_review_decision_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        candidate = decisions[0] if decisions else {}
+        return candidate.get("decision", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "summary": summarize_review_decisions(decisions),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "policy": dict(MEMORY_REVIEW_DECISION_GATE_POLICY),
+        }
+
+    if dimension == "memory_proposal_draft_builder":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        draft = drafts[0] if drafts else {}
+        return draft.get("proposal_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "summary": summarize_memory_proposal_drafts(drafts),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "policy": dict(MEMORY_PROPOSAL_DRAFT_POLICY),
+        }
+
+    if dimension == "memory_proposal_governance_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        submission = submissions[0] if submissions else {}
+        return submission.get("submission_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "summary": summarize_governance_submission_candidates(submissions),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "policy": dict(MEMORY_PROPOSAL_GOVERNANCE_GATE_POLICY),
+        }
+
+    if dimension == "memory_governance_submission_packet":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        packet = packets[0] if packets else {}
+        return packet.get("packet_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "summary": summarize_governance_submission_packets(packets),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "policy": dict(MEMORY_GOVERNANCE_SUBMISSION_PACKET_POLICY),
+        }
+
+    if dimension == "memory_human_review_outcome_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        outcome = outcomes[0] if outcomes else {}
+        return outcome.get("outcome", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "summary": summarize_human_review_outcomes(outcomes),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "persisted_approval": False,
+            "policy": dict(MEMORY_HUMAN_REVIEW_OUTCOME_GATE_POLICY),
+        }
+
+    if dimension == "memory_real_proposal_creation_plan":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        plan = plans[0] if plans else {}
+        return plan.get("plan_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "summary": summarize_real_proposal_creation_plans(plans),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "persisted_approval": False,
+            "policy": dict(MEMORY_REAL_PROPOSAL_CREATION_PLAN_POLICY),
+        }
+
+    if dimension == "memory_real_proposal_dry_run":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        dry_run = dry_runs[0] if dry_runs else {}
+        return dry_run.get("dry_run_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "summary": summarize_real_proposal_dry_runs(dry_runs),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "persisted_approval": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "policy": dict(MEMORY_REAL_PROPOSAL_DRY_RUN_POLICY),
+        }
+
+    if dimension == "memory_real_proposal_write_lock_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        gate = write_lock_gates[0] if write_lock_gates else {}
+        return gate.get("gate_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "summary": summarize_real_proposal_write_lock_gates(write_lock_gates),
+            "candidate_count": len(memories),
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "persisted_approval": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "policy": dict(MEMORY_REAL_PROPOSAL_WRITE_LOCK_GATE_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_request":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        request = approval_token_requests[0] if approval_token_requests else {}
+        return request.get("request_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "summary": summarize_human_approval_token_requests(approval_token_requests),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_REQUEST_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_review_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_review_outcome = token_review_outcomes[0] if token_review_outcomes else {}
+        return token_review_outcome.get("outcome", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "summary": summarize_human_approval_token_review_outcomes(token_review_outcomes),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_REVIEW_GATE_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_issuance_plan":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_plan = token_issuance_plans[0] if token_issuance_plans else {}
+        return token_issuance_plan.get("plan_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "summary": summarize_human_approval_token_issuance_plans(token_issuance_plans),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_ISSUANCE_PLAN_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_issuance_dry_run":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_issuance_dry_run = token_issuance_dry_runs[0] if token_issuance_dry_runs else {}
+        return token_issuance_dry_run.get("dry_run_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "summary": summarize_human_approval_token_issuance_dry_runs(token_issuance_dry_runs),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_ISSUANCE_DRY_RUN_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_write_lock_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        token_write_lock_gate = token_write_lock_gates[0] if token_write_lock_gates else {}
+        return token_write_lock_gate.get("gate_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "summary": summarize_human_approval_token_write_lock_gates(token_write_lock_gates),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_LOCK_GATE_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_final_confirmation_request":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_request = final_confirmation_requests[0] if final_confirmation_requests else {}
+        return final_confirmation_request.get("request_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "summary": summarize_human_approval_token_final_confirmation_requests(final_confirmation_requests),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_FINAL_CONFIRMATION_REQUEST_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_final_confirmation_review_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        final_confirmation_review_outcome = (
+            final_confirmation_review_outcomes[0] if final_confirmation_review_outcomes else {}
+        )
+        return final_confirmation_review_outcome.get("outcome", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "summary": summarize_human_approval_token_final_confirmation_review_outcomes(
+                final_confirmation_review_outcomes
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_FINAL_CONFIRMATION_REVIEW_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_write_execution_plan":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_plan = token_write_execution_plans[0] if token_write_execution_plans else {}
+        return token_write_execution_plan.get("plan_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "summary": summarize_human_approval_token_write_execution_plans(token_write_execution_plans),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_EXECUTION_PLAN_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_write_execution_dry_run":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_execution_dry_run = (
+            token_write_execution_dry_runs[0] if token_write_execution_dry_runs else {}
+        )
+        return token_write_execution_dry_run.get("dry_run_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "summary": summarize_human_approval_token_write_execution_dry_runs(
+                token_write_execution_dry_runs
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_EXECUTION_DRY_RUN_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_write_final_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        token_write_final_gate = token_write_final_gates[0] if token_write_final_gates else {}
+        return token_write_final_gate.get("gate_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "summary": summarize_human_approval_token_write_final_gates(token_write_final_gates),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_WRITE_FINAL_GATE_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_real_write_executor_contract":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        real_write_executor_contracts = [
+            create_human_approval_token_real_write_executor_contract(
+                gate,
+                operator=case.get("approval_token_real_write_executor_contract_operator"),
+            )
+            for gate in token_write_final_gates
+        ]
+        contract = real_write_executor_contracts[0] if real_write_executor_contracts else {}
+        return contract.get("contract_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "human_approval_token_real_write_executor_contract_candidates": real_write_executor_contracts,
+            "summary": summarize_human_approval_token_real_write_executor_contracts(
+                real_write_executor_contracts
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "policy": dict(MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CONTRACT_POLICY),
+        }
+
+    if dimension == "memory_human_approval_token_real_write_executor_contract_review_gate":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        real_write_executor_contracts = [
+            create_human_approval_token_real_write_executor_contract(
+                gate,
+                operator=case.get("approval_token_real_write_executor_contract_operator"),
+            )
+            for gate in token_write_final_gates
+        ]
+        contract_review_outcomes = [
+            create_human_approval_token_real_write_executor_contract_review_outcome(
+                contract,
+                reviewer=case.get("approval_token_real_write_executor_contract_reviewer"),
+            )
+            for contract in real_write_executor_contracts
+        ]
+        contract_review_outcome = (
+            contract_review_outcomes[0] if contract_review_outcomes else {}
+        )
+        return contract_review_outcome.get("outcome", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "human_approval_token_real_write_executor_contract_candidates": real_write_executor_contracts,
+            "human_approval_token_real_write_executor_contract_review_outcome_candidates": contract_review_outcomes,
+            "summary": summarize_human_approval_token_real_write_executor_contract_review_outcomes(
+                contract_review_outcomes
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "policy": dict(
+                MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CONTRACT_REVIEW_POLICY
+            ),
+        }
+
+    if dimension == "memory_human_approval_token_real_write_executor_implementation_plan":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        real_write_executor_contracts = [
+            create_human_approval_token_real_write_executor_contract(
+                gate,
+                operator=case.get("approval_token_real_write_executor_contract_operator"),
+            )
+            for gate in token_write_final_gates
+        ]
+        contract_review_outcomes = [
+            create_human_approval_token_real_write_executor_contract_review_outcome(
+                contract,
+                reviewer=case.get("approval_token_real_write_executor_contract_reviewer"),
+            )
+            for contract in real_write_executor_contracts
+        ]
+        implementation_plans = [
+            create_human_approval_token_real_write_executor_implementation_plan(
+                outcome,
+                implementer=case.get(
+                    "approval_token_real_write_executor_implementation_plan_implementer"
+                ),
+            )
+            for outcome in contract_review_outcomes
+        ]
+        implementation_plan = implementation_plans[0] if implementation_plans else {}
+        return implementation_plan.get("plan_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "human_approval_token_real_write_executor_contract_candidates": real_write_executor_contracts,
+            "human_approval_token_real_write_executor_contract_review_outcome_candidates": contract_review_outcomes,
+            "human_approval_token_real_write_executor_implementation_plan_candidates": implementation_plans,
+            "summary": summarize_human_approval_token_real_write_executor_implementation_plans(
+                implementation_plans
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "policy": dict(
+                MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_IMPLEMENTATION_PLAN_POLICY
+            ),
+        }
+
+    if dimension == "memory_human_approval_token_real_write_executor_implementation_dry_run":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        real_write_executor_contracts = [
+            create_human_approval_token_real_write_executor_contract(
+                gate,
+                operator=case.get("approval_token_real_write_executor_contract_operator"),
+            )
+            for gate in token_write_final_gates
+        ]
+        contract_review_outcomes = [
+            create_human_approval_token_real_write_executor_contract_review_outcome(
+                contract,
+                reviewer=case.get("approval_token_real_write_executor_contract_reviewer"),
+            )
+            for contract in real_write_executor_contracts
+        ]
+        implementation_plans = [
+            create_human_approval_token_real_write_executor_implementation_plan(
+                outcome,
+                implementer=case.get(
+                    "approval_token_real_write_executor_implementation_plan_implementer"
+                ),
+            )
+            for outcome in contract_review_outcomes
+        ]
+        implementation_dry_runs = [
+            create_human_approval_token_real_write_executor_implementation_dry_run(
+                plan,
+                operator=case.get(
+                    "approval_token_real_write_executor_implementation_dry_run_operator"
+                ),
+            )
+            for plan in implementation_plans
+        ]
+        implementation_dry_run = (
+            implementation_dry_runs[0] if implementation_dry_runs else {}
+        )
+        return implementation_dry_run.get("dry_run_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "human_approval_token_real_write_executor_contract_candidates": real_write_executor_contracts,
+            "human_approval_token_real_write_executor_contract_review_outcome_candidates": contract_review_outcomes,
+            "human_approval_token_real_write_executor_implementation_plan_candidates": implementation_plans,
+            "human_approval_token_real_write_executor_implementation_dry_run_candidates": implementation_dry_runs,
+            "summary": summarize_human_approval_token_real_write_executor_implementation_dry_runs(
+                implementation_dry_runs
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "creates_executor_source_files": False,
+            "policy": dict(
+                MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_IMPLEMENTATION_DRY_RUN_POLICY
+            ),
+        }
+
+    if dimension == "memory_human_approval_token_real_write_executor_code_review_plan":
+        compiler_result = compile_memory_patterns(memories, project_scope=case.get("project_scope"))
+        blocks = compile_blocks_from_compiler_result(compiler_result, project_scope=case.get("project_scope"))
+        queue = build_review_queue(blocks, reviewer=case.get("reviewer"))
+        decisions = [evaluate_review_queue_item(item, reviewer=case.get("reviewer")) for item in queue]
+        drafts = [create_memory_proposal_draft(decision, author=case.get("author")) for decision in decisions]
+        submissions = [
+            create_governance_submission_candidate(draft, reviewer=case.get("governance_reviewer"))
+            for draft in drafts
+        ]
+        packets = [
+            create_governance_submission_packet(submission, reviewer=case.get("packet_reviewer"))
+            for submission in submissions
+        ]
+        outcomes = [
+            create_human_review_outcome_candidate(packet, reviewer=case.get("human_reviewer"))
+            for packet in packets
+        ]
+        plans = [
+            create_real_proposal_creation_plan(outcome, planner=case.get("planner"))
+            for outcome in outcomes
+        ]
+        dry_runs = [
+            create_real_proposal_dry_run(plan, operator=case.get("operator"))
+            for plan in plans
+        ]
+        write_lock_gates = [
+            create_real_proposal_write_lock_gate(dry_run, operator=case.get("write_lock_operator"))
+            for dry_run in dry_runs
+        ]
+        approval_token_requests = [
+            create_human_approval_token_request(gate, requester=case.get("approval_token_requester"))
+            for gate in write_lock_gates
+        ]
+        token_review_outcomes = [
+            create_human_approval_token_review_outcome(
+                request,
+                reviewer=case.get("approval_token_reviewer"),
+            )
+            for request in approval_token_requests
+        ]
+        token_issuance_plans = [
+            create_human_approval_token_issuance_plan(
+                outcome,
+                planner=case.get("approval_token_issuance_planner"),
+            )
+            for outcome in token_review_outcomes
+        ]
+        token_issuance_dry_runs = [
+            create_human_approval_token_issuance_dry_run(
+                plan,
+                operator=case.get("approval_token_issuance_dry_run_operator"),
+            )
+            for plan in token_issuance_plans
+        ]
+        token_write_lock_gates = [
+            create_human_approval_token_write_lock_gate(
+                dry_run,
+                operator=case.get("approval_token_write_lock_operator"),
+            )
+            for dry_run in token_issuance_dry_runs
+        ]
+        final_confirmation_requests = [
+            create_human_approval_token_final_confirmation_request(
+                gate,
+                requester=case.get("approval_token_final_confirmation_requester"),
+            )
+            for gate in token_write_lock_gates
+        ]
+        final_confirmation_review_outcomes = [
+            create_human_approval_token_final_confirmation_review_outcome(
+                request,
+                confirmer=case.get("approval_token_final_confirmation_confirmer"),
+            )
+            for request in final_confirmation_requests
+        ]
+        token_write_execution_plans = [
+            create_human_approval_token_write_execution_plan(
+                outcome,
+                executor=case.get("approval_token_write_execution_plan_executor"),
+            )
+            for outcome in final_confirmation_review_outcomes
+        ]
+        token_write_execution_dry_runs = [
+            create_human_approval_token_write_execution_dry_run(
+                plan,
+                operator=case.get("approval_token_write_execution_dry_run_operator"),
+            )
+            for plan in token_write_execution_plans
+        ]
+        token_write_final_gates = [
+            create_human_approval_token_write_final_gate(
+                dry_run,
+                operator=case.get("approval_token_write_final_gate_operator"),
+            )
+            for dry_run in token_write_execution_dry_runs
+        ]
+        real_write_executor_contracts = [
+            create_human_approval_token_real_write_executor_contract(
+                gate,
+                operator=case.get("approval_token_real_write_executor_contract_operator"),
+            )
+            for gate in token_write_final_gates
+        ]
+        contract_review_outcomes = [
+            create_human_approval_token_real_write_executor_contract_review_outcome(
+                contract,
+                reviewer=case.get("approval_token_real_write_executor_contract_reviewer"),
+            )
+            for contract in real_write_executor_contracts
+        ]
+        implementation_plans = [
+            create_human_approval_token_real_write_executor_implementation_plan(
+                outcome,
+                implementer=case.get(
+                    "approval_token_real_write_executor_implementation_plan_implementer"
+                ),
+            )
+            for outcome in contract_review_outcomes
+        ]
+        implementation_dry_runs = [
+            create_human_approval_token_real_write_executor_implementation_dry_run(
+                plan,
+                operator=case.get(
+                    "approval_token_real_write_executor_implementation_dry_run_operator"
+                ),
+            )
+            for plan in implementation_plans
+        ]
+        code_review_plans = [
+            create_human_approval_token_real_write_executor_code_review_plan(
+                dry_run,
+                reviewer=case.get(
+                    "approval_token_real_write_executor_code_review_plan_reviewer"
+                ),
+            )
+            for dry_run in implementation_dry_runs
+        ]
+        code_review_plan = code_review_plans[0] if code_review_plans else {}
+        return code_review_plan.get("plan_status", ""), {
+            "compiler": compiler_result,
+            "memory_blocks": blocks,
+            "review_queue": queue,
+            "decision_candidates": decisions,
+            "proposal_draft_candidates": drafts,
+            "governance_submission_candidates": submissions,
+            "governance_submission_packet_candidates": packets,
+            "human_review_outcome_candidates": outcomes,
+            "real_proposal_creation_plan_candidates": plans,
+            "real_proposal_dry_run_candidates": dry_runs,
+            "real_proposal_write_lock_gate_candidates": write_lock_gates,
+            "human_approval_token_request_candidates": approval_token_requests,
+            "human_approval_token_review_outcome_candidates": token_review_outcomes,
+            "human_approval_token_issuance_plan_candidates": token_issuance_plans,
+            "human_approval_token_issuance_dry_run_candidates": token_issuance_dry_runs,
+            "human_approval_token_write_lock_gate_candidates": token_write_lock_gates,
+            "human_approval_token_final_confirmation_request_candidates": final_confirmation_requests,
+            "human_approval_token_final_confirmation_review_outcome_candidates": final_confirmation_review_outcomes,
+            "human_approval_token_write_execution_plan_candidates": token_write_execution_plans,
+            "human_approval_token_write_execution_dry_run_candidates": token_write_execution_dry_runs,
+            "human_approval_token_write_final_gate_candidates": token_write_final_gates,
+            "human_approval_token_real_write_executor_contract_candidates": real_write_executor_contracts,
+            "human_approval_token_real_write_executor_contract_review_outcome_candidates": contract_review_outcomes,
+            "human_approval_token_real_write_executor_implementation_plan_candidates": implementation_plans,
+            "human_approval_token_real_write_executor_implementation_dry_run_candidates": implementation_dry_runs,
+            "human_approval_token_real_write_executor_code_review_plan_candidates": code_review_plans,
+            "summary": summarize_human_approval_token_real_write_executor_code_review_plans(
+                code_review_plans
+            ),
+            "candidate_count": len(memories),
+            "token_issued": False,
+            "persisted_approval": False,
+            "approved": False,
+            "created_real_proposal": False,
+            "created_operation_event": False,
+            "submitted_to_governance": False,
+            "converted_to_real_proposal": False,
+            "writes_proposal_files": False,
+            "writes_operation_ledger": False,
+            "writes_token_files": False,
+            "writes_approval_audit": False,
+            "invokes_real_token_write_executor": False,
+            "implements_real_token_write_executor": False,
+            "creates_executor_source_files": False,
+            "creates_executor_tests": False,
+            "policy": dict(
+                MEMORY_HUMAN_APPROVAL_TOKEN_REAL_WRITE_EXECUTOR_CODE_REVIEW_PLAN_POLICY
+            ),
+        }
+
+    selected = _newest(memories)
+    return selected.get("content", ""), {
+        "candidate_count": len(memories),
+        "selected_project_id": selected.get("project_id"),
+        "selected_source": selected.get("source"),
+    }
+
+
+def _newest(memories: list[dict[str, Any]]) -> dict[str, Any]:
+    if not memories:
+        return {}
+    return max(memories, key=lambda memory: memory.get("created_at", ""))
+
+
+def _contradiction_answer(memories: list[dict[str, Any]]) -> str:
+    normalized = {str(memory.get("content", "")).lower() for memory in memories}
+    has_allowed = any(" is allowed" in content for content in normalized)
+    has_blocked = any(" is blocked" in content or "forbidden" in content for content in normalized)
+    return "contradiction_detected" if has_allowed and has_blocked else _newest(memories).get("content", "")
+
+
+def _dimension_scores(cases: list[CaseResult]) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    for dimension in DIMENSIONS:
+        if dimension == "latency_ms":
+            scores[dimension] = round(sum(case.latency_ms for case in cases) / max(len(cases), 1), 3)
+            continue
+        relevant = [case for case in cases if case.dimension == dimension]
+        scores[dimension] = round(sum(case.score for case in relevant) / len(relevant), 3) if relevant else 0.0
+    return scores
+
+
+def _aggregate(cases: list[CaseResult]) -> dict[str, Any]:
+    case_count = len(cases)
+    passed_count = sum(1 for case in cases if case.passed)
+    score = sum(case.score for case in cases) / case_count if case_count else 0.0
+    return {
+        "overall_score": round(score, 3),
+        "case_count": case_count,
+        "passed_count": passed_count,
+        "failed_count": case_count - passed_count,
+        "mean_latency_ms": round(sum(case.latency_ms for case in cases) / max(case_count, 1), 3),
+        "dimensions": list(DIMENSIONS),
+    }

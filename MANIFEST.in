@@ -1,0 +1,5 @@
+include plugin.yaml
+include README.md
+recursive-include docs *.md
+recursive-include benchmarks/hermes_memory_bench *.md *.json *.py
+

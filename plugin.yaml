@@ -1,0 +1,7 @@
+name: memory-fabric
+version: 0.1.0
+description: Governed read-only Memory Fabric and evidence repair pipeline for Hermes
+hooks:
+  - on_pre_compress
+  - on_session_end
+

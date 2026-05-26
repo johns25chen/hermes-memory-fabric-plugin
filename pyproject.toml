@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-memory-fabric-plugin"
+version = "0.1.0"
+description = "Governed read-only Memory Fabric and evidence repair pipeline for Hermes"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Hermes Memory Fabric maintainers" }]
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+hermes = ["hermes-agent"]
+dev = ["pytest"]
+
+[project.entry-points."hermes.memory_providers"]
+memory-fabric = "hermes_memory_fabric:register"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
