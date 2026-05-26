@@ -19,6 +19,9 @@ dev = ["pytest"]
 [project.entry-points."hermes.memory_providers"]
 memory-fabric = "hermes_memory_fabric:register"
 
+[project.entry-points."hermes_agent.plugins"]
+memory-fabric = "hermes_memory_fabric"
+
 [tool.setuptools]
 include-package-data = true
 
