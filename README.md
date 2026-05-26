@@ -50,13 +50,19 @@ local lexical scoring only; it does not call external APIs, write durable
 memory, write graph state, write token files, write approval audits, or expose
 provider tools.
 
+Hermes Memory Bench v0.2 adds the `v02` suite under
+`benchmarks/hermes_memory_bench/`. It deterministically measures Recall Fusion
+v2 selection and rejection quality, Subspace Index isolation, archived and
+high-risk gating, temporal/conflict handling, explanation quality, and no-write
+safety without network calls or durable memory side effects.
+
 ## Layout
 
 - `src/hermes_memory_fabric/`: extracted Memory Fabric and evidence-repair modules.
 - `src/hermes_memory_fabric/provider.py`: Hermes-compatible provider wrapper.
 - `src/hermes_memory_fabric/tools/`: callable tool wrappers using the local registry shim.
 - `tests/`: extracted and standalone-scoped tests.
-- `benchmarks/hermes_memory_bench/`: copied benchmark fixture.
+- `benchmarks/hermes_memory_bench/`: deterministic smoke and v0.2 benchmark fixtures.
 - `docs/share-hermes-memory-with-codex-openclaw.md`: copied guide when present in the prototype branch.
 
 ## Limitations
