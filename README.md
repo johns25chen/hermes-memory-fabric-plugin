@@ -36,6 +36,17 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.0.0 Real Active Context Injection Contract
+
+v1.0.0 implements `MemoryFabricProvider.prefetch(...)` for Hermes' existing
+real injection path. The provider now composes valid runtime memory candidates
+into bounded `compact_context_text`, returns `""` when there is no usable active
+context, keeps candidates/config in memory only, performs no durable writes, and
+continues to expose no provider tools.
+
+See [docs/REAL_ACTIVE_CONTEXT_INJECTION.md](docs/REAL_ACTIVE_CONTEXT_INJECTION.md)
+for the contract, local smoke, and the separate manual real chat smoke boundary.
+
 ## v0.9.0 Active Context Quality Harness
 
 v0.9.0 adds a deterministic local harness for validating
