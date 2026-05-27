@@ -36,6 +36,25 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v0.9.0 Active Context Quality Harness
+
+v0.9.0 adds a deterministic local harness for validating
+`MemoryFabricProvider` active context packets. It proves bounded,
+project-scoped, explainable context selection and rejection behavior without
+network calls, real model calls, durable writes, graph writes, token writes,
+approval-audit writes, operation-ledger writes, executor calls, or provider
+tool exposure.
+
+Run it with:
+
+```bash
+python scripts/run_active_context_quality_harness.py
+```
+
+See [docs/ACTIVE_CONTEXT_QUALITY_HARNESS.md](docs/ACTIVE_CONTEXT_QUALITY_HARNESS.md)
+for JSON output, fail-threshold usage, fixture details, and the separate manual
+Hermes chat smoke.
+
 ## v0.1 Behavior
 
 Version 0.1 is intentionally read-only. The provider lifecycle is available, but it does not perform durable memory writes, does not invoke a real token write executor, and does not expose Memory Fabric tools to the model by default.
@@ -86,6 +105,7 @@ token, approval-audit, config, ledger, or executor writes.
 - `src/hermes_memory_fabric/tools/`: callable tool wrappers using the local registry shim.
 - `tests/`: extracted and standalone-scoped tests.
 - `benchmarks/hermes_memory_bench/`: deterministic smoke and v0.2 benchmark fixtures.
+- `benchmarks/active_context_quality/`: deterministic v0.9 active context quality fixtures.
 - `docs/share-hermes-memory-with-codex-openclaw.md`: copied guide when present in the prototype branch.
 
 ## Limitations

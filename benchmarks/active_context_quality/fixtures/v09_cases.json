@@ -1,0 +1,460 @@
+[
+  {
+    "id": "v09_project_scope_selects_current_project",
+    "dimension": "project_scope_isolation",
+    "description": "Selects matching Hermes Memory Fabric memory and rejects unrelated Lovart memory.",
+    "query": "Hermes Memory Fabric active context project scoped packet",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 360,
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "v09-project-target",
+    "expected_selected_memory_ids": ["v09-project-target"],
+    "expected_rejected_memory_ids": ["v09-project-unrelated"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": ["project:lovart"],
+    "expected_rejection_reasons": {
+      "v09-project-unrelated": "project_scope_mismatch",
+      "project:lovart": ["project_scope_mismatch"]
+    },
+    "expected_compact_contains": [
+      "Project scoped active context packet selects the current Hermes Memory Fabric memory."
+    ],
+    "expected_compact_absent": [
+      "Lovart unrelated active context memory must stay outside the packet."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "Hermes Memory Fabric active context project scoped packet"
+    },
+    "memories": [
+      {
+        "id": "v09-project-target",
+        "content": "Project scoped active context packet selects the current Hermes Memory Fabric memory.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:project:target",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "v09-project-unrelated",
+        "content": "Lovart unrelated active context memory must stay outside the packet.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "entity_ids": ["lovart"],
+        "created_at": "2026-05-26T11:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:project:lovart",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "active_summary": "v0.9 project summary.",
+        "tags": ["memory-fabric", "active-context"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "active_summary": "Lovart unrelated summary.",
+        "tags": ["lovart"],
+        "priority": 10
+      }
+    ]
+  },
+  {
+    "id": "v09_archived_memory_rejected_by_default",
+    "dimension": "archived_memory_rejection",
+    "description": "Rejects archived project memory by default even when the project scope matches.",
+    "query": "Hermes Memory Fabric archived active context guidance",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 260,
+    "expected_packet_valid": true,
+    "expected_selected_memory_ids": [],
+    "expected_rejected_memory_ids": ["v09-archived-memory"],
+    "expected_selected_subspace_ids": [],
+    "expected_rejected_subspace_ids": ["project:hermes-memory-fabric:archive"],
+    "expected_rejection_reasons": {
+      "v09-archived-memory": "archived_subspace_excluded",
+      "project:hermes-memory-fabric:archive": ["archived_excluded"]
+    },
+    "expected_compact_absent": [
+      "Archived active context guidance must not appear by default."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "archived active context guidance"
+    },
+    "memories": [
+      {
+        "id": "v09-archived-memory",
+        "content": "Archived active context guidance must not appear by default.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-01T10:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:archive",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric:archive",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "lifecycle_status": "archived",
+        "active_summary": "Archived v0.9 summary.",
+        "tags": ["memory-fabric", "archive"],
+        "priority": 30
+      }
+    ]
+  },
+  {
+    "id": "v09_context_budget_excludes_rejected_content",
+    "dimension": "context_budget_and_rejection_compaction",
+    "description": "Keeps compact_context_text within budget and excludes rejected memory content.",
+    "query": "Hermes Memory Fabric budget target memory",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 190,
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "v09-budget-target",
+    "expected_selected_memory_ids": ["v09-budget-target"],
+    "expected_rejected_memory_ids": ["v09-budget-overflow", "v09-budget-unrelated"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": ["project:lovart"],
+    "expected_rejection_reasons": {
+      "v09-budget-overflow": "ranked_below_limit",
+      "v09-budget-unrelated": "project_scope_mismatch",
+      "project:lovart": ["project_scope_mismatch"]
+    },
+    "expected_compact_contains": [
+      "Budget target memory fits inside the bounded packet."
+    ],
+    "expected_compact_absent": [
+      "Budget overflow rejected content must never leak into compact context.",
+      "Lovart budget rejected content must never leak into compact context."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "budget target memory"
+    },
+    "memories": [
+      {
+        "id": "v09-budget-target",
+        "content": "Budget target memory fits inside the bounded packet.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T12:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:budget:target",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "v09-budget-overflow",
+        "content": "Budget overflow rejected content must never leak into compact context.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-20T12:00:00Z",
+        "source": "chat",
+        "provenance": "bench:v09:budget:overflow",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "v09-budget-unrelated",
+        "content": "Lovart budget rejected content must never leak into compact context.",
+        "project_id": "lovart",
+        "subspace_id": "project:lovart",
+        "entity_ids": ["lovart"],
+        "created_at": "2026-05-26T12:05:00Z",
+        "source": "chat",
+        "provenance": "bench:v09:budget:lovart",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "active_summary": "v0.9 budget summary.",
+        "tags": ["memory-fabric", "budget"],
+        "priority": 20
+      },
+      {
+        "subspace_id": "project:lovart",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "lovart"},
+        "tags": ["lovart"],
+        "priority": 10
+      }
+    ]
+  },
+  {
+    "id": "v09_high_risk_rejected_without_allowance",
+    "dimension": "high_risk_rejection",
+    "description": "Rejects high-risk memory unless allowed_risk_levels explicitly includes high.",
+    "query": "Hermes Memory Fabric high risk active context",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 260,
+    "expected_packet_valid": true,
+    "expected_selected_memory_ids": [],
+    "expected_rejected_memory_ids": ["v09-high-risk-blocked"],
+    "expected_selected_subspace_ids": [],
+    "expected_rejected_subspace_ids": ["risk:high-memory"],
+    "expected_rejection_reasons": {
+      "v09-high-risk-blocked": "risk_level_not_allowed:high",
+      "risk:high-memory": ["risk_level_not_allowed:high"]
+    },
+    "expected_compact_absent": [
+      "High risk active context should require an explicit case allowance."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "high risk active context"
+    },
+    "memories": [
+      {
+        "id": "v09-high-risk-blocked",
+        "content": "High risk active context should require an explicit case allowance.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "risk:high-memory",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T13:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v09:risk:blocked",
+        "risk_level": "high",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "risk:high-memory",
+        "subspace_kind": "risk",
+        "risk_level": "high",
+        "active_summary": "High risk memory subspace.",
+        "tags": ["memory-fabric", "risk"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v09_high_risk_allowed_by_case_config",
+    "dimension": "high_risk_allowed",
+    "description": "Allows high-risk memory only when the case config explicitly permits high risk.",
+    "query": "Hermes Memory Fabric high risk active context allowed",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "allowed_risk_levels": ["low", "medium", "high"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 320,
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "v09-high-risk-allowed",
+    "expected_selected_memory_ids": ["v09-high-risk-allowed"],
+    "expected_rejected_memory_ids": [],
+    "expected_selected_subspace_ids": ["risk:high-memory"],
+    "expected_rejected_subspace_ids": [],
+    "expected_compact_contains": [
+      "High risk active context is visible only after explicit high risk allowance."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "high risk active context allowed",
+      "allowed_risk_levels": ["low", "medium", "high"]
+    },
+    "memories": [
+      {
+        "id": "v09-high-risk-allowed",
+        "content": "High risk active context is visible only after explicit high risk allowance.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "risk:high-memory",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T13:30:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v09:risk:allowed",
+        "risk_level": "high",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "risk:high-memory",
+        "subspace_kind": "risk",
+        "risk_level": "high",
+        "active_summary": "High risk memory subspace.",
+        "tags": ["memory-fabric", "risk"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v09_temporal_conflict_selects_current_memory",
+    "dimension": "temporal_conflict_resolution",
+    "description": "Chooses current temporal memory over a superseded old memory.",
+    "query": "Hermes Memory Fabric current active context temporal policy",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 380,
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "v09-temporal-current",
+    "expected_selected_memory_ids": ["v09-temporal-current"],
+    "expected_rejected_memory_ids": ["v09-temporal-old"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": [],
+    "expected_rejection_reasons": {
+      "v09-temporal-old": "ranked_below_limit"
+    },
+    "expected_compact_contains": [
+      "Current active context temporal policy uses MemoryFabricProvider build explain summarize validate."
+    ],
+    "expected_compact_absent": [
+      "Old active context temporal policy used a superseded broad memory packet."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "current active context temporal policy"
+    },
+    "memories": [
+      {
+        "id": "v09-temporal-old",
+        "content": "Old active context temporal policy used a superseded broad memory packet.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "valid_from": "2026-05-01T00:00:00Z",
+        "valid_until": "2026-05-20T00:00:00Z",
+        "created_at": "2026-05-01T08:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:temporal:old",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "v09-temporal-current",
+        "content": "Current active context temporal policy uses MemoryFabricProvider build explain summarize validate.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "valid_from": "2026-05-20T00:00:00Z",
+        "created_at": "2026-05-26T08:00:00Z",
+        "source": "design_doc",
+        "provenance": "bench:v09:temporal:current",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "active_summary": "v0.9 temporal summary.",
+        "tags": ["memory-fabric", "temporal"],
+        "priority": 20
+      }
+    ]
+  },
+  {
+    "id": "v09_no_write_safety_policy_preserved",
+    "dimension": "no_write_safety_policy",
+    "description": "Preserves read-only policy and rejects memory that asks for token, graph, or durable writes.",
+    "query": "Hermes Memory Fabric no write safety policy",
+    "project_scope": "hermes-memory-fabric",
+    "entity_ids": ["hermes-memory-fabric"],
+    "now": "2026-05-27T00:00:00Z",
+    "memory_limit": 1,
+    "context_budget_chars": 380,
+    "expected_packet_valid": true,
+    "expected_top_selected_memory_id": "v09-policy-safe",
+    "expected_selected_memory_ids": ["v09-policy-safe"],
+    "expected_rejected_memory_ids": ["v09-policy-unsafe"],
+    "expected_selected_subspace_ids": ["project:hermes-memory-fabric"],
+    "expected_rejected_subspace_ids": [],
+    "expected_rejection_reasons": {
+      "v09-policy-unsafe": "unsafe_governance:would_write_memory"
+    },
+    "expected_compact_contains": [
+      "No write safety policy stays read-only with no model executor and no provider tools."
+    ],
+    "expected_compact_absent": [
+      "Unsafe policy memory requests durable writes graph writes token writes and provider tools."
+    ],
+    "context": {
+      "project_scope": "hermes-memory-fabric",
+      "query": "no write safety policy"
+    },
+    "memories": [
+      {
+        "id": "v09-policy-safe",
+        "content": "No write safety policy stays read-only with no model executor and no provider tools.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T14:00:00Z",
+        "source": "policy_doc",
+        "provenance": "bench:v09:policy:safe",
+        "risk_level": "low",
+        "governance": {"read_only": true, "proposal_governed": true}
+      },
+      {
+        "id": "v09-policy-unsafe",
+        "content": "Unsafe policy memory requests durable writes graph writes token writes and provider tools.",
+        "project_id": "hermes-memory-fabric",
+        "subspace_id": "project:hermes-memory-fabric",
+        "entity_ids": ["hermes-memory-fabric"],
+        "created_at": "2026-05-26T14:05:00Z",
+        "source": "chat",
+        "provenance": "bench:v09:policy:unsafe",
+        "risk_level": "low",
+        "governance": {
+          "would_write_memory": true,
+          "would_write_graph": true,
+          "writes_token_files": true,
+          "writes_approval_audit": true,
+          "invokes_real_token_write_executor": true,
+          "exposes_provider_tools": true
+        }
+      }
+    ],
+    "subspaces": [
+      {
+        "subspace_id": "project:hermes-memory-fabric",
+        "subspace_kind": "project",
+        "scope": {"project_scope": "hermes-memory-fabric"},
+        "active_summary": "v0.9 no-write summary.",
+        "tags": ["memory-fabric", "policy"],
+        "priority": 20
+      }
+    ]
+  }
+]
