@@ -36,6 +36,8 @@ PROVIDER_RUNTIME_INTEGRATION_POLICY = {
 }
 
 DEFAULT_PROVIDER_RUNTIME_CONFIG = {
+    "project_scope": None,
+    "agent_scope": None,
     "max_active_subspaces": DEFAULT_MAX_ACTIVE_SUBSPACES,
     "memory_limit": DEFAULT_MEMORY_LIMIT,
     "context_budget_chars": DEFAULT_CONTEXT_BUDGET_CHARS,
@@ -52,11 +54,20 @@ class MemoryFabricProvider(MemoryProvider):
     name = "memory-fabric"
     runtime_integration_policy = PROVIDER_RUNTIME_INTEGRATION_POLICY
 
-    def __init__(self, **runtime_config: Any) -> None:
+    def __init__(
+        self,
+        runtime_memory_candidates: Iterable[Mapping[str, Any]] | None = None,
+        runtime_config: Mapping[str, Any] | None = None,
+        **runtime_config_overrides: Any,
+    ) -> None:
         self.session_id = ""
         self.hermes_home = ""
         self.initialized_kwargs: dict[str, Any] = {}
-        self.runtime_config = _normalize_provider_runtime_config(runtime_config)
+        config = dict(runtime_config) if isinstance(runtime_config, Mapping) else {}
+        config.update(runtime_config_overrides)
+        self.runtime_config = _normalize_provider_runtime_config(config)
+        self._runtime_memory_candidates: list[dict[str, Any]] = []
+        self.set_runtime_memory_candidates(runtime_memory_candidates)
 
     def is_available(self) -> bool:
         return True
@@ -100,6 +111,8 @@ class MemoryFabricProvider(MemoryProvider):
     ) -> dict[str, Any]:
         """Build a deterministic, read-only active context packet."""
         runtime_config = self._active_context_runtime_config(
+            project_scope=project_scope,
+            agent_scope=agent_scope,
             max_active_subspaces=max_active_subspaces,
             memory_limit=memory_limit,
             context_budget_chars=context_budget_chars,
@@ -112,8 +125,8 @@ class MemoryFabricProvider(MemoryProvider):
             memory_candidates=memory_candidates,
             subspace_registry=subspace_registry,
             context=context,
-            project_scope=project_scope,
-            agent_scope=agent_scope,
+            project_scope=runtime_config["project_scope"],
+            agent_scope=runtime_config["agent_scope"],
             entity_ids=entity_ids,
             now=now,
             max_active_subspaces=runtime_config["max_active_subspaces"],
@@ -138,7 +151,33 @@ class MemoryFabricProvider(MemoryProvider):
         return validate_active_context_packet(packet)
 
     def prefetch(self, query: str, *, session_id: str = "") -> str:
-        return ""
+        try:
+            candidates = self._runtime_memory_candidates_snapshot()
+            if not candidates:
+                return ""
+
+            packet = self.build_active_context(
+                query=str(query),
+                memory_candidates=candidates,
+                project_scope=self.runtime_config.get("project_scope"),
+                agent_scope=self.runtime_config.get("agent_scope"),
+            )
+            validity = self.validate_active_context(packet)
+            if validity != {"valid": True, "errors": []}:
+                return ""
+
+            compact_context_text = packet.get("compact_context_text")
+            if not isinstance(compact_context_text, str) or not compact_context_text:
+                return ""
+            return compact_context_text
+        except Exception:
+            return ""
+
+    def set_runtime_memory_candidates(self, candidates: Iterable[Mapping[str, Any]] | None) -> None:
+        self._runtime_memory_candidates = _copy_runtime_memory_candidates(candidates)
+
+    def clear_runtime_memory_candidates(self) -> None:
+        self._runtime_memory_candidates = []
 
     def queue_prefetch(self, query: str, *, session_id: str = "") -> None:
         return None
@@ -175,6 +214,8 @@ class MemoryFabricProvider(MemoryProvider):
     def _active_context_runtime_config(
         self,
         *,
+        project_scope: str | None,
+        agent_scope: str | None,
         max_active_subspaces: int | None,
         memory_limit: int | None,
         context_budget_chars: int | None,
@@ -183,6 +224,8 @@ class MemoryFabricProvider(MemoryProvider):
         required_tags: Iterable[str] | None,
     ) -> dict[str, Any]:
         overrides = {
+            "project_scope": project_scope,
+            "agent_scope": agent_scope,
             "max_active_subspaces": max_active_subspaces,
             "memory_limit": memory_limit,
             "context_budget_chars": context_budget_chars,
@@ -193,6 +236,9 @@ class MemoryFabricProvider(MemoryProvider):
         effective = dict(self.runtime_config)
         effective.update({key: value for key, value in overrides.items() if value is not None})
         return _normalize_provider_runtime_config(effective)
+
+    def _runtime_memory_candidates_snapshot(self) -> list[dict[str, Any]]:
+        return deepcopy(self._runtime_memory_candidates)
 
 
 def register(ctx: Any) -> None:
@@ -220,6 +266,8 @@ def _normalize_provider_runtime_config(values: Mapping[str, Any] | None) -> dict
     if isinstance(values, Mapping):
         raw.update({field: deepcopy(values[field]) for field in PROVIDER_RUNTIME_CONFIG_FIELDS if field in values})
     return {
+        "project_scope": _optional_text(raw.get("project_scope")),
+        "agent_scope": _optional_text(raw.get("agent_scope")),
         "max_active_subspaces": _non_negative_int(
             raw.get("max_active_subspaces"),
             DEFAULT_PROVIDER_RUNTIME_CONFIG["max_active_subspaces"],
@@ -244,6 +292,23 @@ def _optional_list(value: Any) -> list[Any] | None:
         return deepcopy(list(value))
     except TypeError:
         return [deepcopy(value)]
+
+
+def _optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _copy_runtime_memory_candidates(candidates: Iterable[Mapping[str, Any]] | None) -> list[dict[str, Any]]:
+    if candidates is None:
+        return []
+    copied: list[dict[str, Any]] = []
+    for candidate in candidates:
+        if isinstance(candidate, Mapping):
+            copied.append(deepcopy(dict(candidate)))
+    return copied
 
 
 def _non_negative_int(value: Any, default: int) -> int:
