@@ -36,6 +36,21 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.1.0 Read-only JSONL Candidate Source
+
+v1.1.0 lets `MemoryFabricProvider.prefetch(...)` load candidates from an
+existing local JSONL file through `runtime_config["candidate_jsonl_path"]`.
+JSONL candidates are bounded by line and byte limits, invalid lines are ignored
+by default, runtime candidates can still be supplied explicitly, and duplicate
+candidate `id` values prefer explicit runtime candidates over JSONL.
+
+The source remains local and read-only: no SQLite, no Hermes graph DB reads, no
+operation ledger reads, no write proposal reads, no session log reads, no model
+calls, no network calls, no durable writes, and no provider tools.
+
+See [docs/JSONL_CANDIDATE_SOURCE.md](docs/JSONL_CANDIDATE_SOURCE.md) for the
+format, safety boundary, and smoke command.
+
 ## v1.0.0 Real Active Context Injection Contract
 
 v1.0.0 implements `MemoryFabricProvider.prefetch(...)` for Hermes' existing

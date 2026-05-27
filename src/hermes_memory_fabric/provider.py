@@ -10,6 +10,12 @@ try:
 except Exception:  # pragma: no cover - standalone test fallback
     from .memory_provider import MemoryProvider
 
+from .candidate_jsonl_source import (
+    DEFAULT_CANDIDATE_JSONL_IGNORE_INVALID_LINES,
+    DEFAULT_CANDIDATE_JSONL_MAX_BYTES,
+    DEFAULT_CANDIDATE_JSONL_MAX_LINES,
+    load_candidate_jsonl_source,
+)
 from .memory_active_context_composer import (
     DEFAULT_CONTEXT_BUDGET_CHARS,
     DEFAULT_MAX_ACTIVE_SUBSPACES,
@@ -44,6 +50,11 @@ DEFAULT_PROVIDER_RUNTIME_CONFIG = {
     "include_archived": False,
     "allowed_risk_levels": None,
     "required_tags": None,
+    "candidate_jsonl_path": None,
+    "candidate_jsonl_max_lines": DEFAULT_CANDIDATE_JSONL_MAX_LINES,
+    "candidate_jsonl_max_bytes": DEFAULT_CANDIDATE_JSONL_MAX_BYTES,
+    "candidate_jsonl_required_fields": None,
+    "candidate_jsonl_ignore_invalid_lines": DEFAULT_CANDIDATE_JSONL_IGNORE_INVALID_LINES,
 }
 PROVIDER_RUNTIME_CONFIG_FIELDS = tuple(DEFAULT_PROVIDER_RUNTIME_CONFIG)
 
@@ -152,7 +163,7 @@ class MemoryFabricProvider(MemoryProvider):
 
     def prefetch(self, query: str, *, session_id: str = "") -> str:
         try:
-            candidates = self._runtime_memory_candidates_snapshot()
+            candidates = self._prefetch_memory_candidates_snapshot()
             if not candidates:
                 return ""
 
@@ -240,6 +251,24 @@ class MemoryFabricProvider(MemoryProvider):
     def _runtime_memory_candidates_snapshot(self) -> list[dict[str, Any]]:
         return deepcopy(self._runtime_memory_candidates)
 
+    def _prefetch_memory_candidates_snapshot(self) -> list[dict[str, Any]]:
+        return _merge_candidate_sources(
+            jsonl_candidates=self._candidate_jsonl_candidates_snapshot(),
+            runtime_candidates=self._runtime_memory_candidates_snapshot(),
+        )
+
+    def _candidate_jsonl_candidates_snapshot(self) -> list[dict[str, Any]]:
+        path = self.runtime_config.get("candidate_jsonl_path")
+        if not path:
+            return []
+        return load_candidate_jsonl_source(
+            path,
+            max_lines=self.runtime_config.get("candidate_jsonl_max_lines"),
+            max_bytes=self.runtime_config.get("candidate_jsonl_max_bytes"),
+            required_fields=self.runtime_config.get("candidate_jsonl_required_fields"),
+            ignore_invalid_lines=bool(self.runtime_config.get("candidate_jsonl_ignore_invalid_lines", True)),
+        )
+
 
 def register(ctx: Any) -> None:
     """Register the Memory Fabric provider with a Hermes plugin context."""
@@ -280,6 +309,22 @@ def _normalize_provider_runtime_config(values: Mapping[str, Any] | None) -> dict
         "include_archived": bool(raw.get("include_archived", DEFAULT_PROVIDER_RUNTIME_CONFIG["include_archived"])),
         "allowed_risk_levels": _optional_list(raw.get("allowed_risk_levels")),
         "required_tags": _optional_list(raw.get("required_tags")),
+        "candidate_jsonl_path": _optional_text(raw.get("candidate_jsonl_path")),
+        "candidate_jsonl_max_lines": _non_negative_int(
+            raw.get("candidate_jsonl_max_lines"),
+            DEFAULT_PROVIDER_RUNTIME_CONFIG["candidate_jsonl_max_lines"],
+        ),
+        "candidate_jsonl_max_bytes": _non_negative_int(
+            raw.get("candidate_jsonl_max_bytes"),
+            DEFAULT_PROVIDER_RUNTIME_CONFIG["candidate_jsonl_max_bytes"],
+        ),
+        "candidate_jsonl_required_fields": _optional_list(raw.get("candidate_jsonl_required_fields")),
+        "candidate_jsonl_ignore_invalid_lines": bool(
+            raw.get(
+                "candidate_jsonl_ignore_invalid_lines",
+                DEFAULT_PROVIDER_RUNTIME_CONFIG["candidate_jsonl_ignore_invalid_lines"],
+            )
+        ),
     }
 
 
@@ -309,6 +354,42 @@ def _copy_runtime_memory_candidates(candidates: Iterable[Mapping[str, Any]] | No
         if isinstance(candidate, Mapping):
             copied.append(deepcopy(dict(candidate)))
     return copied
+
+
+def _merge_candidate_sources(
+    *,
+    jsonl_candidates: Iterable[Mapping[str, Any]],
+    runtime_candidates: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    positions_by_id: dict[str, int] = {}
+
+    for candidate in jsonl_candidates:
+        _merge_candidate(candidate, merged, positions_by_id, replace_existing=False)
+    for candidate in runtime_candidates:
+        _merge_candidate(candidate, merged, positions_by_id, replace_existing=True)
+
+    return deepcopy(merged)
+
+
+def _merge_candidate(
+    candidate: Mapping[str, Any],
+    merged: list[dict[str, Any]],
+    positions_by_id: dict[str, int],
+    *,
+    replace_existing: bool,
+) -> None:
+    if not isinstance(candidate, Mapping):
+        return
+    copied = deepcopy(dict(candidate))
+    candidate_id = _optional_text(copied.get("id"))
+    if candidate_id and candidate_id in positions_by_id:
+        if replace_existing:
+            merged[positions_by_id[candidate_id]] = copied
+        return
+    if candidate_id:
+        positions_by_id[candidate_id] = len(merged)
+    merged.append(copied)
 
 
 def _non_negative_int(value: Any, default: int) -> int:
