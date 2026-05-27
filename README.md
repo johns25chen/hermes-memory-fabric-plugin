@@ -36,6 +36,40 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.3.0 Codex Task Summary Ingestion Dry Run
+
+v1.3.0 adds a deterministic dry-run ingestion pipeline that converts structured
+Codex task summaries into Memory Fabric candidate JSONL records. The parser
+recognizes sections such as Goal / Purpose, Included / Changed files,
+Validation, Boundary, Commit, PR, Version, and Result. Generated candidates are
+grounded in explicit input text, preserve validation and boundary evidence when
+present, default to low risk unless high-risk terms appear, and are marked
+read-only, proposal-governed, and dry-run.
+
+Run it with stdout output:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/ingest_codex_task_summary_dry_run.py \
+  --input benchmarks/candidate_ingestion/fixtures/v13_codex_task_summary.txt
+```
+
+Or write to an explicit JSONL path for v1.1 `candidate_jsonl_path` loading:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/ingest_codex_task_summary_dry_run.py \
+  --input benchmarks/candidate_ingestion/fixtures/v13_codex_task_summary.txt \
+  --output /tmp/codex-task-summary-candidates.jsonl \
+  --print-summary
+```
+
+The dry run does not modify Hermes Agent, implement SQLite, write to
+`~/.hermes/memory`, call a model, use the network, expose provider tools, or
+create durable writes outside the explicit CLI output path.
+
+See [docs/CODEX_TASK_SUMMARY_INGESTION.md](docs/CODEX_TASK_SUMMARY_INGESTION.md)
+for the schema, safety boundary, and `MemoryFabricProvider.prefetch(...)`
+usage.
+
 ## v1.1.0 Read-only JSONL Candidate Source
 
 v1.1.0 lets `MemoryFabricProvider.prefetch(...)` load candidates from an

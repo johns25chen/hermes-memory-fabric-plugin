@@ -1,0 +1,31 @@
+# v1.1.0 Read-only JSONL Candidate Source Adapter
+
+Goal / Purpose
+Add a local JSONL candidate source so MemoryFabricProvider.prefetch can load explicit candidate records from a configured file path.
+
+Included / Changed files
+- src/hermes_memory_fabric/candidate_jsonl_source.py
+- src/hermes_memory_fabric/provider.py
+- tests/test_candidate_jsonl_source.py
+- tests/test_provider_prefetch_jsonl_source.py
+- scripts/smoke_jsonl_candidate_source.py
+- docs/JSONL_CANDIDATE_SOURCE.md
+
+Validation
+- PYTHONPATH="$PWD/src:$PWD" /Users/han/.hermes/hermes-agent/.venv/bin/python -m pytest -o addopts='' tests/test_candidate_jsonl_source.py tests/test_provider_prefetch_jsonl_source.py -q
+- PYTHONPATH="$PWD/src:$PWD" /Users/han/.hermes/hermes-agent/.venv/bin/python scripts/smoke_jsonl_candidate_source.py
+
+Boundary
+- Local file reads only.
+- No SQLite.
+- No Hermes graph DB reads.
+- No operation ledger reads.
+- No model calls.
+- No network calls.
+- No provider tools.
+
+Version
+1.1.0
+
+Result
+MemoryFabricProvider.prefetch can reuse candidate_jsonl_path records as bounded read-only memory candidates.

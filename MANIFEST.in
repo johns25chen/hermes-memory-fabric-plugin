@@ -4,4 +4,5 @@ recursive-include docs *.md
 recursive-include benchmarks/hermes_memory_bench *.md *.json *.py
 recursive-include benchmarks/active_context_quality *.json
 recursive-include benchmarks/persistent_candidate_retrieval *.jsonl
+recursive-include benchmarks/candidate_ingestion *.txt
 recursive-include scripts *.py *.sh
