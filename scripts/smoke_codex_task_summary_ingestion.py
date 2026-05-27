@@ -26,9 +26,27 @@ def main() -> int:
     assert "capability" in candidate_kinds
     assert "validation" in candidate_kinds
     assert "boundary" in candidate_kinds
+    assert {candidate["risk_level"] for candidate in candidates} == {"low"}
     assert all(candidate["governance"]["read_only"] is True for candidate in candidates)
     assert all(candidate["governance"]["proposal_governed"] is True for candidate in candidates)
     assert all(candidate["governance"]["dry_run"] is True for candidate in candidates)
+
+    safety_negative_text = """Goal / Purpose
+Verify Codex task summary risk normalization for safety-negative boundaries.
+
+Boundary
+- No token write.
+- No approval audit write.
+- No executor call.
+- No model calls.
+- No network calls.
+- No durable memory write.
+
+Result
+Safety-negative boundary terms remain low risk.
+"""
+    safety_negative_candidates = generate_codex_task_summary_candidates(safety_negative_text)
+    assert {candidate["risk_level"] for candidate in safety_negative_candidates} == {"low"}
 
     provider = MemoryFabricProvider()
     assert provider.get_tool_schemas() == []

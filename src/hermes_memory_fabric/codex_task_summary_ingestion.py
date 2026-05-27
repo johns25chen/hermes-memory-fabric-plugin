@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, TextIO
 
 
-CODEX_TASK_SUMMARY_INGESTION_VERSION = "1.3.0"
+CODEX_TASK_SUMMARY_INGESTION_VERSION = "1.3.1"
 DEFAULT_PROJECT_ID = "hermes-memory-fabric"
 DEFAULT_SOURCE = "codex-task-summary"
 DEFAULT_CREATED_AT = "1970-01-01T00:00:00Z"
@@ -87,7 +87,38 @@ HIGH_RISK_PATTERNS = (
     re.compile(r"\bexecutors?\b", re.IGNORECASE),
     re.compile(r"\bdelet(?:e|es|ed|ing|ion|ions)\b", re.IGNORECASE),
     re.compile(r"\bmigrat(?:e|es|ed|ing|ion|ions)\b", re.IGNORECASE),
+    re.compile(r"\bnetwork\s+calls?\b|\bcall(?:s|ed|ing)?\s+(?:the\s+)?network\b", re.IGNORECASE),
+    re.compile(r"\bmodel\s+calls?\b|\bcall(?:s|ed|ing)?\s+(?:a\s+|the\s+)?models?\b", re.IGNORECASE),
 )
+SECURITY_TOKEN_CONTEXT_PATTERNS = (
+    re.compile(
+        r"\b(?:auth(?:entication|orization)?|api|access|refresh|credential|bearer|session)\s+tokens?\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bwrit(?:e|es|ing|ten)\s+(?:\S+\s+){0,3}tokens?\s+files?\b", re.IGNORECASE),
+    re.compile(r"\bwrote\s+(?:\S+\s+){0,3}tokens?\s+files?\b", re.IGNORECASE),
+    re.compile(r"\bstor(?:e|es|ed|ing)\s+(?:\S+\s+){0,3}tokens?\b", re.IGNORECASE),
+    re.compile(
+        r"\bcreat(?:e|es|ed|ing)\s+(?:\S+\s+){0,3}"
+        r"(?:approval|auth(?:entication|orization)?|api|access|refresh|credential|bearer|session)\s+tokens?\b",
+        re.IGNORECASE,
+    ),
+)
+BENIGN_MARKER_TOKEN_PATTERNS = (
+    re.compile(r"\b(?:answer|e2e|validation|test|marker|expected|reply)\s+tokens?\b", re.IGNORECASE),
+    re.compile(r"\bexpected\s+output\s+tokens?\b", re.IGNORECASE),
+    re.compile(
+        r"\boutput\s+tokens?\b(?=\s*(?:[:=]|(?:is|are|equals?|exactly|should|must)\b))",
+        re.IGNORECASE,
+    ),
+)
+NEGATIVE_SAFETY_BOUNDARY_PREFIX_RE = re.compile(
+    r"^\s*(?:[-*+]\s*|\d+[.)]\s*)?"
+    r"(?:no\b|does\s+not\b|do\s+not\b|never\b|without\b)",
+    re.IGNORECASE,
+)
+RISK_CLAUSE_SPLIT_RE = re.compile(r"(?:[\r\n]+|[.;!?]+|\s+(?:but|however|then)\s+)", re.IGNORECASE)
+RISK_LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+]\s*|\d+[.)]\s*)+")
 
 _HEADING_MARKDOWN_RE = re.compile(r"^\s{0,3}#{1,6}\s+")
 _BOLD_WRAPPER_RE = re.compile(r"^\*{1,2}(.+?)\*{1,2}$")
@@ -222,7 +253,7 @@ def ingest_codex_task_summary_dry_run(
     source: str = DEFAULT_SOURCE,
     created_at: str = DEFAULT_CREATED_AT,
 ) -> list[dict[str, Any]]:
-    """Alias for the v1.3.0 dry-run ingestion entry point."""
+    """Alias for the v1.3.1 dry-run ingestion entry point."""
 
     return generate_codex_task_summary_candidates(
         text,
@@ -252,10 +283,33 @@ def write_candidates_jsonl(candidates: Iterable[Mapping[str, Any]], output_path:
 
 
 def detect_codex_task_summary_risk_level(text: Any) -> str:
-    """Return high when explicit high-risk terms appear, otherwise low."""
+    """Return high when affirmative high-risk terms appear, otherwise low."""
 
     value = "" if text is None else str(text)
-    return "high" if any(pattern.search(value) for pattern in HIGH_RISK_PATTERNS) else "low"
+    risk_text = _normalize_negative_safety_boundaries_for_risk(value)
+    if any(pattern.search(risk_text) for pattern in SECURITY_TOKEN_CONTEXT_PATTERNS):
+        return "high"
+    risk_text = _normalize_benign_marker_tokens_for_risk(risk_text)
+    return "high" if any(pattern.search(risk_text) for pattern in HIGH_RISK_PATTERNS) else "low"
+
+
+def _normalize_negative_safety_boundaries_for_risk(text: str) -> str:
+    clauses = []
+    for clause in RISK_CLAUSE_SPLIT_RE.split(text):
+        normalized = _clean_risk_clause(clause)
+        if not normalized:
+            continue
+        if NEGATIVE_SAFETY_BOUNDARY_PREFIX_RE.match(normalized):
+            continue
+        clauses.append(normalized)
+    return "\n".join(clauses)
+
+
+def _normalize_benign_marker_tokens_for_risk(text: str) -> str:
+    normalized = text
+    for pattern in BENIGN_MARKER_TOKEN_PATTERNS:
+        normalized = pattern.sub("validation marker", normalized)
+    return normalized
 
 
 def summarize_candidate_batch(candidates: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
@@ -475,6 +529,11 @@ def _clean_text(value: Any) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+def _clean_risk_clause(value: Any) -> str:
+    text = _HEADING_MARKDOWN_RE.sub("", _clean_text(value)).strip()
+    return RISK_LIST_MARKER_RE.sub("", text).strip()
 
 
 def _dedupe(values: Iterable[str]) -> list[str]:

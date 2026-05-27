@@ -1,6 +1,6 @@
 # Codex Task Summary Ingestion Dry Run
 
-v1.3.0 adds a deterministic dry-run pipeline that turns structured Codex task
+v1.3.1 keeps the deterministic dry-run pipeline that turns structured Codex task
 summaries into local Memory Fabric candidate JSONL records.
 
 ## Why Codex Task Summaries Come First
@@ -57,13 +57,46 @@ Each generated JSONL object includes:
 - `source`: CLI source label, default `codex-task-summary`.
 - `provenance`: dry-run ingestion metadata, input hash, and source section line
   ranges.
-- `risk_level`: `low` by default, `high` when grounded content includes terms
-  such as auth, token, credential, write, approval, executor, deletion, or
-  migration.
+- `risk_level`: `low` by default, `high` when grounded affirmative content
+  includes terms such as auth, token, credential, write, approval, executor,
+  deletion, migration, network calls, or model calls.
 - `governance`: read-only, proposal-governed, dry-run policy flags.
 - `created_at`: deterministic dry-run timestamp.
 - `tags`: `codex-task-summary`, `dry-run`, candidate kind, and source section
   tags.
+
+## Risk Normalization
+
+v1.3.1 normalizes negative safety-boundary statements before high-risk
+detection. Lines or clauses starting with `No`, `Does not`, `Do not`, `Never`,
+or `Without` do not escalate risk only because they mention token, write,
+approval, executor, network, or model surfaces.
+
+These statements stay low risk by themselves:
+
+```text
+No token write.
+No approval audit write.
+No executor call.
+No model calls.
+No network calls.
+No durable memory write.
+```
+
+Affirmative dangerous operations still become high risk:
+
+```text
+Writes token files.
+Creates approval token.
+Runs executor.
+Deletes credentials.
+Migrates memory.
+Modifies auth config.
+```
+
+This only changes candidate risk labeling during dry-run summary ingestion. The
+provider's existing default risk gate still rejects high-risk candidates unless
+the caller explicitly includes high risk in `allowed_risk_levels`.
 
 ## Example Command
 
