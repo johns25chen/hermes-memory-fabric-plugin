@@ -36,15 +36,18 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
-## v1.3.0 Codex Task Summary Ingestion Dry Run
+## v1.3.1 Codex Task Summary Ingestion Dry Run
 
-v1.3.0 adds a deterministic dry-run ingestion pipeline that converts structured
+v1.3.1 includes a deterministic dry-run ingestion pipeline that converts structured
 Codex task summaries into Memory Fabric candidate JSONL records. The parser
 recognizes sections such as Goal / Purpose, Included / Changed files,
 Validation, Boundary, Commit, PR, Version, and Result. Generated candidates are
 grounded in explicit input text, preserve validation and boundary evidence when
-present, default to low risk unless high-risk terms appear, and are marked
-read-only, proposal-governed, and dry-run.
+present, and are marked read-only, proposal-governed, and dry-run. Negative
+safety-boundary statements such as `No token write.` or `No executor call.` stay
+low risk by themselves, while affirmative dangerous operations such as writing
+token files, creating approval tokens, running executors, deleting credentials,
+migrating memory, or modifying auth config still become high risk.
 
 Run it with stdout output:
 

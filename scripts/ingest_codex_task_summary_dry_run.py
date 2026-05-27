@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI wrapper for v1.3.0 Codex task summary ingestion dry-run."""
+"""CLI wrapper for v1.3.1 Codex task summary ingestion dry-run."""
 
 from __future__ import annotations
 
