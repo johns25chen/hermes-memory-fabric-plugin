@@ -18,14 +18,23 @@ cd /Users/han/hermes-memory-fabric-plugin
 uv pip install -e .
 ```
 
-Hermes plugin-directory install:
+## Hermes Integration
+
+Hermes memory provider runtime loads providers through its directory-based
+`plugins.memory` loader. Install the v0.8.0 shim after installing this package:
 
 ```bash
-mkdir -p ~/.hermes/plugins/memory
-ln -s /Users/han/hermes-memory-fabric-plugin ~/.hermes/plugins/memory/memory-fabric
+python scripts/install_memory_fabric_shim.py
 ```
 
-Copying the directory to `~/.hermes/plugins/memory/memory-fabric` also works.
+Then run the no-model smoke:
+
+```bash
+PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memory_fabric_hermes.sh
+```
+
+See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
+details, optional real chat smoke, and rollback instructions.
 
 ## v0.1 Behavior
 
