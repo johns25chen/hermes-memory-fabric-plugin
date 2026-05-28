@@ -36,6 +36,40 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.5.0 Memory Candidate Proposal Dry Run
+
+v1.5.0 adds a safe isolated dry-run adapter that converts v1.3.1 Memory Fabric
+candidate JSONL rows into existing Memory Block and proposal preview chain
+objects. It accepts low-risk, read-only, proposal-governed dry-run candidates by
+default, maps them to `project_context` Memory Block candidates, and reuses only
+in-memory preview modules through `memory_real_proposal_dry_run`.
+
+Run it with stdout output:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/propose_memory_candidates_dry_run.py \
+  --input /tmp/codex-task-summary-candidates.jsonl
+```
+
+Or write the preview result to one explicit path:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/propose_memory_candidates_dry_run.py \
+  --input /tmp/codex-task-summary-candidates.jsonl \
+  --output /tmp/memory-candidate-proposal-dry-run.json \
+  --print-summary
+```
+
+The adapter does not call `memory_fabric_bridge.create_memory_write_proposal`,
+human approval token modules, real write executor modules, provider tools,
+network calls, or model calls. It does not write proposal files, operation
+ledger files, memory, graph state, token files, approval audit files, config, or
+SQLite state.
+
+See
+[docs/MEMORY_CANDIDATE_PROPOSAL_DRY_RUN.md](docs/MEMORY_CANDIDATE_PROPOSAL_DRY_RUN.md)
+for the schema mapping, reused modules, and safety boundary.
+
 ## v1.3.1 Codex Task Summary Ingestion Dry Run
 
 v1.3.1 includes a deterministic dry-run ingestion pipeline that converts structured
