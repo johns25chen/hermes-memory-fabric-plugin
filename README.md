@@ -36,6 +36,38 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.6.0 Executor Surface Lockdown Audit
+
+v1.6.0 adds a read-only static audit for approval, token, executor, write-lock,
+ledger, and tool-wrapper surfaces. It verifies that real-write-executor planning
+and review modules keep explicit no-write flags, that the forbidden real executor
+module/test names are absent, that dry-run paths do not call
+`memory_fabric_bridge.create_memory_write_proposal`, and that
+`MemoryFabricProvider` still exposes no provider tools.
+
+Run the audit with stdout JSON:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/audit_executor_surface_lockdown.py
+```
+
+Or write the report to one explicit non-Hermes path:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/audit_executor_surface_lockdown.py \
+  --output /tmp/executor-surface-lockdown-audit.json \
+  --print-summary
+```
+
+The audit does not implement approval intent, issue approval tokens, call a real
+write executor, create proposal files, append operation ledger files, write
+memory/graph/config/SQLite state, or expose provider tools.
+
+See
+[docs/EXECUTOR_SURFACE_LOCKDOWN_AUDIT.md](docs/EXECUTOR_SURFACE_LOCKDOWN_AUDIT.md)
+for the audited surfaces, forbidden write APIs, required no-write flags, and
+the relationship to the v1.5 proposal dry-run preview.
+
 ## v1.5.0 Memory Candidate Proposal Dry Run
 
 v1.5.0 adds a safe isolated dry-run adapter that converts v1.3.1 Memory Fabric
