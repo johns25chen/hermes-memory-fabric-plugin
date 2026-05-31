@@ -36,6 +36,42 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.8.0 Approval Intent Review Gate Dry Run
+
+v1.8.0 adds a deterministic review-gate dry-run layer on top of the v1.7.0
+approval intent. It converts a ready v1.7 intent plus an explicit reviewer
+decision (`approve`, `request_changes`, or `reject`) into a review outcome
+candidate with a stable `review_outcome_id` and a required next step.
+
+Run it with stdout JSON:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/review_approval_intent_dry_run.py \
+  --input /tmp/approval-intent-dry-run.json \
+  --decision approve
+```
+
+Or write the report to one explicit non-Hermes path:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/review_approval_intent_dry_run.py \
+  --input /tmp/approval-intent-dry-run.json \
+  --decision request_changes \
+  --reason "needs narrower scope" \
+  --output /tmp/approval-intent-review-outcome-dry-run.json \
+  --print-summary
+```
+
+The dry run does not issue approval tokens, create real proposals, write
+proposal files, append operation ledger files, write memory/graph/config/SQLite
+state, write token files or approval audit files, invoke executors, apply
+proposals, expose provider tools, call models, or use the network.
+
+See
+[docs/APPROVAL_INTENT_REVIEW_GATE_DRY_RUN.md](docs/APPROVAL_INTENT_REVIEW_GATE_DRY_RUN.md)
+for status behavior, why `approved` is still not token issuance, and the
+no-write boundary.
+
 ## v1.7.0 Approval Intent Dry Run
 
 v1.7.0 adds a deterministic approval-intent dry-run layer on top of the v1.5.0
