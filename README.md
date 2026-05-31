@@ -36,6 +36,38 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v1.7.0 Approval Intent Dry Run
+
+v1.7.0 adds a deterministic approval-intent dry-run layer on top of the v1.5.0
+proposal preview. It creates an in-memory intent candidate for later human
+review only, with a stable `approval_intent_id`, source preview counts, explicit
+no-write flags, and a compact v1.6.0 Executor Surface Lockdown Audit snapshot.
+
+Run it with stdout JSON:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/create_approval_intent_dry_run.py \
+  --input /tmp/memory-candidate-proposal-dry-run.json
+```
+
+Or write the report to one explicit non-Hermes path:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/create_approval_intent_dry_run.py \
+  --input /tmp/memory-candidate-proposal-dry-run.json \
+  --output /tmp/approval-intent-dry-run.json \
+  --print-summary
+```
+
+The dry run does not issue approval tokens, create real proposals, write
+proposal files, append operation ledger files, write memory/graph/config/SQLite
+state, write token files or approval audit files, invoke executors, apply
+proposals, expose provider tools, call models, or use the network.
+
+See
+[docs/APPROVAL_INTENT_DRY_RUN.md](docs/APPROVAL_INTENT_DRY_RUN.md)
+for status behavior, the v1.6 audit gate, and the safety boundary.
+
 ## v1.6.0 Executor Surface Lockdown Audit
 
 v1.6.0 adds a read-only static audit for approval, token, executor, write-lock,
