@@ -43,6 +43,28 @@ of approved Codex skills and projecting them into Codex/OpenClaw without
 duplicating installs. It writes registry, lock, projection, and audit files only;
 it does not write Hermes memory or modify OpenClaw config.
 
+### v2.3.0 Release Integrity Audit
+
+v2.3.0 adds a deterministic local release integrity audit for the safety-critical
+published chain from v2.0.0 through v2.2.0. The audit checks the local package
+version, expected local release tags, expected source/test/doc files, provider
+tool exposure, the v2.0 authority dry-run boundary, v2.1 Skill Fabric temporary
+root verification, and the v2.2 local archive simulation.
+
+The audit is local only. It does not fetch releases, call remote APIs, publish
+artifacts, write Hermes memory, modify Hermes Agent state, or expose provider
+tools.
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_release_integrity_audit.py
+```
+
+Expected output:
+
+```text
+release_integrity_audit=passed
+```
+
 ### v2.2.0 Skill Fabric Real-World Import Simulation
 
 v2.2.0 adds a deterministic local simulation for the GitHub archive import path.

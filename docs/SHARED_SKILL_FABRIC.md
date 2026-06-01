@@ -6,6 +6,20 @@ governance surface; this module writes local Skill Fabric registry, lock,
 projection, and operation ledger files only. These files are local Skill Fabric
 state, not Hermes memory.
 
+## v2.3.0 Release Integrity Audit Note
+
+v2.3.0 adds `run_release_integrity_audit(repo_root)` as a deterministic local
+proof that the v2.0.0, v2.1.0, and v2.2.0 release-chain boundaries still hold in
+the installed source tree. It checks local package metadata, local tag metadata,
+expected files, provider tools, the authority contract dry run, temporary-root
+Skill Fabric verification, the local archive simulation, and unsafe source
+surfaces.
+
+The audit does not fetch from remote services, call remote APIs, publish
+releases, write Hermes memory, modify Hermes Agent state, execute external app
+actions, or expose provider tools. Documentation-only historical references are
+reported separately from source-code safety hits.
+
 ## v2.2.0 Local GitHub Archive Simulation
 
 v2.2.0 adds a deterministic end-to-end simulation for the Shared Skill Fabric

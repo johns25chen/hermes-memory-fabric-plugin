@@ -1,0 +1,326 @@
+"""Deterministic local release integrity audit for v2.0.0 through v2.2.0."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+import tomllib
+from typing import Any, Iterable, Mapping
+
+from .memory_token_authority_boundary_contract_dry_run import (
+    NO_TOKEN_NO_WRITE_FLAGS,
+    SOURCE_REQUIRED_KEYS,
+    run_memory_token_authority_boundary_contract_dry_run,
+)
+from .provider import MemoryFabricProvider
+from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skill_fabric
+from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
+
+
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.3.0"
+
+EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
+EXPECTED_RELEASE_FILES = (
+    "src/hermes_memory_fabric/memory_token_authority_boundary_contract_dry_run.py",
+    "scripts/smoke_token_authority_boundary_contract_dry_run.py",
+    "tests/test_memory_token_authority_boundary_contract_dry_run.py",
+    "docs/TOKEN_AUTHORITY_BOUNDARY_CONTRACT_DRY_RUN.md",
+    "src/hermes_memory_fabric/skill_fabric.py",
+    "scripts/skill_fabric.py",
+    "tests/test_skill_fabric.py",
+    "docs/SHARED_SKILL_FABRIC.md",
+    "src/hermes_memory_fabric/skill_fabric_simulation.py",
+    "scripts/smoke_skill_fabric_simulation.py",
+    "tests/test_skill_fabric_simulation.py",
+)
+SURFACE_AUDIT_FILES = (
+    "src/hermes_memory_fabric/skill_fabric.py",
+    "src/hermes_memory_fabric/skill_fabric_simulation.py",
+    "src/hermes_memory_fabric/release_integrity_audit.py",
+    "scripts/skill_fabric.py",
+    "scripts/smoke_skill_fabric_simulation.py",
+    "tests/test_skill_fabric.py",
+    "tests/test_skill_fabric_simulation.py",
+    "docs/SHARED_SKILL_FABRIC.md",
+    "README.md",
+)
+
+
+def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
+    """Run a local, no-network integrity audit for the v2.0-v2.2 release chain."""
+
+    root = Path(repo_root).expanduser().resolve()
+    pyproject_version = _pyproject_version(root)
+    expected_tags, missing_tags = _release_tags(root)
+    missing_files = [relative for relative in EXPECTED_RELEASE_FILES if not (root / relative).is_file()]
+    expected_files_present = not missing_files
+    provider_tools = MemoryFabricProvider().get_tool_schemas()
+    provider_tools_empty = provider_tools == []
+    authority = _run_authority_contract_check()
+    skill_fabric = _run_skill_fabric_check()
+    simulation = _run_simulation_check()
+    surface = _scan_unsafe_surfaces(root)
+
+    no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
+    no_hermes_memory_write = not any(
+        hit["category"] == "hermes_memory_write" for hit in surface["unsafe_source_hits"]
+    )
+    no_github_write = not any(hit["category"] == "github_write" for hit in surface["unsafe_source_hits"])
+    no_composio_execution = not any(
+        hit["category"] == "composio_execution" for hit in surface["unsafe_source_hits"]
+    )
+    modifies_hermes_agent = False
+    release_chain_status = "pass" if (
+        pyproject_version == RELEASE_INTEGRITY_AUDIT_VERSION
+        and not missing_tags
+        and expected_files_present
+        and provider_tools_empty
+        and authority["authority_contract_safe"]
+        and skill_fabric["skill_fabric_safe"]
+        and simulation["simulation_status"] == "pass"
+        and simulation["simulation_safe"]
+        and simulation["simulation_used_network"] is False
+        and simulation["simulation_used_local_archive"] is True
+        and no_network_surface
+        and no_hermes_memory_write
+        and no_github_write
+        and no_composio_execution
+        and not modifies_hermes_agent
+    ) else "fail"
+    audit_status = release_chain_status
+
+    return {
+        "version": RELEASE_INTEGRITY_AUDIT_VERSION,
+        "audit_status": audit_status,
+        "pyproject_version": pyproject_version,
+        "expected_tags_present": not missing_tags,
+        "missing_tags": missing_tags,
+        "expected_files_present": expected_files_present,
+        "missing_files": missing_files,
+        "provider_tools": provider_tools,
+        "provider_tools_empty": provider_tools_empty,
+        "authority_contract_status": authority["authority_contract_status"],
+        "authority_contract_safe": authority["authority_contract_safe"],
+        "skill_fabric_verify_status": skill_fabric["skill_fabric_verify_status"],
+        "skill_fabric_safe": skill_fabric["skill_fabric_safe"],
+        "skill_fabric_files": skill_fabric["skill_fabric_files"],
+        "simulation_status": simulation["simulation_status"],
+        "simulation_safe": simulation["simulation_safe"],
+        "simulation_used_network": simulation["simulation_used_network"],
+        "simulation_used_local_archive": simulation["simulation_used_local_archive"],
+        "unsafe_source_hits": surface["unsafe_source_hits"],
+        "allowed_documentation_hits": surface["allowed_documentation_hits"],
+        "no_network_surface": no_network_surface,
+        "no_hermes_memory_write": no_hermes_memory_write,
+        "no_github_write": no_github_write,
+        "no_composio_execution": no_composio_execution,
+        "modifies_hermes_agent": modifies_hermes_agent,
+        "release_chain_status": release_chain_status,
+        "safety_summary": {
+            "local_only": True,
+            "uses_network": False,
+            "uses_github_api": False,
+            "writes_hermes_memory": False,
+            "exposes_provider_tools": False,
+            "checks": {
+                "version": pyproject_version == RELEASE_INTEGRITY_AUDIT_VERSION,
+                "tags": not missing_tags,
+                "files": expected_files_present,
+                "provider_tools_empty": provider_tools_empty,
+                "authority_contract_safe": authority["authority_contract_safe"],
+                "skill_fabric_safe": skill_fabric["skill_fabric_safe"],
+                "simulation_safe": simulation["simulation_safe"],
+                "surface_scan_safe": surface["unsafe_source_hits"] == [],
+            },
+        },
+    }
+
+
+def release_integrity_audit_to_json(result: Mapping[str, Any]) -> str:
+    """Serialize a release integrity audit report deterministically."""
+
+    return json.dumps(dict(result), ensure_ascii=True, indent=2, sort_keys=True) + "\n"
+
+
+def _pyproject_version(root: Path) -> str | None:
+    path = root / "pyproject.toml"
+    if not path.is_file():
+        return None
+    with path.open("rb") as handle:
+        data = tomllib.load(handle)
+    project = data.get("project", {})
+    return str(project.get("version")) if isinstance(project, dict) and project.get("version") else None
+
+
+def _release_tags(root: Path) -> tuple[dict[str, bool], list[str]]:
+    tags = set(_git_tags(root))
+    expected = {tag: tag in tags for tag in EXPECTED_RELEASE_TAGS}
+    missing = [tag for tag in EXPECTED_RELEASE_TAGS if tag not in tags]
+    return expected, missing
+
+
+def _git_tags(root: Path) -> list[str]:
+    try:
+        completed = subprocess.run(
+            ["git", "tag", "--list", "v2.*"],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        return []
+    if completed.returncode != 0:
+        return []
+    return [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+
+
+def _run_authority_contract_check() -> dict[str, Any]:
+    source = _valid_token_issuance_source()
+    result = run_memory_token_authority_boundary_contract_dry_run(source)
+    expected_false = {
+        key: value for key, value in NO_TOKEN_NO_WRITE_FLAGS.items() if isinstance(value, bool)
+    }
+    safe = (
+        result.get("authority_contract_status") == "ready"
+        and all(result.get(key) is expected for key, expected in expected_false.items())
+        and result.get("approval_token_id") is None
+        and result.get("approval_token_value") is None
+        and result.get("provider_tools") == []
+    )
+    return {
+        "authority_contract_status": str(result.get("authority_contract_status") or "fail"),
+        "authority_contract_safe": safe,
+    }
+
+
+def _valid_token_issuance_source() -> dict[str, Any]:
+    source: dict[str, Any] = {key: None for key in SOURCE_REQUIRED_KEYS}
+    source.update(
+        {
+            "version": "1.9.0",
+            "dry_run": True,
+            "token_issuance_status": "ready",
+            "token_draft_id": "release-integrity-token-draft",
+            "token_intent_id": "release-integrity-token-intent",
+            "required_next_step": "manual_token_issuance_review_required_no_token_created",
+            "safety_summary": {},
+            **NO_TOKEN_NO_WRITE_FLAGS,
+        }
+    )
+    return source
+
+
+def _run_skill_fabric_check() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="release-integrity-skill-fabric-") as directory:
+        temp_root = Path(directory).resolve()
+        paths = SkillFabricPaths(temp_root / "skill-fabric")
+        initialize_skill_fabric(paths)
+        verification = verify_skill_fabric(paths)
+        files = _relative_files(paths.root, paths.root)
+        safe = (
+            verification.get("status") == "pass"
+            and paths.root.resolve().is_relative_to(temp_root)
+            and paths.registry_path.is_file()
+            and paths.lock_path.is_file()
+            and paths.ledger_path.is_file()
+        )
+        return {
+            "skill_fabric_verify_status": str(verification.get("status") or "fail"),
+            "skill_fabric_safe": safe,
+            "skill_fabric_files": files,
+        }
+
+
+def _run_simulation_check() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="release-integrity-simulation-") as directory:
+        result = run_skill_fabric_github_archive_simulation(Path(directory))
+    return {
+        "simulation_status": str(result.get("simulation_status") or "fail"),
+        "simulation_safe": (
+            result.get("simulation_status") == "pass"
+            and result.get("used_network") is False
+            and result.get("used_local_archive") is True
+            and result.get("writes_hermes_memory") is False
+            and result.get("modifies_hermes_agent") is False
+            and result.get("executes_composio") is False
+            and result.get("performs_github_write") is False
+            and result.get("provider_tools") == []
+        ),
+        "simulation_used_network": result.get("used_network") is True,
+        "simulation_used_local_archive": result.get("used_local_archive") is True,
+    }
+
+
+def _scan_unsafe_surfaces(root: Path) -> dict[str, list[dict[str, Any]]]:
+    unsafe_source_hits: list[dict[str, Any]] = []
+    allowed_documentation_hits: list[dict[str, Any]] = []
+    for relative in SURFACE_AUDIT_FILES:
+        path = root / relative
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for line_number, line, category, pattern_name in _unsafe_line_hits(text):
+            hit = {
+                "file": relative,
+                "line": line_number,
+                "pattern": pattern_name,
+                "category": category,
+                "text": line.strip(),
+            }
+            if path.suffix == ".md":
+                allowed_documentation_hits.append(hit)
+            else:
+                unsafe_source_hits.append(hit)
+    return {
+        "unsafe_source_hits": unsafe_source_hits,
+        "allowed_documentation_hits": allowed_documentation_hits,
+    }
+
+
+def _unsafe_line_hits(text: str) -> Iterable[tuple[int, str, str, str]]:
+    expressions = _unsafe_expressions()
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        for pattern_name, category, expression in expressions:
+            if expression.search(line):
+                yield line_number, line, category, pattern_name
+
+
+def _unsafe_expressions() -> tuple[tuple[str, str, re.Pattern[str]], ...]:
+    return (
+        ("network_client_a", "network", re.compile(re.escape("url" + "open"))),
+        ("network_client_b", "network", re.compile(re.escape("urllib" + "." + "request"))),
+        ("network_client_c", "network", re.compile(r"\b" + re.escape("requ" + "ests") + r"\b")),
+        ("shell_github_cli", "github_write", re.compile(r"subprocess.*\b" + re.escape("g" + "h") + r"\b")),
+        ("github_api_cli", "github_write", re.compile(re.escape("g" + "h api"))),
+        ("github_push", "github_write", re.compile(re.escape("git " + "push"))),
+        ("github_merge", "github_write", re.compile(re.escape("git " + "merge"))),
+        ("external_app_execution", "composio_execution", re.compile(re.escape("composio " + "execute"))),
+        (
+            "durable_memory_proposal",
+            "hermes_memory_write",
+            re.compile(re.escape("create_" + "memory_write_proposal")),
+        ),
+        ("hermes_home_write", "hermes_memory_write", re.compile(re.escape("HERMES" + "_HOME " + "writes"))),
+        ("hermes_home_path_write", "hermes_memory_write", re.compile(re.escape("~/" + "." + "hermes writes"))),
+    )
+
+
+def _relative_files(root: Path, base: Path) -> list[str]:
+    if not root.exists():
+        return []
+    return [
+        path.relative_to(base).as_posix()
+        for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file())
+    ]
+
+
+__all__ = [
+    "RELEASE_INTEGRITY_AUDIT_VERSION",
+    "run_release_integrity_audit",
+    "release_integrity_audit_to_json",
+]
