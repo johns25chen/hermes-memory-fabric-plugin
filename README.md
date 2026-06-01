@@ -36,6 +36,50 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## Shared Skill Fabric
+
+This repository includes a governed Skill Fabric for storing one canonical copy
+of approved Codex skills and projecting them into Codex/OpenClaw without
+duplicating installs. It writes registry, lock, projection, and audit files only;
+it does not write Hermes memory or modify OpenClaw config.
+
+### v2.1.0 Shared Skill Fabric Governance
+
+v2.1.0 hardens the Shared Skill Fabric to strict local-only boundaries. GitHub
+planning remains available as a deterministic no-network helper, but active
+network fetching is disabled. GitHub archive import accepts only an explicit
+local archive already present on disk, with owner/repo/path/ref metadata,
+expected SHA-256, and manual approval. Registry and ledger writes are local
+Skill Fabric state under explicit `--root` or the default OpenClaw Skill Fabric
+root; they are not Hermes memory.
+
+The v2.1.0 boundary excludes network fetch, GitHub write actions, Composio
+execution, Hermes memory writes, Hermes Agent modification, provider tool
+exposure, and implicit Codex projection. Codex projection must be explicitly
+invoked and writes only a managed symlink/copy plus projection marker under the
+chosen Codex skills directory.
+
+```bash
+python3 scripts/skill_fabric.py init
+python3 scripts/skill_fabric.py status
+python3 scripts/skill_fabric.py audit ./path/to/skill
+python3 scripts/skill_fabric.py audit-repo ./path/to/extracted-repo
+python3 scripts/skill_fabric.py lint-triggers ./path/to/skill ./path/to/other-skill
+python3 scripts/skill_fabric.py import ./path/to/skill --approved-by manual-review
+python3 scripts/skill_fabric.py versions <skill-name>
+python3 scripts/skill_fabric.py activate <skill-name> <version>
+python3 scripts/skill_fabric.py rollback <skill-name>
+python3 scripts/skill_fabric.py plan-github-import <owner>/<repo>/<path> --ref <ref>
+python3 scripts/skill_fabric.py import-github-archive <owner>/<repo>/<path> --ref <ref> --path <path> --archive-path <archive.zip> --expected-archive-sha256 <sha256> --approved-by <reviewer>
+python3 scripts/skill_fabric.py project-codex <skill-name>
+python3 scripts/skill_fabric.py unproject-codex <skill-name>
+python3 scripts/skill_fabric.py verify
+python3 scripts/skill_fabric.py governance-report
+```
+
+See [docs/SHARED_SKILL_FABRIC.md](docs/SHARED_SKILL_FABRIC.md) for the
+Codex/OpenClaw/Hermes boundary and gated GitHub import flow.
+
 ## v2.0.0 Token Authority Boundary Contract Dry Run
 
 v2.0.0 adds a deterministic authority boundary contract dry-run layer on top of
