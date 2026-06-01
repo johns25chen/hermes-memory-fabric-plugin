@@ -43,6 +43,29 @@ of approved Codex skills and projecting them into Codex/OpenClaw without
 duplicating installs. It writes registry, lock, projection, and audit files only;
 it does not write Hermes memory or modify OpenClaw config.
 
+### v2.2.0 Skill Fabric Real-World Import Simulation
+
+v2.2.0 adds a deterministic local simulation for the GitHub archive import path.
+It creates a fake GitHub-style skill archive under a temporary directory,
+computes the archive SHA-256, runs the no-network import plan, imports from the
+local archive only, projects the skill to a temporary Codex skills directory,
+checks the managed projection marker, unprojects it, confirms unmanaged paths
+were not touched, and runs Skill Fabric verification.
+
+The simulation is not real GitHub import, network fetch, Composio execution,
+Hermes memory write, Hermes Agent modification, or provider tool exposure. It
+uses temporary local directories only.
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_skill_fabric_simulation.py
+```
+
+Expected output:
+
+```text
+skill_fabric_github_archive_simulation=passed
+```
+
 ### v2.1.0 Shared Skill Fabric Governance
 
 v2.1.0 hardens the Shared Skill Fabric to strict local-only boundaries. GitHub

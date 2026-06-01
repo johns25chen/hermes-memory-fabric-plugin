@@ -6,6 +6,44 @@ governance surface; this module writes local Skill Fabric registry, lock,
 projection, and operation ledger files only. These files are local Skill Fabric
 state, not Hermes memory.
 
+## v2.2.0 Local GitHub Archive Simulation
+
+v2.2.0 adds a deterministic end-to-end simulation for the Shared Skill Fabric
+GitHub archive flow. The simulation creates a fake GitHub-style zip archive in
+a temporary local directory, places one valid `SKILL.md` under a scoped path
+such as `skills/demo-skill/SKILL.md`, computes the archive SHA-256, plans the
+GitHub import, imports only from that local archive, projects the imported skill
+to a temporary Codex skills directory, verifies the managed projection marker,
+unprojects it, confirms unmanaged Codex paths were left untouched, and runs
+`verify`.
+
+This remains a local proof only:
+
+- No network fetch is performed.
+- No GitHub API or write action is performed.
+- No Composio execution is performed.
+- No Hermes memory is written.
+- No Hermes Agent files or configuration are modified.
+- No provider tools are exposed.
+- All files are created under temporary local directories chosen by the
+  simulation caller.
+
+Run the smoke simulation:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_skill_fabric_simulation.py
+```
+
+Expected output:
+
+```text
+skill_fabric_github_archive_simulation=passed
+```
+
+Programmatic callers can use
+`run_skill_fabric_github_archive_simulation(temp_root)` and serialize the report
+with `skill_fabric_simulation_to_json(result)`.
+
 ## v2.1.0 Safety Boundary
 
 v2.1.0 is strict local-only Shared Skill Fabric Governance:
