@@ -36,6 +36,43 @@ PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memor
 See [docs/HERMES_INTEGRATION.md](docs/HERMES_INTEGRATION.md) for the loader
 details, optional real chat smoke, and rollback instructions.
 
+## v2.0.0 Token Authority Boundary Contract Dry Run
+
+v2.0.0 adds a deterministic authority boundary contract dry-run layer on top of
+the v1.9.0 approval token issuance dry run. It converts a safe v1.9 token
+issuance draft candidate into a declarative boundary contract candidate with a
+stable `authority_contract_id`.
+
+Run it with stdout JSON:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/build_token_authority_boundary_contract_dry_run.py \
+  --input /tmp/approval-token-issuance-dry-run.json
+```
+
+Or write the report to one explicit non-Hermes path:
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python scripts/build_token_authority_boundary_contract_dry_run.py \
+  --input /tmp/approval-token-issuance-dry-run.json \
+  --scope memory_proposal_apply_preview_only \
+  --expiry-seconds 900 \
+  --output /tmp/token-authority-boundary-contract-dry-run.json \
+  --print-summary
+```
+
+The dry run defines future scope, expiry, revocation, audit, ledger, and
+executor boundaries only. It does not issue approval tokens, create token
+values, write token files, create proposals, append operation ledger files,
+write memory/graph/config/SQLite state, write approval audit files, invoke
+executors, apply proposals, expose provider tools, call models, or use the
+network.
+
+See
+[docs/TOKEN_AUTHORITY_BOUNDARY_CONTRACT_DRY_RUN.md](docs/TOKEN_AUTHORITY_BOUNDARY_CONTRACT_DRY_RUN.md)
+for status behavior, why `ready` is still not token issuance, and the no-write
+boundary.
+
 ## v1.9.0 Approval Token Issuance Dry Run
 
 v1.9.0 adds a deterministic token issuance dry-run layer on top of the v1.8.0
