@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "2.5.0"
+    assert result["version"] == "2.6.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "2.5.0"
+    assert result["pyproject_version"] == "2.6.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -89,6 +89,15 @@ def test_release_integrity_review_gate_safety_remains_true():
     assert result["review_gate_approve_candidate_count"] > 0
     assert result["review_gate_reject_locked_count"] > 0
     assert result["review_gate_risk_note_only_count"] > 0
+
+
+def test_release_integrity_approval_request_safety_remains_true():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert result["approval_request_status"] == "ready"
+    assert result["approval_request_safe"] is True
+    assert result["approval_request_count"] == 15
+    assert result["blocked_decision_count"] == 3
 
 
 def test_release_integrity_unsafe_source_hits_are_empty():

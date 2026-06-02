@@ -6,6 +6,22 @@ governance surface; this module writes local Skill Fabric registry, lock,
 projection, and operation ledger files only. These files are local Skill Fabric
 state, not Hermes memory.
 
+## v2.6.0 Governed Memory Approval Request Dry Run
+
+v2.6.0 adds
+`build_governed_memory_approval_request_dry_run(proposal_path)` for consuming
+the v2.5.0 governed memory proposal review gate and producing deterministic
+approval request envelopes only for `approve_candidate` decisions.
+
+Rejected, deferred, and risk-note decisions stay blocked. The dry run preserves
+the source proposal ID, review decision ID, entry key, target surface, and review
+reason in each envelope, then assigns a stable approval request ID.
+
+This is not approval-token issuance or execution. It does not write Hermes
+memory, mutate the Memory Graph, append an operation ledger entry, issue
+approval tokens, create usable tokens, expose provider tools, call provider
+APIs, modify Hermes Agent, or use the network.
+
 ## v2.5.0 Governed Memory Proposal Review Gate Dry Run
 
 v2.5.0 adds
