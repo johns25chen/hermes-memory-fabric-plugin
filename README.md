@@ -43,6 +43,32 @@ of approved Codex skills and projecting them into Codex/OpenClaw without
 duplicating installs. It writes registry, lock, projection, and audit files only;
 it does not write Hermes memory or modify OpenClaw config.
 
+### v2.5.0 Governed Memory Proposal Review Gate Dry Run
+
+v2.5.0 adds a deterministic local review gate for the v2.4.0 governed memory
+proposal pack. It consumes the parsed pack entries and classifies each entry as
+`approve_candidate`, `reject_locked`, `defer_for_human_review`, or
+`risk_note_only`.
+
+The review gate is a dry run only. It does not write Hermes memory, mutate the
+Memory Graph, append operation ledger entries, issue approval tokens, create
+usable tokens, execute provider tools, modify Hermes Agent state, or use the
+network.
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_governed_memory_proposal_review_gate_dry_run.py
+```
+
+Expected output:
+
+```text
+governed_memory_proposal_review_gate_dry_run=passed
+```
+
+See
+[docs/GOVERNED_MEMORY_PROPOSAL_REVIEW_GATE_DRY_RUN.md](docs/GOVERNED_MEMORY_PROPOSAL_REVIEW_GATE_DRY_RUN.md)
+for the decision rules and safety boundary.
+
 ### v2.4.0 Governed Memory Proposal Pack Dry Run
 
 v2.4.0 adds a deterministic local dry-run builder for

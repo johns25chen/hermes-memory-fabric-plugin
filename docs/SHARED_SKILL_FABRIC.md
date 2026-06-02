@@ -6,6 +6,23 @@ governance surface; this module writes local Skill Fabric registry, lock,
 projection, and operation ledger files only. These files are local Skill Fabric
 state, not Hermes memory.
 
+## v2.5.0 Governed Memory Proposal Review Gate Dry Run
+
+v2.5.0 adds
+`run_governed_memory_proposal_review_gate_dry_run(proposal_path)` for consuming
+the v2.4.0 Civilization Core Video AI skills governed memory proposal pack and
+producing deterministic review decisions for every pack entry.
+
+The gate marks proposed durable-surface entries as `approve_candidate`, keeps
+rejected entries locked as `reject_locked`, leaves risk notes as
+`risk_note_only`, and blocks unknown statuses or target surfaces by deferring
+them for human review.
+
+This is still not execution. It does not write Hermes memory, mutate the Memory
+Graph, append an operation ledger entry, issue approval tokens, create usable
+tokens, expose provider tools, call provider APIs, modify Hermes Agent, or use
+the network.
+
 ## v2.4.0 Governed Memory Proposal Pack Dry Run
 
 v2.4.0 adds
