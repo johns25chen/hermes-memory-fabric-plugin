@@ -43,6 +43,33 @@ of approved Codex skills and projecting them into Codex/OpenClaw without
 duplicating installs. It writes registry, lock, projection, and audit files only;
 it does not write Hermes memory or modify OpenClaw config.
 
+### v2.4.0 Governed Memory Proposal Pack Dry Run
+
+v2.4.0 adds a deterministic local dry-run builder for
+`docs/CIVILIZATION_CORE_VIDEO_AI_SKILLS_MEMORY_PROPOSAL.md`. It parses the
+staging Markdown into structured proposal-pack entries with stable proposal IDs,
+target surfaces, statuses, no-write flags, rejected non-durable entries, and
+risk notes.
+
+The proposal pack builder is local-only. It does not write Hermes memory, mutate
+the Memory Graph, append operation ledger entries, create real memory write
+proposals, modify Hermes Agent state, expose provider tools, or use the
+network.
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_governed_memory_proposal_pack_dry_run.py
+```
+
+Expected output:
+
+```text
+governed_memory_proposal_pack_dry_run=passed
+```
+
+See
+[docs/GOVERNED_MEMORY_PROPOSAL_PACK_DRY_RUN.md](docs/GOVERNED_MEMORY_PROPOSAL_PACK_DRY_RUN.md)
+for the parsed surfaces and no-write boundary.
+
 ### v2.3.0 Release Integrity Audit
 
 v2.3.0 adds a deterministic local release integrity audit for the safety-critical

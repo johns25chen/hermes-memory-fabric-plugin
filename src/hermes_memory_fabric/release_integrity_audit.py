@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v2.2.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v2.4.0."""
 
 from __future__ import annotations
 
@@ -15,12 +15,15 @@ from .memory_token_authority_boundary_contract_dry_run import (
     SOURCE_REQUIRED_KEYS,
     run_memory_token_authority_boundary_contract_dry_run,
 )
+from .governed_memory_proposal_pack_dry_run import (
+    build_governed_memory_proposal_pack_dry_run,
+)
 from .provider import MemoryFabricProvider
 from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skill_fabric
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "2.3.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.4.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -35,6 +38,10 @@ EXPECTED_RELEASE_FILES = (
     "src/hermes_memory_fabric/skill_fabric_simulation.py",
     "scripts/smoke_skill_fabric_simulation.py",
     "tests/test_skill_fabric_simulation.py",
+    "src/hermes_memory_fabric/governed_memory_proposal_pack_dry_run.py",
+    "scripts/smoke_governed_memory_proposal_pack_dry_run.py",
+    "tests/test_governed_memory_proposal_pack_dry_run.py",
+    "docs/GOVERNED_MEMORY_PROPOSAL_PACK_DRY_RUN.md",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -44,6 +51,10 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_skill_fabric_simulation.py",
     "tests/test_skill_fabric.py",
     "tests/test_skill_fabric_simulation.py",
+    "src/hermes_memory_fabric/governed_memory_proposal_pack_dry_run.py",
+    "scripts/smoke_governed_memory_proposal_pack_dry_run.py",
+    "tests/test_governed_memory_proposal_pack_dry_run.py",
+    "docs/GOVERNED_MEMORY_PROPOSAL_PACK_DRY_RUN.md",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
@@ -62,6 +73,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     authority = _run_authority_contract_check()
     skill_fabric = _run_skill_fabric_check()
     simulation = _run_simulation_check()
+    proposal_pack = _run_governed_memory_proposal_pack_check(root)
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -84,6 +96,8 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         and simulation["simulation_safe"]
         and simulation["simulation_used_network"] is False
         and simulation["simulation_used_local_archive"] is True
+        and proposal_pack["proposal_pack_status"] == "ready"
+        and proposal_pack["proposal_pack_safe"]
         and no_network_surface
         and no_hermes_memory_write
         and no_github_write
@@ -111,6 +125,11 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         "simulation_safe": simulation["simulation_safe"],
         "simulation_used_network": simulation["simulation_used_network"],
         "simulation_used_local_archive": simulation["simulation_used_local_archive"],
+        "proposal_pack_status": proposal_pack["proposal_pack_status"],
+        "proposal_pack_safe": proposal_pack["proposal_pack_safe"],
+        "proposal_pack_entry_count": proposal_pack["proposal_pack_entry_count"],
+        "proposal_pack_rejected_count": proposal_pack["proposal_pack_rejected_count"],
+        "proposal_pack_risk_note_count": proposal_pack["proposal_pack_risk_note_count"],
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -133,6 +152,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "authority_contract_safe": authority["authority_contract_safe"],
                 "skill_fabric_safe": skill_fabric["skill_fabric_safe"],
                 "simulation_safe": simulation["simulation_safe"],
+                "proposal_pack_safe": proposal_pack["proposal_pack_safe"],
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
             },
         },
@@ -253,6 +273,36 @@ def _run_simulation_check() -> dict[str, Any]:
         ),
         "simulation_used_network": result.get("used_network") is True,
         "simulation_used_local_archive": result.get("used_local_archive") is True,
+    }
+
+
+def _run_governed_memory_proposal_pack_check(root: Path) -> dict[str, Any]:
+    proposal_path = root / "docs" / "CIVILIZATION_CORE_VIDEO_AI_SKILLS_MEMORY_PROPOSAL.md"
+    result = build_governed_memory_proposal_pack_dry_run(proposal_path)
+    safe = (
+        result.get("pack_status") == "ready"
+        and result.get("entry_count", 0) > 0
+        and result.get("proposed_count", 0) > 0
+        and result.get("rejected_count", 0) > 0
+        and result.get("risk_note_count", 0) > 0
+        and result.get("writes_memory") is False
+        and result.get("writes_graph") is False
+        and result.get("writes_operation_ledger") is False
+        and result.get("writes_config") is False
+        and result.get("writes_sqlite") is False
+        and result.get("invokes_real_executor") is False
+        and result.get("provider_tools") == []
+        and result.get("creates_real_memory_write_proposal") is False
+        and result.get("creates_real_operation_ledger_entry") is False
+        and result.get("modifies_hermes_agent") is False
+        and result.get("no_network_surface") is True
+    )
+    return {
+        "proposal_pack_status": str(result.get("pack_status") or "blocked"),
+        "proposal_pack_safe": safe,
+        "proposal_pack_entry_count": int(result.get("entry_count") or 0),
+        "proposal_pack_rejected_count": int(result.get("rejected_count") or 0),
+        "proposal_pack_risk_note_count": int(result.get("risk_note_count") or 0),
     }
 
 
