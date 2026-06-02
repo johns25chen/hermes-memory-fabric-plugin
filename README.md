@@ -43,6 +43,33 @@ of approved Codex skills and projecting them into Codex/OpenClaw without
 duplicating installs. It writes registry, lock, projection, and audit files only;
 it does not write Hermes memory or modify OpenClaw config.
 
+### v2.6.0 Governed Memory Approval Request Dry Run
+
+v2.6.0 adds a deterministic local approval-request envelope dry run for the
+v2.5.0 governed memory proposal review gate. It consumes review-gate decisions
+and creates approval request envelopes only for `approve_candidate` decisions.
+Rejected, deferred, and risk-note decisions remain blocked and never become
+approval requests.
+
+This is envelope creation only. It does not issue approval tokens, create usable
+tokens, write Hermes memory, mutate the Memory Graph, append operation ledger
+entries, execute provider tools, expose provider tools, modify Hermes Agent
+state, or use the network.
+
+```bash
+PYTHONPATH="$PWD/src:$PWD" python3 scripts/smoke_governed_memory_approval_request_dry_run.py
+```
+
+Expected output:
+
+```text
+governed_memory_approval_request_dry_run=passed
+```
+
+See
+[docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md](docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md)
+for the envelope schema and safety boundary.
+
 ### v2.5.0 Governed Memory Proposal Review Gate Dry Run
 
 v2.5.0 adds a deterministic local review gate for the v2.4.0 governed memory

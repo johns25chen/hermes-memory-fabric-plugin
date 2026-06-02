@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v2.5.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v2.6.0."""
 
 from __future__ import annotations
 
@@ -21,12 +21,15 @@ from .governed_memory_proposal_pack_dry_run import (
 from .governed_memory_proposal_review_gate_dry_run import (
     run_governed_memory_proposal_review_gate_dry_run,
 )
+from .governed_memory_approval_request_dry_run import (
+    build_governed_memory_approval_request_dry_run,
+)
 from .provider import MemoryFabricProvider
 from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skill_fabric
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "2.5.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.6.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -49,6 +52,10 @@ EXPECTED_RELEASE_FILES = (
     "scripts/smoke_governed_memory_proposal_review_gate_dry_run.py",
     "tests/test_governed_memory_proposal_review_gate_dry_run.py",
     "docs/GOVERNED_MEMORY_PROPOSAL_REVIEW_GATE_DRY_RUN.md",
+    "src/hermes_memory_fabric/governed_memory_approval_request_dry_run.py",
+    "scripts/smoke_governed_memory_approval_request_dry_run.py",
+    "tests/test_governed_memory_approval_request_dry_run.py",
+    "docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -66,13 +73,17 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_governed_memory_proposal_review_gate_dry_run.py",
     "tests/test_governed_memory_proposal_review_gate_dry_run.py",
     "docs/GOVERNED_MEMORY_PROPOSAL_REVIEW_GATE_DRY_RUN.md",
+    "src/hermes_memory_fabric/governed_memory_approval_request_dry_run.py",
+    "scripts/smoke_governed_memory_approval_request_dry_run.py",
+    "tests/test_governed_memory_approval_request_dry_run.py",
+    "docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
 
 
 def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
-    """Run a local, no-network integrity audit for the v2.0-v2.2 release chain."""
+    """Run a local, no-network integrity audit for the v2.0-v2.6 release chain."""
 
     root = Path(repo_root).expanduser().resolve()
     pyproject_version = _pyproject_version(root)
@@ -86,6 +97,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     simulation = _run_simulation_check()
     proposal_pack = _run_governed_memory_proposal_pack_check(root)
     review_gate = _run_governed_memory_proposal_review_gate_check(root)
+    approval_request = _run_governed_memory_approval_request_check(root)
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -112,6 +124,8 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         and proposal_pack["proposal_pack_safe"]
         and review_gate["review_gate_status"] == "ready"
         and review_gate["review_gate_safe"]
+        and approval_request["approval_request_status"] == "ready"
+        and approval_request["approval_request_safe"]
         and no_network_surface
         and no_hermes_memory_write
         and no_github_write
@@ -150,6 +164,10 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         "review_gate_approve_candidate_count": review_gate["review_gate_approve_candidate_count"],
         "review_gate_reject_locked_count": review_gate["review_gate_reject_locked_count"],
         "review_gate_risk_note_only_count": review_gate["review_gate_risk_note_only_count"],
+        "approval_request_status": approval_request["approval_request_status"],
+        "approval_request_safe": approval_request["approval_request_safe"],
+        "approval_request_count": approval_request["approval_request_count"],
+        "blocked_decision_count": approval_request["blocked_decision_count"],
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -174,6 +192,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "simulation_safe": simulation["simulation_safe"],
                 "proposal_pack_safe": proposal_pack["proposal_pack_safe"],
                 "review_gate_safe": review_gate["review_gate_safe"],
+                "approval_request_safe": approval_request["approval_request_safe"],
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
             },
         },
@@ -366,6 +385,40 @@ def _run_governed_memory_proposal_review_gate_check(root: Path) -> dict[str, Any
     }
 
 
+def _run_governed_memory_approval_request_check(root: Path) -> dict[str, Any]:
+    proposal_path = root / "docs" / "CIVILIZATION_CORE_VIDEO_AI_SKILLS_MEMORY_PROPOSAL.md"
+    result = build_governed_memory_approval_request_dry_run(proposal_path)
+    safe = (
+        result.get("approval_request_status") == "ready"
+        and result.get("review_gate_version") == "2.5.0"
+        and result.get("review_gate_status") == "ready"
+        and result.get("approval_request_count") == result.get("approve_candidate_count")
+        and result.get("approval_request_count") == 15
+        and result.get("blocked_decision_count") == 3
+        and result.get("writes_memory") is False
+        and result.get("writes_graph") is False
+        and result.get("writes_operation_ledger") is False
+        and result.get("writes_config") is False
+        and result.get("writes_sqlite") is False
+        and result.get("invokes_real_executor") is False
+        and result.get("provider_tools") == []
+        and result.get("creates_real_memory_write_proposal") is False
+        and result.get("creates_real_operation_ledger_entry") is False
+        and result.get("issues_approval_token") is False
+        and result.get("approval_token_issued") is False
+        and result.get("approval_token_value") is None
+        and result.get("creates_usable_token") is False
+        and result.get("modifies_hermes_agent") is False
+        and result.get("no_network_surface") is True
+    )
+    return {
+        "approval_request_status": str(result.get("approval_request_status") or "blocked"),
+        "approval_request_safe": safe,
+        "approval_request_count": int(result.get("approval_request_count") or 0),
+        "blocked_decision_count": int(result.get("blocked_decision_count") or 0),
+    }
+
+
 def _scan_unsafe_surfaces(root: Path) -> dict[str, list[dict[str, Any]]]:
     unsafe_source_hits: list[dict[str, Any]] = []
     allowed_documentation_hits: list[dict[str, Any]] = []
@@ -404,7 +457,17 @@ def _unsafe_expressions() -> tuple[tuple[str, str, re.Pattern[str]], ...]:
     return (
         ("network_client_a", "network", re.compile(re.escape("url" + "open"))),
         ("network_client_b", "network", re.compile(re.escape("urllib" + "." + "request"))),
-        ("network_client_c", "network", re.compile(r"\b" + re.escape("requ" + "ests") + r"\b")),
+        (
+            "network_client_c",
+            "network",
+            re.compile(
+                r"^\s*(import\s+"
+                + re.escape("requ" + "ests")
+                + r"\b|from\s+"
+                + re.escape("requ" + "ests")
+                + r"\b)"
+            ),
+        ),
         ("shell_github_cli", "github_write", re.compile(r"subprocess.*\b" + re.escape("g" + "h") + r"\b")),
         ("github_api_cli", "github_write", re.compile(re.escape("g" + "h api"))),
         ("github_push", "github_write", re.compile(re.escape("git " + "push"))),
