@@ -6,6 +6,23 @@ governance surface; this module writes local Skill Fabric registry, lock,
 projection, and operation ledger files only. These files are local Skill Fabric
 state, not Hermes memory.
 
+## v2.4.0 Governed Memory Proposal Pack Dry Run
+
+v2.4.0 adds
+`build_governed_memory_proposal_pack_dry_run(proposal_path)` for converting the
+Civilization Core Video AI skills memory proposal Markdown staging artifact into
+a deterministic structured proposal pack.
+
+The builder classifies long-term, short-term, operation-ledger, knowledge
+surface, do-not-persist, and risk-note sections. It assigns stable proposal IDs
+and rejects non-durable material such as temporary command authorizations,
+one-off temporary state, API key or secret mentions, raw credentials, Docker log
+fragments, temporary paths, and PIDs.
+
+This is not a real memory write or Memory Graph mutation. It does not append the
+operation ledger, create a governed memory write proposal, modify Hermes Agent,
+expose provider tools, call provider APIs, or use the network.
+
 ## v2.3.0 Release Integrity Audit Note
 
 v2.3.0 adds `run_release_integrity_audit(repo_root)` as a deterministic local

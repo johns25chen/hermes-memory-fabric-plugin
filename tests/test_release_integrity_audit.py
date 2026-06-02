@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "2.3.0"
+    assert result["version"] == "2.4.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "2.3.0"
+    assert result["pyproject_version"] == "2.4.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -68,6 +68,16 @@ def test_release_integrity_simulation_safety_remains_true():
     assert result["simulation_safe"] is True
     assert result["simulation_used_network"] is False
     assert result["simulation_used_local_archive"] is True
+
+
+def test_release_integrity_proposal_pack_safety_remains_true():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert result["proposal_pack_status"] == "ready"
+    assert result["proposal_pack_safe"] is True
+    assert result["proposal_pack_entry_count"] > 0
+    assert result["proposal_pack_rejected_count"] > 0
+    assert result["proposal_pack_risk_note_count"] > 0
 
 
 def test_release_integrity_unsafe_source_hits_are_empty():
