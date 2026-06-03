@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "2.14.0"
+    assert result["version"] == "2.15.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "2.14.0"
+    assert result["pyproject_version"] == "2.15.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -192,3 +192,13 @@ def test_release_integrity_governed_approval_request_dry_run_envelope_validation
         == "pass"
     )
     assert result["governed_approval_request_dry_run_envelope_validation_smoke_safe"] is True
+
+
+def test_release_integrity_governed_human_operator_decision_packet_dry_run_smoke_remains_safe():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert (
+        result["governed_human_operator_decision_packet_dry_run_smoke_status"]
+        == "pass"
+    )
+    assert result["governed_human_operator_decision_packet_dry_run_smoke_safe"] is True
