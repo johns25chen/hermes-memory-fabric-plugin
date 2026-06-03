@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v2.9.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v2.10.0."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skil
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "2.9.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.10.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -68,6 +68,10 @@ EXPECTED_RELEASE_FILES = (
     "scripts/smoke_closed_loop_evidence_validation.py",
     "tests/test_closed_loop_evidence_validation.py",
     "tests/test_smoke_closed_loop_evidence_validation.py",
+    "src/hermes_memory_fabric/governed_memory_proposal_from_evidence.py",
+    "scripts/smoke_governed_memory_proposal_from_evidence.py",
+    "tests/test_governed_memory_proposal_from_evidence.py",
+    "tests/test_smoke_governed_memory_proposal_from_evidence.py",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -99,6 +103,10 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_closed_loop_evidence_validation.py",
     "tests/test_closed_loop_evidence_validation.py",
     "tests/test_smoke_closed_loop_evidence_validation.py",
+    "src/hermes_memory_fabric/governed_memory_proposal_from_evidence.py",
+    "scripts/smoke_governed_memory_proposal_from_evidence.py",
+    "tests/test_governed_memory_proposal_from_evidence.py",
+    "tests/test_smoke_governed_memory_proposal_from_evidence.py",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
@@ -123,6 +131,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     openclaw_audit_review = _run_openclaw_audit_review_check()
     openclaw_audit_review_smoke = _run_openclaw_audit_review_smoke_check(root)
     closed_loop_evidence_validation_smoke = _run_closed_loop_evidence_validation_smoke_check(root)
+    governed_memory_proposal_from_evidence_smoke = (
+        _run_governed_memory_proposal_from_evidence_smoke_check(root)
+    )
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -154,6 +165,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         and openclaw_audit_review["openclaw_audit_review_safe"]
         and openclaw_audit_review_smoke["openclaw_audit_review_smoke_safe"]
         and closed_loop_evidence_validation_smoke["closed_loop_evidence_validation_smoke_safe"]
+        and governed_memory_proposal_from_evidence_smoke[
+            "governed_memory_proposal_from_evidence_smoke_safe"
+        ]
         and no_network_surface
         and no_hermes_memory_write
         and no_github_write
@@ -210,6 +224,16 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         "closed_loop_evidence_validation_smoke_safe": closed_loop_evidence_validation_smoke[
             "closed_loop_evidence_validation_smoke_safe"
         ],
+        "governed_memory_proposal_from_evidence_smoke_status": (
+            governed_memory_proposal_from_evidence_smoke[
+                "governed_memory_proposal_from_evidence_smoke_status"
+            ]
+        ),
+        "governed_memory_proposal_from_evidence_smoke_safe": (
+            governed_memory_proposal_from_evidence_smoke[
+                "governed_memory_proposal_from_evidence_smoke_safe"
+            ]
+        ),
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -242,6 +266,11 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "closed_loop_evidence_validation_smoke_safe": closed_loop_evidence_validation_smoke[
                     "closed_loop_evidence_validation_smoke_safe"
                 ],
+                "governed_memory_proposal_from_evidence_smoke_safe": (
+                    governed_memory_proposal_from_evidence_smoke[
+                        "governed_memory_proposal_from_evidence_smoke_safe"
+                    ]
+                ),
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
             },
         },
@@ -304,6 +333,26 @@ def _run_closed_loop_evidence_validation_smoke_check(root: Path) -> dict[str, An
     return {
         "closed_loop_evidence_validation_smoke_status": "pass" if safe else "fail",
         "closed_loop_evidence_validation_smoke_safe": safe,
+    }
+
+
+def _run_governed_memory_proposal_from_evidence_smoke_check(root: Path) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(root / "scripts" / "smoke_governed_memory_proposal_from_evidence.py")],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    safe = (
+        completed.returncode == 0
+        and completed.stdout == "governed_memory_proposal_from_evidence=passed\n"
+        and completed.stderr == ""
+    )
+    return {
+        "governed_memory_proposal_from_evidence_smoke_status": "pass" if safe else "fail",
+        "governed_memory_proposal_from_evidence_smoke_safe": safe,
     }
 
 
