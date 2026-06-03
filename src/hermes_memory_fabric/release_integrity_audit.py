@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v2.14.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v2.15.0."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skil
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "2.14.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.15.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -88,6 +88,10 @@ EXPECTED_RELEASE_FILES = (
     "scripts/smoke_governed_approval_request_dry_run_envelope_validation.py",
     "tests/test_governed_approval_request_dry_run_envelope_validation.py",
     "tests/test_smoke_governed_approval_request_dry_run_envelope_validation.py",
+    "src/hermes_memory_fabric/governed_human_operator_decision_packet_dry_run.py",
+    "scripts/smoke_governed_human_operator_decision_packet_dry_run.py",
+    "tests/test_governed_human_operator_decision_packet_dry_run.py",
+    "tests/test_smoke_governed_human_operator_decision_packet_dry_run.py",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -139,13 +143,17 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_governed_approval_request_dry_run_envelope_validation.py",
     "tests/test_governed_approval_request_dry_run_envelope_validation.py",
     "tests/test_smoke_governed_approval_request_dry_run_envelope_validation.py",
+    "src/hermes_memory_fabric/governed_human_operator_decision_packet_dry_run.py",
+    "scripts/smoke_governed_human_operator_decision_packet_dry_run.py",
+    "tests/test_governed_human_operator_decision_packet_dry_run.py",
+    "tests/test_smoke_governed_human_operator_decision_packet_dry_run.py",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
 
 
 def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
-    """Run a local, no-network integrity audit for the v2.0-v2.14 release chain."""
+    """Run a local, no-network integrity audit for the v2.0-v2.15 release chain."""
 
     root = Path(repo_root).expanduser().resolve()
     pyproject_version = _pyproject_version(root)
@@ -177,6 +185,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     )
     governed_approval_request_dry_run_envelope_validation_smoke = (
         _run_governed_approval_request_dry_run_envelope_validation_smoke_check(root)
+    )
+    governed_human_operator_decision_packet_dry_run_smoke = (
+        _run_governed_human_operator_decision_packet_dry_run_smoke_check(root)
     )
     surface = _scan_unsafe_surfaces(root)
 
@@ -223,6 +234,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         ]
         and governed_approval_request_dry_run_envelope_validation_smoke[
             "governed_approval_request_dry_run_envelope_validation_smoke_safe"
+        ]
+        and governed_human_operator_decision_packet_dry_run_smoke[
+            "governed_human_operator_decision_packet_dry_run_smoke_safe"
         ]
         and no_network_surface
         and no_hermes_memory_write
@@ -330,6 +344,16 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governed_approval_request_dry_run_envelope_validation_smoke_safe"
             ]
         ),
+        "governed_human_operator_decision_packet_dry_run_smoke_status": (
+            governed_human_operator_decision_packet_dry_run_smoke[
+                "governed_human_operator_decision_packet_dry_run_smoke_status"
+            ]
+        ),
+        "governed_human_operator_decision_packet_dry_run_smoke_safe": (
+            governed_human_operator_decision_packet_dry_run_smoke[
+                "governed_human_operator_decision_packet_dry_run_smoke_safe"
+            ]
+        ),
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -385,6 +409,11 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governed_approval_request_dry_run_envelope_validation_smoke_safe": (
                     governed_approval_request_dry_run_envelope_validation_smoke[
                         "governed_approval_request_dry_run_envelope_validation_smoke_safe"
+                    ]
+                ),
+                "governed_human_operator_decision_packet_dry_run_smoke_safe": (
+                    governed_human_operator_decision_packet_dry_run_smoke[
+                        "governed_human_operator_decision_packet_dry_run_smoke_safe"
                     ]
                 ),
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
@@ -563,6 +592,37 @@ def _run_governed_approval_request_dry_run_envelope_validation_smoke_check(
             "pass" if safe else "fail"
         ),
         "governed_approval_request_dry_run_envelope_validation_smoke_safe": safe,
+    }
+
+
+def _run_governed_human_operator_decision_packet_dry_run_smoke_check(
+    root: Path,
+) -> dict[str, Any]:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(
+                root
+                / "scripts"
+                / "smoke_governed_human_operator_decision_packet_dry_run.py"
+            ),
+        ],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    safe = (
+        completed.returncode == 0
+        and completed.stdout == "governed_human_operator_decision_packet_dry_run=passed\n"
+        and completed.stderr == ""
+    )
+    return {
+        "governed_human_operator_decision_packet_dry_run_smoke_status": (
+            "pass" if safe else "fail"
+        ),
+        "governed_human_operator_decision_packet_dry_run_smoke_safe": safe,
     }
 
 
