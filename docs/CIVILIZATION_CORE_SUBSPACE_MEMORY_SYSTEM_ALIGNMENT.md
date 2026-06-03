@@ -169,3 +169,12 @@ v2.8.0 的方向是最小闭环验证：
 v2.8.0 的目标不是扩大自动化权限，而是验证最小可行治理闭环是否成立。只有当
 每个环节都能证明“证据可追溯、权限不外溢、执行不自触发、版本可回滚、人类
 仍为最终权威”时，文明之核的亚空间记忆系统才进入下一阶段建设。
+
+## 9. v2.10-pre 框架纠偏交叉引用
+
+十五层记忆是文明之核的最高记忆坐标，亚空间记忆系统是其工程实现载体。v2.10-pre
+框架纠偏文档见：
+
+- [`CIVILIZATION_CORE_FIFTEEN_MEMORY_LAYERS.md`](CIVILIZATION_CORE_FIFTEEN_MEMORY_LAYERS.md)
+- [`CIVILIZATION_CORE_PROJECT_DRIFT_AUDIT.md`](CIVILIZATION_CORE_PROJECT_DRIFT_AUDIT.md)
+- [`CIVILIZATION_CORE_VERSION_MEMORY_LAYER_MAP.md`](CIVILIZATION_CORE_VERSION_MEMORY_LAYER_MAP.md)
