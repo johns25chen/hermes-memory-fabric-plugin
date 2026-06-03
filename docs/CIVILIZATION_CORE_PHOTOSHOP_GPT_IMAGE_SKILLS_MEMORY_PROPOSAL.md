@@ -277,6 +277,88 @@ photo annotation, dimension callouts, and construction markup workflows:
 The tenth pass did not mutate evidence photos, write Hermes memory, write
 operation-ledger entries, or change policy/config surfaces.
 
+### eleventh_round_earthwork_drainage_erosion_research_operation
+
+Codex continued an eleventh research pass on 2026-06-03 focused on earthwork,
+sloping/benching, construction drainage, erosion control, and sediment-control
+visuals:
+
+- Excavation imagery should distinguish vertical trench walls, sloped
+  excavation, benched excavation, stepped faces, surcharge zones, spoil piles,
+  trench boxes, and shoring/shielding.
+- Dewatering and drainage details include sumps, pumps, muddy water, diversion
+  swales, lined ditches, inlet protection, drainageways, sediment basins,
+  fiber logs, rock checks, and construction entrances.
+- Erosion/sediment control visuals include silt fence at downslope boundaries,
+  perimeter controls, stockpile controls, inlet protection, stabilized slopes,
+  and exposed-soil coverage.
+- These details are important for construction-site realism and safety context,
+  but should not be presented as code-compliant unless checked against local
+  SWPPP/BMP/manual requirements.
+
+The eleventh pass did not write Hermes memory, write operation-ledger entries,
+call image models, or change policy/config surfaces.
+
+### twelfth_round_work_zone_traffic_control_research_operation
+
+Codex continued a twelfth research pass on 2026-06-03 focused on roadwork
+traffic-control visuals:
+
+- Work-zone scenes rely on traffic-control devices such as cones, drums,
+  channelizers, barricades, temporary signs, arrow boards, warning lights,
+  flaggers, stop/slow paddles, lane-closure tapers, and pedestrian detours.
+- Temporary traffic-control signs and devices are regulated by jurisdictional
+  standards such as MUTCD and state/local supplements; generated visuals should
+  avoid implying compliance unless based on project-specific plans.
+- Road construction edits should preserve or deliberately design the traffic
+  management layout instead of scattering cones randomly for decoration.
+
+The twelfth pass did not write Hermes memory, write operation-ledger entries,
+call image models, or change policy/config surfaces.
+
+### thirteenth_round_defect_damage_image_research_operation
+
+Codex continued a thirteenth research pass on 2026-06-03 focused on pavement,
+concrete, and construction-defect image datasets and visual categories:
+
+- Pavement distress imagery includes cracks, alligator cracking, block
+  cracking, potholes, patches, deformations, maintenance holes, worn markings,
+  puddles, and surface repairs.
+- Concrete defect imagery includes cracks, honeycombing/voids, spalling,
+  delamination, exposed rebar, rebar corrosion, efflorescence, crushing, and
+  deformation.
+- Defect datasets are useful for building visual failure-mode vocabulary and
+  review rubrics, but should not be used as Photoshop cleanup targets when
+  the image is evidence.
+
+The thirteenth pass did not download datasets, train models, call image models,
+write Hermes memory, write operation-ledger entries, or change policy/config
+surfaces.
+
+### fourteenth_round_precision_ai_control_research_operation
+
+Codex continued a fourteenth research pass on 2026-06-03 focused on precise AI
+image-editing control using masks, inpainting, ControlNet-style depth, Canny
+edge, lineart, segmentation, and multi-condition workflows:
+
+- Inpainting is appropriate when the overall engineering scene is correct but a
+  bounded area needs replacement, repair, or insertion.
+- Depth control preserves spatial relationships, useful for trenches, pits,
+  road scenes, equipment placement, pipe rows, and braced excavations.
+- Canny/edge control preserves hard boundaries and line structures, useful for
+  sheet piles, road edges, conduit rows, formwork, barriers, and dimension-like
+  geometry.
+- Lineart/sketch control is useful when a user supplies a simplified layout,
+  pipe alignment, shoring sketch, duct bank cross-section, or construction
+  sequence diagram.
+- Segmentation guidance can help isolate target objects or surfaces but must
+  be checked because engineering elements may be misclassified by generic
+  segmentation models.
+
+The fourteenth pass did not run ComfyUI, download models, execute workflows,
+call image models, write Hermes memory, write operation-ledger entries, or
+change policy/config surfaces.
+
 ## Knowledge Surface Candidates
 
 ### photoshop_retouching_core_methodology
@@ -1186,6 +1268,160 @@ Engineering image outputs should be classified by intended use:
   matched viewpoints or georeferenced drone data.
 - `evidence`: unmodified original or minimally processed documentation image.
 
+### earthwork_slope_drainage_visual_rules
+
+Earthwork and excavation image edits need explicit ground-shape logic:
+
+1. Sloped excavation, benched excavation, and shored vertical excavation should
+   look different; do not mix them randomly.
+2. Benching creates step-like horizontal shelves and vertical faces; sloping
+   creates a continuous inclined face.
+3. Spoil piles, equipment loads, road traffic, and nearby structures are
+   surcharge cues; do not place them unrealistically at unsupported trench
+   edges in documentation-style images.
+4. Dewatering should show a plausible low point, sump, pump, hose, drainage
+   channel, muddy water, or wet soil staining.
+5. Exposed soil should vary by layer, moisture, compaction, and cut surface;
+   generic brown blur weakens realism.
+6. Construction drainage features such as swales, ditches, fiber logs, inlet
+   protection, and sediment basins must follow gravity and site slope.
+
+### erosion_sediment_control_visual_rules
+
+Erosion and sediment-control details should be treated as site infrastructure:
+
+1. Silt fence normally belongs at downslope/perimeter locations or around
+   stockpiles, not across active high-flow channels unless designed for that
+   condition.
+2. Fiber rolls/logs, check dams, inlet protection, stabilized construction
+   entrances, and covered stockpiles provide stronger visual specificity than
+   generic black fencing.
+3. Sediment accumulation, muddy runoff paths, tire tracking, and washed-out
+   soil are important context and should not be removed from evidence photos.
+4. For presentation renderings, sediment controls can be cleaned visually but
+   should remain positioned logically relative to drainage.
+5. AI-generated erosion controls should not be treated as SWPPP compliance
+   drawings.
+
+### work_zone_traffic_control_visual_rules
+
+Roadwork image editing should preserve temporary traffic-control logic:
+
+1. Cones, drums, vertical panels, barricades, signs, arrow boards, and flaggers
+   should form a readable path for drivers and pedestrians.
+2. Lane closures require a transition/taper, work area, buffer space, and
+   downstream return in many standard layouts; a few random cones beside a
+   trench can look unsafe.
+3. Road-closed scenes need stronger closure cues such as Type III barricades,
+   road closed signs, detour signs, or physical barriers.
+4. Work-zone signs should not conflict with visible lane geometry or each
+   other; sign clutter can reduce believability.
+5. Night or low-light roadwork needs reflective bands, warning lights, vehicle
+   beacons, and high-visibility PPE.
+6. Do not generate misleading signs, incorrect symbols, or fake jurisdictional
+   compliance markings when exact traffic-control plans matter.
+
+### construction_equipment_compositing_rules
+
+Heavy equipment added to construction photos must match site physics:
+
+1. Excavators, rollers, loaders, dump trucks, compactors, and cranes need
+   contact shadows, tire/track marks, scale consistency, and ground deformation
+   where appropriate.
+2. Excavator reach and bucket position should make sense relative to the trench
+   or spoil pile.
+3. Equipment should not be placed on unsupported trench edges, inside blocked
+   bracing, or under overhead conflicts unless intentionally showing a hazard.
+4. Machine orientation should align with the work sequence: excavating,
+   lowering pipe, backfilling, compacting, loading spoil, or paving.
+5. Safety exclusion space around swinging excavators and suspended loads should
+   be visually considered in concept imagery.
+
+### pavement_and_concrete_defect_visual_rules
+
+Engineering image editing must distinguish defect handling by image purpose:
+
+1. Evidence or inspection photos: preserve cracks, potholes, spalling,
+   honeycombing, corrosion stains, exposed rebar, delamination cues, and
+   deformation. Use annotations, not cleanup.
+2. Presentation cleanup: defects may be visually softened only if the image is
+   not used for inspection, claims, progress payment, or quality documentation.
+3. Concept repair visualization: show proposed repair patches, sawcuts,
+   resurfacing, crack sealing, or concrete repair zones as future-state
+   illustrations.
+4. Road patches should match asphalt color, aggregate texture, feathered edges,
+   compaction marks, lane marking continuity, and drainage.
+5. Concrete repair edits should preserve surface plane, formwork pattern,
+   aggregate exposure, curing discoloration, and rebar/cover logic.
+6. AI should not remove safety-critical defects from factual records.
+
+### defect_annotation_prompt_patterns
+
+Useful defect-focused prompt and markup patterns:
+
+1. `Add clear red annotation circles around the visible pavement cracks and
+   potholes without changing the road surface pixels. Add short labels only.`
+2. `Create a concept repair visualization showing an asphalt patch over the
+   marked pothole while preserving original road perspective, lane markings,
+   curb line, and lighting. Mark the output as concept repair.`
+3. `Highlight concrete spalling and exposed reinforcement with arrows and
+   labels. Do not remove or alter the defect.`
+4. `Generate a future-state visualization after trench resurfacing: compacted
+   asphalt patch flush with existing road, matching texture and road crown,
+   with lane marking restored in perspective.`
+
+### infrastructure_defect_reference_taxonomy
+
+The creative skill system should keep an infrastructure defect taxonomy:
+
+- Pavement: longitudinal crack, transverse crack, alligator crack, block crack,
+  pothole, rutting, patch, edge break, ravelling, bleeding, worn lane marking,
+  utility cut settlement, manhole settlement.
+- Concrete: crack, honeycomb, void, spalling, delamination, exposed rebar,
+  rust staining, efflorescence, scaling, crushing, deformation, cold joint,
+  poor patch repair.
+- Earthwork/drainage: erosion rill, gully, sediment accumulation, failed silt
+  fence, clogged inlet, washed-out slope, muddy runoff, ponding, collapsed
+  trench edge.
+- Utility installation: poor bedding, pipe misalignment, damaged corrugation,
+  deformed pipe, leaking joint, missing warning tape, floating conduit,
+  improper backfill, insufficient compaction evidence.
+
+### precision_ai_control_for_engineering_scenes
+
+For engineering construction image editing, use control modes by problem type:
+
+1. Mask/inpainting: localized cleanup, adding one pipe, replacing one road
+   patch, correcting one shoring member, or removing non-evidence clutter.
+2. Depth control: preserve trench depth cues, road perspective, pit geometry,
+   equipment placement, and foreground/background relationships.
+3. Canny/edge control: preserve road edges, sheet pile ridges, conduit rows,
+   formwork lines, barricades, lane markings, and hard construction geometry.
+4. Lineart/sketch control: impose a planned duct bank layout, widened pit
+   outline, pipe centerline, sheet pile wall, or staged excavation diagram.
+5. Segmentation control: isolate asphalt, soil, pipe, water, steel, concrete,
+   workers, machinery, cones, and barriers before editing.
+6. Reference image: preserve material appearance, object identity, equipment
+   type, or target construction stage.
+7. Photoshop post-pass: correct contact shadows, material color, pipe
+   corrugation, waler/strut alignment, warning tape readability, and annotation
+   clarity.
+
+### engineering_ai_control_failure_checks
+
+After using AI control workflows, inspect:
+
+- Did the edit stay within the masked area?
+- Did protected facts drift outside the mask?
+- Do depth relationships still match the road/trench/pit?
+- Are edge-controlled elements too rigid, jagged, doubled, or broken?
+- Are repeated structures such as corrugated pipe ridges, sheet piles, conduit
+  rows, cones, and road markings consistent?
+- Did the model invent text, warning signs, labels, workers, or unsafe
+  conditions?
+- Does the output still match the intended output class: evidence, markup,
+  concept, overlay, presentation, or progress comparison?
+
 ### curated_source_map
 
 Useful source anchors from the 2026-06-03 research pass:
@@ -1349,6 +1585,39 @@ Civil construction site anchors from the fourth research pass:
   `https://vortyk.com/blog/construction-photo-documentation-best-practices`,
   `https://sitemanagerai.com/blog/construction-photo-documentation.html`,
   and `https://shotkit.com/draw-arrows-photoshop/`
+- Earthwork, drainage, and erosion-control anchors:
+  `https://stormwater.pca.state.mn.us/temporary_construction_erosion_and_sediment_control`,
+  `https://www.unitedrentals.com/project-uptime/safety/excavation-sloping-and-benching-tips-and-faqs`,
+  `https://www.hseblog.com/benching-excavation/`,
+  `https://dot.ca.gov/-/media/dot-media/programs/construction/documents/environmental-compliance/bmp-field-master-fullsize-final-jan03-a11y.pdf`,
+  `https://www.ccgov.org/government/public-works/public-works-divisions/stormwater-management-division/construction-site-bmps`,
+  and `https://www.oregon.gov/ODOT/GeoEnvironmental/Docs_Environmental/Erosion-Control-Field-Manual.pdf`
+- Work-zone traffic-control anchors:
+  `https://mutcd.fhwa.dot.gov/pdfs/11th_Edition/part6.pdf`,
+  `https://www.osha.gov/sites/default/files/publications/WORK_ZONE_SAFETY.pdf`,
+  `https://www.codot.gov/safety/traffic-safety/assets/traffic-signs/construction`,
+  `https://www.trafficsafetystore.com/blog/the-most-common-traffic-control-devices-used-in-work-zones/`,
+  `https://www.grainger.com/know-how/equipment-information/kh-controlling-traffic-cones-barricades`,
+  and `https://arxiv.org/abs/2406.07661`
+- Pavement and concrete defect image anchors:
+  `https://data.mendeley.com/datasets/8b27pdcxv7`,
+  `https://data.mendeley.com/datasets/yfhwfcrfmk`,
+  `https://datasetninja.com/codebrim`,
+  `https://pmc.ncbi.nlm.nih.gov/articles/PMC13181123/`,
+  `https://www.sciencedirect.com/science/article/pii/S235234092500109X`,
+  `https://www.sciencedirect.com/science/article/pii/S2352340923007278`,
+  `https://data.mendeley.com/datasets/w7549ryvx2`,
+  `https://data.mendeley.com/datasets/fx3rthfjhy/3`,
+  `https://www.kaggle.com/datasets/atharv0919/sdnet2018-a-concrete-crack-image-dataset`,
+  and `https://commons.und.edu/data/19/`
+- Precision AI control and inpainting anchors:
+  `https://docs.comfy.org/tutorials/basic/inpaint`,
+  `https://docs.comfy.org/tutorials/controlnet/depth-controlnet`,
+  `https://comfy.org/ko/templates/sd3.5_large_canny_controlnet_example/`,
+  `https://comfyui.dev/docs/guides/nodes/controlnet-preprocessor/`,
+  `https://stable-diffusion-art.com/inpaint-comfyui/`,
+  `https://arxiv.org/abs/2302.05543`,
+  and `https://arxiv.org/abs/2208.03357`
 
 ## Do Not Persist
 
