@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v2.7.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v2.8.0."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import tomllib
 from typing import Any, Iterable, Mapping
@@ -30,7 +31,7 @@ from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skil
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "2.7.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "2.8.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -59,7 +60,9 @@ EXPECTED_RELEASE_FILES = (
     "docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md",
     "src/hermes_memory_fabric/openclaw_audit_review.py",
     "src/hermes_memory_fabric/tools/openclaw_audit_review_tool.py",
+    "scripts/smoke_openclaw_audit_review.py",
     "tests/test_openclaw_audit_review.py",
+    "tests/test_smoke_openclaw_audit_review.py",
     "tests/tools/test_openclaw_audit_review_tool.py",
 )
 SURFACE_AUDIT_FILES = (
@@ -84,7 +87,9 @@ SURFACE_AUDIT_FILES = (
     "docs/GOVERNED_MEMORY_APPROVAL_REQUEST_DRY_RUN.md",
     "src/hermes_memory_fabric/openclaw_audit_review.py",
     "src/hermes_memory_fabric/tools/openclaw_audit_review_tool.py",
+    "scripts/smoke_openclaw_audit_review.py",
     "tests/test_openclaw_audit_review.py",
+    "tests/test_smoke_openclaw_audit_review.py",
     "tests/tools/test_openclaw_audit_review_tool.py",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
@@ -92,7 +97,7 @@ SURFACE_AUDIT_FILES = (
 
 
 def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
-    """Run a local, no-network integrity audit for the v2.0-v2.7 release chain."""
+    """Run a local, no-network integrity audit for the v2.0-v2.8 release chain."""
 
     root = Path(repo_root).expanduser().resolve()
     pyproject_version = _pyproject_version(root)
@@ -108,6 +113,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     review_gate = _run_governed_memory_proposal_review_gate_check(root)
     approval_request = _run_governed_memory_approval_request_check(root)
     openclaw_audit_review = _run_openclaw_audit_review_check()
+    openclaw_audit_review_smoke = _run_openclaw_audit_review_smoke_check(root)
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -137,6 +143,7 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         and approval_request["approval_request_status"] == "ready"
         and approval_request["approval_request_safe"]
         and openclaw_audit_review["openclaw_audit_review_safe"]
+        and openclaw_audit_review_smoke["openclaw_audit_review_smoke_safe"]
         and no_network_surface
         and no_hermes_memory_write
         and no_github_write
@@ -181,6 +188,12 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         "blocked_decision_count": approval_request["blocked_decision_count"],
         "openclaw_audit_review_status": openclaw_audit_review["openclaw_audit_review_status"],
         "openclaw_audit_review_safe": openclaw_audit_review["openclaw_audit_review_safe"],
+        "openclaw_audit_review_smoke_status": openclaw_audit_review_smoke[
+            "openclaw_audit_review_smoke_status"
+        ],
+        "openclaw_audit_review_smoke_safe": openclaw_audit_review_smoke[
+            "openclaw_audit_review_smoke_safe"
+        ],
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -207,6 +220,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "review_gate_safe": review_gate["review_gate_safe"],
                 "approval_request_safe": approval_request["approval_request_safe"],
                 "openclaw_audit_review_safe": openclaw_audit_review["openclaw_audit_review_safe"],
+                "openclaw_audit_review_smoke_safe": openclaw_audit_review_smoke[
+                    "openclaw_audit_review_smoke_safe"
+                ],
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
             },
         },
@@ -230,6 +246,27 @@ def _run_openclaw_audit_review_check() -> dict[str, Any]:
         "openclaw_audit_review_status": str(result.get("status") or "fail"),
         "openclaw_audit_review_safe": safe,
     }
+
+
+def _run_openclaw_audit_review_smoke_check(root: Path) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(root / "scripts" / "smoke_openclaw_audit_review.py")],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    safe = (
+        completed.returncode == 0
+        and completed.stdout == "openclaw_audit_review=passed\n"
+        and completed.stderr == ""
+    )
+    return {
+        "openclaw_audit_review_smoke_status": "pass" if safe else "fail",
+        "openclaw_audit_review_smoke_safe": safe,
+    }
+
 
 def release_integrity_audit_to_json(result: Mapping[str, Any]) -> str:
     """Serialize a release integrity audit report deterministically."""
