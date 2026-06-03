@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "2.6.0"
+    assert result["version"] == "2.7.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "2.6.0"
+    assert result["pyproject_version"] == "2.7.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -133,3 +133,10 @@ def test_release_integrity_smoke_script_exits_zero():
     assert completed.returncode == 0
     assert completed.stdout == "release_integrity_audit=passed\n"
     assert completed.stderr == ""
+
+
+def test_release_integrity_openclaw_audit_review_safety_remains_true():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert result["openclaw_audit_review_status"] == "missing_audit_log"
+    assert result["openclaw_audit_review_safe"] is True
