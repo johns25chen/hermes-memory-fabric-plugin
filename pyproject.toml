@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hermes-memory-fabric-plugin"
-version = "2.46.0"
+version = "2.47.0"
 description = "Governed read-only Memory Fabric and evidence repair pipeline for Hermes"
 readme = "README.md"
 requires-python = ">=3.11"
