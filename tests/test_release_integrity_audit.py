@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "3.13.0"
+    assert result["version"] == "3.14.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "3.13.0"
+    assert result["pyproject_version"] == "3.14.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -1111,6 +1111,23 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
     assert (
         result[
             "governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_review_gate_smoke_safe"
+        ]
+        is True
+    )
+
+
+def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_proposal_smoke_remains_safe():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert (
+        result[
+            "governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_proposal_smoke_status"
+        ]
+        == "pass"
+    )
+    assert (
+        result[
+            "governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_proposal_smoke_safe"
         ]
         is True
     )
