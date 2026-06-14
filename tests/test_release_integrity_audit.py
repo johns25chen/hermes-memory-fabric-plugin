@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "3.16.0"
+    assert result["version"] == "4.0.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "3.16.0"
+    assert result["pyproject_version"] == "4.0.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -1165,3 +1165,10 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
         ]
         is True
     )
+
+
+def test_release_integrity_event_driven_governance_kernel_smoke_is_safe():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert result["event_driven_governance_kernel_smoke_status"] == "pass"
+    assert result["event_driven_governance_kernel_smoke_safe"] is True
