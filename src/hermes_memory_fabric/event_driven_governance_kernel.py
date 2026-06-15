@@ -14,9 +14,17 @@ from .governance_event_canonicalizer import (
 from .governance_event_schema_registry import (
     ALLOWED_EVENT_TYPES,
     CANONICAL_EVENT_SCHEMA_VERSION,
-    SAFETY_BOUNDARIES,
     sanitize_governance_event,
     validate_event_against_schema_registry,
+)
+from .governance_transition_policy_registry import (
+    ALLOWED_GOVERNANCE_STATES,
+    GOVERNANCE_STATE_MACHINE_POLICY_VERSION,
+    GOVERNANCE_TRANSITION_POLICY_REGISTRY,
+    SAFETY_BOUNDARIES,
+    TRANSITION_POLICY_REGISTRY_VERSION,
+    evaluate_governance_transition,
+    get_governance_transition_policy,
 )
 
 
@@ -41,45 +49,11 @@ class GovernanceState(StrEnum):
 GovernanceEvent: TypeAlias = Mapping[str, Any]
 GovernanceRecord: TypeAlias = dict[str, Any]
 
-_STATE_ORDER = tuple(state.value for state in GovernanceState)
+_STATE_ORDER = ALLOWED_GOVERNANCE_STATES
 
 STATE_MACHINE: dict[str, dict[str, str]] = {
-    GovernanceState.INITIALIZED.value: {
-        "governance_kernel_initialized": GovernanceState.PROPOSAL_OPEN.value,
-        "proposal_submitted": GovernanceState.PROPOSAL_OPEN.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.PROPOSAL_OPEN.value: {
-        "proposal_submitted": GovernanceState.PROPOSAL_OPEN.value,
-        "review_completed": GovernanceState.REVIEW_READY.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.REVIEW_READY.value: {
-        "dry_run_approved": GovernanceState.APPROVED_FOR_DRY_RUN.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.APPROVED_FOR_DRY_RUN.value: {
-        "dry_run_prepared": GovernanceState.DRY_RUN_READY.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.DRY_RUN_READY.value: {
-        "dry_run_completed": GovernanceState.DRY_RUN_COMPLETED.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.DRY_RUN_COMPLETED.value: {
-        "attestation_submitted": GovernanceState.ATTESTATION_READY.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.ATTESTATION_READY.value: {
-        "finalization_requested": GovernanceState.FINALIZED.value,
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.FINALIZED.value: {
-        "blocked": GovernanceState.BLOCKED.value,
-    },
-    GovernanceState.BLOCKED.value: {
-        "blocked": GovernanceState.BLOCKED.value,
-    },
+    state: dict(GOVERNANCE_TRANSITION_POLICY_REGISTRY[state])
+    for state in _STATE_ORDER
 }
 
 def validate_governance_event(event: Mapping[str, Any]) -> dict[str, Any]:
@@ -101,9 +75,13 @@ def apply_governance_event(
     sanitized_event = sanitize_governance_event(event)
     event_id = _safe_non_empty_string(sanitized_event, "event_id")
     event_type = _safe_non_empty_string(sanitized_event, "event_type")
+    policy_evaluation = evaluate_governance_transition(
+        state,
+        raw_event_type or "",
+    )
 
     blocking_reasons = list(validation["blocking_reasons"])
-    if state not in STATE_MACHINE:
+    if policy_evaluation["transition_policy"]["known_state"] is not True:
         blocking_reasons.append("current_state is not a recognized governance state")
 
     if validation["valid"] and event.get("previous_event_id") != previous_event_id:
@@ -111,12 +89,10 @@ def apply_governance_event(
             "previous_event_id does not match the prior accepted event"
         )
 
-    if not blocking_reasons:
-        next_state = STATE_MACHINE[state].get(str(raw_event_type))
-        if next_state is None:
-            blocking_reasons.append(
-                "event_type is not allowed from the current governance state"
-            )
+    if not blocking_reasons and policy_evaluation["valid_transition"] is not True:
+        blocking_reasons.append(
+            "event_type is not allowed from the current governance state"
+        )
 
     if blocking_reasons:
         return _transition(
@@ -126,9 +102,10 @@ def apply_governance_event(
             event_id=event_id,
             event_type=event_type,
             blocking_reasons=blocking_reasons,
+            policy_evaluation=policy_evaluation,
         )
 
-    next_state = STATE_MACHINE[state][str(raw_event_type)]
+    next_state = policy_evaluation["next_state"]
     transition_reasons = (
         ["blocked event received"]
         if raw_event_type == "blocked"
@@ -141,6 +118,7 @@ def apply_governance_event(
         event_id=event_id,
         event_type=event_type,
         blocking_reasons=transition_reasons,
+        policy_evaluation=policy_evaluation,
     )
 
 
@@ -172,6 +150,10 @@ def replay_governance_events(
             rejection_reasons.append("event_id must be unique within a replay")
 
         if rejection_reasons:
+            policy_evaluation = evaluate_governance_transition(
+                current_state,
+                event_type or "",
+            )
             transition = _transition(
                 accepted=False,
                 previous_state=current_state,
@@ -179,6 +161,7 @@ def replay_governance_events(
                 event_id=event_id,
                 event_type=event_type,
                 blocking_reasons=rejection_reasons,
+                policy_evaluation=policy_evaluation,
             )
         else:
             transition = apply_governance_event(
@@ -224,7 +207,8 @@ def replay_governance_events(
         canonical_sequence["deterministic_sequence_hash"],
         current_state,
     )
-    next_allowed_events = list(STATE_MACHINE[current_state])
+    final_transition_policy = get_governance_transition_policy(current_state)
+    next_allowed_events = list(final_transition_policy["allowed_events"])
     safety_boundaries = dict(SAFETY_BOUNDARIES)
 
     return {
@@ -240,6 +224,11 @@ def replay_governance_events(
         "audit_status": audit_status,
         "replay_safe": True,
         "deterministic_replay_hash": replay_hash,
+        "transition_policy_version": GOVERNANCE_STATE_MACHINE_POLICY_VERSION,
+        "transition_policy_registry_version": (
+            TRANSITION_POLICY_REGISTRY_VERSION
+        ),
+        "current_transition_policy": final_transition_policy,
         "state_machine": _state_machine_report(),
         "allowed_transitions": _allowed_transition_report(),
         "final_report": {
@@ -263,6 +252,7 @@ def _transition(
     event_id: str | None,
     event_type: str | None,
     blocking_reasons: Sequence[str],
+    policy_evaluation: Mapping[str, Any],
 ) -> dict[str, Any]:
     safety_boundaries = dict(SAFETY_BOUNDARIES)
     return {
@@ -272,6 +262,7 @@ def _transition(
         "event_id": event_id,
         "event_type": event_type,
         "blocking_reasons": _deduplicate(blocking_reasons),
+        "policy_evaluation": _detached_json_value(policy_evaluation),
         "safety_boundaries": safety_boundaries,
         **safety_boundaries,
     }
@@ -321,7 +312,7 @@ def _deterministic_replay_hash(
 
 def _state_machine_report() -> dict[str, dict[str, str]]:
     return {
-        state: dict(STATE_MACHINE[state])
+        state: dict(GOVERNANCE_TRANSITION_POLICY_REGISTRY[state])
         for state in _STATE_ORDER
     }
 
@@ -334,8 +325,22 @@ def _allowed_transition_report() -> list[dict[str, str]]:
             "next_state": next_state,
         }
         for state in _STATE_ORDER
-        for event_type, next_state in STATE_MACHINE[state].items()
+        for event_type, next_state in (
+            GOVERNANCE_TRANSITION_POLICY_REGISTRY[state].items()
+        )
     ]
+
+
+def _detached_json_value(value: Any) -> Any:
+    return json.loads(
+        json.dumps(
+            value,
+            ensure_ascii=True,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    )
 
 
 def _deduplicate(values: Sequence[str]) -> list[str]:
@@ -351,6 +356,7 @@ __all__ = [
     "KERNEL_VERSION",
     "SAFETY_BOUNDARIES",
     "STATE_MACHINE",
+    "TRANSITION_POLICY_REGISTRY_VERSION",
     "apply_governance_event",
     "replay_governance_events",
     "validate_governance_event",

@@ -11,11 +11,15 @@ from .event_driven_governance_kernel import replay_governance_events
 from .governance_event_canonicalizer import (
     canonicalize_governance_event_sequence,
 )
-from .governance_event_schema_registry import SAFETY_BOUNDARIES
+from .governance_transition_policy_registry import (
+    GOVERNANCE_STATE_MACHINE_POLICY_VERSION,
+    SAFETY_BOUNDARIES,
+    TRANSITION_POLICY_REGISTRY_VERSION,
+)
 
 
-REPLAY_AUDIT_REPORT_VERSION = "4.3.0"
-REPLAY_AUDIT_SCHEMA_VERSION = "4.3.0"
+REPLAY_AUDIT_REPORT_VERSION = "4.4.0"
+REPLAY_AUDIT_SCHEMA_VERSION = "4.4.0"
 REPLAY_AUDIT_HASH_ALGORITHM = "sha256"
 
 ERROR_CATEGORY_TAXONOMY = (
@@ -47,6 +51,9 @@ _AUDIT_REPORT_HASH_FIELDS = (
     "deterministic_replay_hash",
     "deterministic_sequence_hash",
     "next_allowed_events",
+    "transition_policy_version",
+    "transition_policy_registry_version",
+    "policy_evaluation_summaries",
 )
 
 HASH_INPUT_CONTRACT = {
@@ -100,6 +107,9 @@ def build_governance_replay_audit_report(
     )
     accepted_event_summaries = _accepted_event_summaries(replay_result)
     rejected_event_summaries = _rejected_event_summaries(replay_result)
+    policy_evaluation_summaries = _policy_evaluation_summaries(
+        replay_result
+    )
     final_state = replay_result["current_state"]
     accepted_event_count = len(replay_result["accepted_events"])
     rejected_event_count = len(replay_result["rejected_events"])
@@ -123,6 +133,11 @@ def build_governance_replay_audit_report(
         "error_category_taxonomy": list(ERROR_CATEGORY_TAXONOMY),
         "accepted_event_summaries": accepted_event_summaries,
         "rejected_event_summaries": rejected_event_summaries,
+        "transition_policy_version": GOVERNANCE_STATE_MACHINE_POLICY_VERSION,
+        "transition_policy_registry_version": (
+            TRANSITION_POLICY_REGISTRY_VERSION
+        ),
+        "policy_evaluation_summaries": policy_evaluation_summaries,
         "canonical_events": canonical_sequence["canonical_events"],
         "canonical_sequence": canonical_sequence,
         "replay_outcome": {
@@ -217,6 +232,33 @@ def _rejected_event_summaries(
                 if field in event:
                     summary[field] = _detached_json_value(event[field])
         summaries.append(summary)
+    return summaries
+
+
+def _policy_evaluation_summaries(
+    replay_result: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    summaries: list[dict[str, Any]] = []
+    for event_index, transition in enumerate(
+        replay_result["transition_history"]
+    ):
+        evaluation = transition["policy_evaluation"]
+        summaries.append(
+            {
+                "event_index": event_index,
+                "valid_transition": evaluation["valid_transition"],
+                "current_state": evaluation["current_state"],
+                "event_type": evaluation["event_type"],
+                "next_state": evaluation["next_state"],
+                "blocking_reasons": list(
+                    evaluation["blocking_reasons"]
+                ),
+                "policy_version": evaluation["policy_version"],
+                "transition_policy": _detached_json_value(
+                    evaluation["transition_policy"]
+                ),
+            }
+        )
     return summaries
 
 

@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 
+import hermes_memory_fabric.governance_replay_audit_report as replay_audit_module
 from hermes_memory_fabric.governance_event_schema_registry import (
     SAFETY_BOUNDARIES,
 )
@@ -28,7 +29,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "4.3.0",
+        "kernel_version": "4.4.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -82,7 +83,7 @@ def _event(
             else dict(_PAYLOADS.get(event_type, {}))
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "4.3.0",
+        "schema_version": "4.4.0",
     }
 
 
@@ -112,15 +113,15 @@ def _rechain(events: list[dict[str, object]]) -> None:
 
 
 def test_public_versions_and_hash_algorithm():
-    assert REPLAY_AUDIT_REPORT_VERSION == "4.3.0"
-    assert REPLAY_AUDIT_SCHEMA_VERSION == "4.3.0"
+    assert REPLAY_AUDIT_REPORT_VERSION == "4.4.0"
+    assert REPLAY_AUDIT_SCHEMA_VERSION == "4.4.0"
     assert REPLAY_AUDIT_HASH_ALGORITHM == "sha256"
 
 
 def test_valid_full_sequence_reports_pass_and_finalized():
     result = build_governance_replay_audit_report(_full_events())
 
-    assert result["version"] == "4.3.0"
+    assert result["version"] == "4.4.0"
     assert result["audit_report_status"] == "pass"
     assert result["replay_status"] == "pass"
     assert result["canonicalization_status"] == "pass"
@@ -129,6 +130,13 @@ def test_valid_full_sequence_reports_pass_and_finalized():
     assert result["rejected_event_count"] == 0
     assert result["blocking_reasons"] == []
     assert result["error_categories"] == []
+    assert result["transition_policy_version"] == "4.4.0"
+    assert result["transition_policy_registry_version"] == "4.4.0"
+    assert len(result["policy_evaluation_summaries"]) == 8
+    assert all(
+        summary["valid_transition"] is True
+        for summary in result["policy_evaluation_summaries"]
+    )
 
 
 def test_valid_partial_sequence_reports_current_state():
@@ -180,6 +188,33 @@ def test_report_hash_changes_when_event_order_changes():
     )
 
 
+def test_report_hash_changes_when_policy_aware_outcome_changes(monkeypatch):
+    events = _full_events()
+    original = build_governance_replay_audit_report(events)
+    original_replay = replay_audit_module.replay_governance_events
+
+    def changed_replay(
+        replay_events: list[dict[str, object]],
+    ) -> dict[str, object]:
+        result = deepcopy(original_replay(replay_events))
+        result["transition_history"][0]["policy_evaluation"][
+            "next_state"
+        ] = "policy-outcome-changed"
+        return result
+
+    monkeypatch.setattr(
+        replay_audit_module,
+        "replay_governance_events",
+        changed_replay,
+    )
+    changed = build_governance_replay_audit_report(events)
+
+    assert original["audit_report_hash"] != changed["audit_report_hash"]
+    assert original["deterministic_sequence_hash"] == (
+        changed["deterministic_sequence_hash"]
+    )
+
+
 def test_report_includes_canonical_replay_hashes_and_contract():
     result = build_governance_replay_audit_report(_full_events())
 
@@ -193,6 +228,9 @@ def test_report_includes_canonical_replay_hashes_and_contract():
     assert result["hash_input_contract"]["raw_events_included"] is False
     assert (
         result["hash_input_contract"]["sensitive_fields_included"] is False
+    )
+    assert "policy_evaluation_summaries" in (
+        result["hash_input_contract"]["hash_fields"]
     )
 
 
@@ -252,7 +290,7 @@ def test_invalid_payload_schema_is_blocked_and_categorized():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "4.3.0"},
+        {"kernel_version": "4.4.0"},
     )
 
     result = build_governance_replay_audit_report([event])
@@ -411,7 +449,7 @@ def test_module_has_no_execution_or_external_side_effect_surfaces():
         "collections",
         "event_driven_governance_kernel",
         "governance_event_canonicalizer",
-        "governance_event_schema_registry",
+        "governance_transition_policy_registry",
         "hashlib",
         "json",
         "typing",
