@@ -8,6 +8,9 @@ import hashlib
 import json
 from typing import Any, TypeAlias
 
+from .governance_event_canonicalizer import (
+    canonicalize_governance_event_sequence,
+)
 from .governance_event_schema_registry import (
     ALLOWED_EVENT_TYPES,
     CANONICAL_EVENT_SCHEMA_VERSION,
@@ -152,6 +155,7 @@ def replay_governance_events(
     previous_event_id: str | None = None
     seen_event_ids: set[str] = set()
     accepted_events: list[dict[str, Any]] = []
+    accepted_source_events: list[Mapping[str, Any]] = []
     rejected_events: list[dict[str, Any]] = []
     transition_history: list[dict[str, Any]] = []
     blocking_reasons: list[str] = []
@@ -188,10 +192,7 @@ def replay_governance_events(
         transition_history.append(transition)
 
         if transition["accepted"]:
-            accepted_event = validation["sanitized_event"]
-            if not isinstance(accepted_event, dict):
-                raise AssertionError("validated event must have a sanitized mapping")
-            accepted_events.append(accepted_event)
+            accepted_source_events.append(event)
             if raw_event_id is not None:
                 seen_event_ids.add(raw_event_id)
                 previous_event_id = raw_event_id
@@ -207,12 +208,22 @@ def replay_governance_events(
             )
             blocking_reasons.extend(transition["blocking_reasons"])
 
+    canonical_sequence = canonicalize_governance_event_sequence(
+        accepted_source_events
+    )
+    if canonical_sequence["canonicalization_status"] != "pass":
+        raise AssertionError("accepted events must form a canonical sequence")
+    accepted_events = canonical_sequence["canonical_events"]
+
     audit_status = (
         "pass"
         if not rejected_events and current_state != GovernanceState.BLOCKED.value
         else "blocked"
     )
-    replay_hash = _deterministic_replay_hash(accepted_events, current_state)
+    replay_hash = _deterministic_replay_hash(
+        canonical_sequence["deterministic_sequence_hash"],
+        current_state,
+    )
     next_allowed_events = list(STATE_MACHINE[current_state])
     safety_boundaries = dict(SAFETY_BOUNDARIES)
 
@@ -291,11 +302,11 @@ def _sanitized_rejection_snapshot(event: Any) -> dict[str, Any] | None:
 
 
 def _deterministic_replay_hash(
-    accepted_events: Sequence[Mapping[str, Any]],
+    canonical_sequence_hash: str,
     final_state: str,
 ) -> str:
     payload = {
-        "accepted_events": list(accepted_events),
+        "canonical_sequence_hash": canonical_sequence_hash,
         "final_state": final_state,
     }
     canonical = json.dumps(

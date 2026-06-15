@@ -30,7 +30,7 @@ CORE_MODULE = (
 
 PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "4.1.0",
+        "kernel_version": "4.2.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -104,7 +104,7 @@ def test_valid_event_for_each_event_type_passes(event_type: str):
     assert result["valid"] is True
     assert result["blocking_reasons"] == []
     assert isinstance(result["sanitized_event"], dict)
-    assert result["schema_version"] == "4.1.0"
+    assert result["schema_version"] == "4.2.0"
     assert result["event_type"] == event_type
 
 
@@ -144,7 +144,7 @@ def test_wrong_schema_version_fails():
     result = validate_event_against_schema_registry(event)
 
     assert result["valid"] is False
-    assert "schema_version must equal 4.1.0" in result["blocking_reasons"]
+    assert "schema_version must equal 4.2.0" in result["blocking_reasons"]
 
 
 def test_payload_not_mapping_fails():
