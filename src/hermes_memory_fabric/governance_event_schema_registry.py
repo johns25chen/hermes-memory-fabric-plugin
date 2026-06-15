@@ -7,9 +7,11 @@ import json
 import math
 from typing import Any
 
+from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
-SCHEMA_REGISTRY_VERSION = "4.3.0"
-CANONICAL_EVENT_SCHEMA_VERSION = "4.3.0"
+
+SCHEMA_REGISTRY_VERSION = "4.4.0"
+CANONICAL_EVENT_SCHEMA_VERSION = "4.4.0"
 
 ALLOWED_EVENT_TYPES = (
     "governance_kernel_initialized",
@@ -96,34 +98,6 @@ GOVERNANCE_EVENT_SCHEMA_REGISTRY: dict[str, dict[str, Any]] = {
         },
         "allow_unknown_payload_fields": True,
     },
-}
-
-SAFETY_BOUNDARIES = {
-    "unsafe_side_effects_performed": False,
-    "memory_written": False,
-    "durable_memory_written": False,
-    "memory_graph_mutated": False,
-    "operation_ledger_entry_created": False,
-    "network_called": False,
-    "github_api_called": False,
-    "openclaw_called": False,
-    "approval_request_created": False,
-    "approval_request_submitted": False,
-    "approval_request_executed": False,
-    "approval_granted": False,
-    "real_approval_granted": False,
-    "real_human_decision_recorded": False,
-    "dry_run_executed": False,
-    "dry_run_plan_executed": False,
-    "completion_executed": False,
-    "attestation_executed": False,
-    "finalization_executed": False,
-    "autonomous_execution_authorized": False,
-    "autonomous_governance_created": False,
-    "consciousness_claimed": False,
-    "self_awareness_claimed": False,
-    "personhood_claimed": False,
-    "sentience_claimed": False,
 }
 
 _SENSITIVE_KEYS = frozenset(
