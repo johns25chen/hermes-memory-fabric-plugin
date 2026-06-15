@@ -20,6 +20,44 @@ CORE_MODULE = (
     / "event_driven_governance_kernel.py"
 )
 
+_PAYLOADS: dict[str, dict[str, str]] = {
+    "governance_kernel_initialized": {
+        "kernel_version": "4.1.0",
+        "initialization_scope": "test",
+    },
+    "proposal_submitted": {
+        "proposal_id": "proposal-1",
+        "proposal_type": "test",
+    },
+    "review_completed": {
+        "review_id": "review-1",
+        "review_status": "complete",
+    },
+    "dry_run_approved": {
+        "approval_id": "approval-1",
+        "approved_for": "plan-preparation-only",
+    },
+    "dry_run_prepared": {
+        "dry_run_id": "dry-run-1",
+        "plan_id": "plan-1",
+    },
+    "dry_run_completed": {
+        "dry_run_id": "dry-run-1",
+        "completion_status": "recorded-only",
+    },
+    "attestation_submitted": {
+        "attestation_id": "attestation-1",
+        "attestation_status": "recorded-only",
+    },
+    "finalization_requested": {
+        "finalization_id": "finalization-1",
+        "requested_scope": "test",
+    },
+    "blocked": {
+        "reason": "test-block",
+    },
+}
+
 
 def _event(
     event_id: str,
@@ -32,9 +70,13 @@ def _event(
         "event_type": event_type,
         "actor": "test-actor",
         "created_at": f"2026-06-14T00:00:{event_id[-1:]}Z",
-        "payload": payload or {},
+        "payload": (
+            payload
+            if payload is not None
+            else dict(_PAYLOADS.get(event_type, {}))
+        ),
         "previous_event_id": previous_event_id,
-        "schema_version": "4.0.0",
+        "schema_version": "4.1.0",
     }
 
 
@@ -58,7 +100,7 @@ def _full_events() -> list[dict[str, object]]:
                 event_id,
                 event_type,
                 previous_event_id,
-                {"sequence": index},
+                {**_PAYLOADS[event_type], "sequence": index},
             )
         )
         previous_event_id = event_id
@@ -68,7 +110,7 @@ def _full_events() -> list[dict[str, object]]:
 def test_valid_full_event_sequence_reaches_finalized():
     result = replay_governance_events(_full_events())
 
-    assert result["version"] == "4.0.0"
+    assert result["version"] == "4.1.0"
     assert result["kernel_name"] == "event_driven_governance_kernel"
     assert result["current_state"] == "finalized"
     assert result["previous_state"] == "attestation_ready"
@@ -146,6 +188,23 @@ def test_invalid_transition_is_rejected():
     )
 
 
+def test_invalid_payload_schema_is_rejected():
+    event = _event(
+        "event-1",
+        "governance_kernel_initialized",
+        None,
+        {"kernel_version": "4.1.0"},
+    )
+
+    result = replay_governance_events([event])
+
+    assert result["current_state"] == "blocked"
+    assert (
+        "missing required payload field: initialization_scope"
+        in result["blocking_reasons"]
+    )
+
+
 def test_blocked_event_moves_to_blocked_state():
     event = _event("event-1", "blocked", None)
 
@@ -212,7 +271,11 @@ def test_sensitive_keys_and_values_are_not_leaked():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"safe": "visible", "nested": sensitive},
+        {
+            **_PAYLOADS["governance_kernel_initialized"],
+            "safe": "visible",
+            "nested": sensitive,
+        },
     )
 
     validation = validate_governance_event(event)
@@ -285,9 +348,9 @@ def test_core_module_has_no_external_side_effect_imports_or_calls():
         "__future__",
         "collections",
         "enum",
+        "governance_event_schema_registry",
         "hashlib",
         "json",
-        "math",
         "typing",
     }
     assert called_names.isdisjoint(
