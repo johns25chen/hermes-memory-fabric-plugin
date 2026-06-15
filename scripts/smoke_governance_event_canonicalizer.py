@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Smoke test for the local event-driven governance kernel."""
+"""Smoke test for deterministic governance event canonicalization."""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import sys
 
@@ -10,10 +11,13 @@ REPO_SRC = Path(__file__).resolve().parents[1] / "src"
 if REPO_SRC.is_dir():
     sys.path.insert(0, str(REPO_SRC))
 
-from hermes_memory_fabric.event_driven_governance_kernel import (  # noqa: E402
-    SAFETY_BOUNDARIES,
-    replay_governance_events,
+from hermes_memory_fabric.governance_event_canonicalizer import (  # noqa: E402
+    canonicalize_governance_event_sequence,
 )
+from hermes_memory_fabric.governance_event_schema_registry import (  # noqa: E402
+    SAFETY_BOUNDARIES,
+)
+
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
@@ -22,7 +26,7 @@ _PAYLOADS: dict[str, dict[str, str]] = {
     },
     "proposal_submitted": {
         "proposal_id": "proposal-1",
-        "proposal_type": "kernel-smoke",
+        "proposal_type": "canonicalizer-smoke",
     },
     "review_completed": {
         "review_id": "review-1",
@@ -52,27 +56,25 @@ _PAYLOADS: dict[str, dict[str, str]] = {
 
 
 def _events() -> list[dict[str, object]]:
-    event_types = [
-        "governance_kernel_initialized",
-        "proposal_submitted",
-        "review_completed",
-        "dry_run_approved",
-        "dry_run_prepared",
-        "dry_run_completed",
-        "attestation_submitted",
-        "finalization_requested",
-    ]
     events: list[dict[str, object]] = []
     previous_event_id: str | None = None
-    for index, event_type in enumerate(event_types, start=1):
+    for index, event_type in enumerate(_PAYLOADS, start=1):
         event_id = f"event-{index}"
         events.append(
             {
                 "event_id": event_id,
                 "event_type": event_type,
                 "actor": "local-smoke",
-                "created_at": f"2026-06-14T00:00:0{index}Z",
-                "payload": {**_PAYLOADS[event_type], "sequence": index},
+                "created_at": f"2026-06-15T00:00:{index:02d}Z",
+                "payload": {
+                    **_PAYLOADS[event_type],
+                    "duplicate": "smoke-secret-value",
+                    "nested": {
+                        "secret": "smoke-secret-value",
+                        "visible": "safe",
+                    },
+                    "sequence": index,
+                },
                 "previous_event_id": previous_event_id,
                 "schema_version": "4.2.0",
             }
@@ -84,27 +86,35 @@ def _events() -> list[dict[str, object]]:
 def main() -> int:
     try:
         events = _events()
-        first = replay_governance_events(events)
-        second = replay_governance_events(events)
-        if first["current_state"] != "finalized":
-            raise AssertionError("current_state")
-        if first["audit_status"] != "pass":
-            raise AssertionError("audit_status")
-        if first["replay_safe"] is not True:
-            raise AssertionError("replay_safe")
+        first = canonicalize_governance_event_sequence(events)
+        second = canonicalize_governance_event_sequence(events)
+        if first["canonicalization_status"] != "pass":
+            raise AssertionError("canonicalization_status")
+        if first["canonical_event_count"] != len(events):
+            raise AssertionError("canonical_event_count")
+        if (
+            first["deterministic_sequence_hash"]
+            != second["deterministic_sequence_hash"]
+        ):
+            raise AssertionError("deterministic_sequence_hash")
         for key in SAFETY_BOUNDARIES:
             if first.get(key) is not False:
                 raise AssertionError(key)
-        if (
-            first["deterministic_replay_hash"]
-            != second["deterministic_replay_hash"]
-        ):
-            raise AssertionError("deterministic_replay_hash")
+            if first["safety_boundaries"].get(key) is not False:
+                raise AssertionError(f"safety_boundaries.{key}")
+        serialized = json.dumps(first, sort_keys=True)
+        if '"secret"' in serialized:
+            raise AssertionError("sensitive_key")
+        if "smoke-secret-value" in serialized:
+            raise AssertionError("sensitive_value")
     except Exception as exc:
-        print(f"event_driven_governance_kernel=failed {exc}", file=sys.stderr)
+        print(
+            f"governance_event_canonicalizer=failed {exc}",
+            file=sys.stderr,
+        )
         return 1
 
-    print("event_driven_governance_kernel=passed")
+    print("governance_event_canonicalizer=passed")
     return 0
 
 
