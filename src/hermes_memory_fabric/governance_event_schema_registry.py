@@ -8,8 +8,8 @@ import math
 from typing import Any
 
 
-SCHEMA_REGISTRY_VERSION = "4.2.0"
-CANONICAL_EVENT_SCHEMA_VERSION = "4.2.0"
+SCHEMA_REGISTRY_VERSION = "4.3.0"
+CANONICAL_EVENT_SCHEMA_VERSION = "4.3.0"
 
 ALLOWED_EVENT_TYPES = (
     "governance_kernel_initialized",

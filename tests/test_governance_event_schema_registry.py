@@ -14,6 +14,7 @@ from hermes_memory_fabric.governance_event_schema_registry import (
     GOVERNANCE_EVENT_SCHEMA_REGISTRY,
     REQUIRED_TOP_LEVEL_EVENT_FIELDS,
     SAFETY_BOUNDARIES,
+    SCHEMA_REGISTRY_VERSION,
     get_governance_event_schema,
     governance_event_schema_registry_to_json,
     sanitize_governance_event,
@@ -30,7 +31,7 @@ CORE_MODULE = (
 
 PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "4.2.0",
+        "kernel_version": "4.3.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -80,6 +81,7 @@ def _event(event_type: str = "governance_kernel_initialized") -> dict[str, objec
 
 
 def test_every_allowed_event_type_has_a_schema():
+    assert SCHEMA_REGISTRY_VERSION == "4.3.0"
     assert tuple(GOVERNANCE_EVENT_SCHEMA_REGISTRY) == ALLOWED_EVENT_TYPES
     for event_type in ALLOWED_EVENT_TYPES:
         assert get_governance_event_schema(event_type)
@@ -104,7 +106,7 @@ def test_valid_event_for_each_event_type_passes(event_type: str):
     assert result["valid"] is True
     assert result["blocking_reasons"] == []
     assert isinstance(result["sanitized_event"], dict)
-    assert result["schema_version"] == "4.2.0"
+    assert result["schema_version"] == "4.3.0"
     assert result["event_type"] == event_type
 
 
@@ -144,7 +146,7 @@ def test_wrong_schema_version_fails():
     result = validate_event_against_schema_registry(event)
 
     assert result["valid"] is False
-    assert "schema_version must equal 4.2.0" in result["blocking_reasons"]
+    assert "schema_version must equal 4.3.0" in result["blocking_reasons"]
 
 
 def test_payload_not_mapping_fails():

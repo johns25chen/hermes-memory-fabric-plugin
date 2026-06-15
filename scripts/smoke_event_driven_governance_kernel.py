@@ -17,7 +17,7 @@ from hermes_memory_fabric.event_driven_governance_kernel import (  # noqa: E402
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "4.2.0",
+        "kernel_version": "4.3.0",
         "initialization_scope": "local-smoke",
     },
     "proposal_submitted": {
@@ -74,7 +74,7 @@ def _events() -> list[dict[str, object]]:
                 "created_at": f"2026-06-14T00:00:0{index}Z",
                 "payload": {**_PAYLOADS[event_type], "sequence": index},
                 "previous_event_id": previous_event_id,
-                "schema_version": "4.2.0",
+                "schema_version": "4.3.0",
             }
         )
         previous_event_id = event_id

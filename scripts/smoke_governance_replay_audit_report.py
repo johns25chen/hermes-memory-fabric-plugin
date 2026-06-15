@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke test for deterministic governance event canonicalization."""
+"""Smoke test for deterministic governance replay audit reports."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ REPO_SRC = Path(__file__).resolve().parents[1] / "src"
 if REPO_SRC.is_dir():
     sys.path.insert(0, str(REPO_SRC))
 
-from hermes_memory_fabric.governance_event_canonicalizer import (  # noqa: E402
-    canonicalize_governance_event_sequence,
+from hermes_memory_fabric.governance_replay_audit_report import (  # noqa: E402
+    build_governance_replay_audit_report,
 )
 from hermes_memory_fabric.governance_event_schema_registry import (  # noqa: E402
     SAFETY_BOUNDARIES,
@@ -26,7 +26,7 @@ _PAYLOADS: dict[str, dict[str, str]] = {
     },
     "proposal_submitted": {
         "proposal_id": "proposal-1",
-        "proposal_type": "canonicalizer-smoke",
+        "proposal_type": "replay-audit-smoke",
     },
     "review_completed": {
         "review_id": "review-1",
@@ -68,9 +68,9 @@ def _events() -> list[dict[str, object]]:
                 "created_at": f"2026-06-15T00:00:{index:02d}Z",
                 "payload": {
                     **_PAYLOADS[event_type],
-                    "duplicate": "smoke-secret-value",
+                    "duplicate": "smoke-sensitive-value",
                     "nested": {
-                        "secret": "smoke-secret-value",
+                        "secret": "smoke-sensitive-value",
                         "visible": "safe",
                     },
                     "sequence": index,
@@ -86,17 +86,27 @@ def _events() -> list[dict[str, object]]:
 def main() -> int:
     try:
         events = _events()
-        first = canonicalize_governance_event_sequence(events)
-        second = canonicalize_governance_event_sequence(events)
+        first = build_governance_replay_audit_report(events)
+        second = build_governance_replay_audit_report(events)
+        if first["audit_report_status"] != "pass":
+            raise AssertionError("audit_report_status")
+        if first["replay_status"] != "pass":
+            raise AssertionError("replay_status")
         if first["canonicalization_status"] != "pass":
             raise AssertionError("canonicalization_status")
-        if first["canonical_event_count"] != len(events):
-            raise AssertionError("canonical_event_count")
-        if (
-            first["deterministic_sequence_hash"]
-            != second["deterministic_sequence_hash"]
+        if first["final_state"] != "finalized":
+            raise AssertionError("final_state")
+        if first["accepted_event_count"] != len(events):
+            raise AssertionError("accepted_event_count")
+        if first["rejected_event_count"] != 0:
+            raise AssertionError("rejected_event_count")
+        for hash_field in (
+            "audit_report_hash",
+            "deterministic_replay_hash",
+            "deterministic_sequence_hash",
         ):
-            raise AssertionError("deterministic_sequence_hash")
+            if first[hash_field] != second[hash_field]:
+                raise AssertionError(hash_field)
         for key in SAFETY_BOUNDARIES:
             if first.get(key) is not False:
                 raise AssertionError(key)
@@ -105,16 +115,16 @@ def main() -> int:
         serialized = json.dumps(first, sort_keys=True)
         if '"secret"' in serialized:
             raise AssertionError("sensitive_key")
-        if "smoke-secret-value" in serialized:
+        if "smoke-sensitive-value" in serialized:
             raise AssertionError("sensitive_value")
     except Exception as exc:
         print(
-            f"governance_event_canonicalizer=failed {exc}",
+            f"governance_replay_audit_report=failed {exc}",
             file=sys.stderr,
         )
         return 1
 
-    print("governance_event_canonicalizer=passed")
+    print("governance_replay_audit_report=passed")
     return 0
 
 
