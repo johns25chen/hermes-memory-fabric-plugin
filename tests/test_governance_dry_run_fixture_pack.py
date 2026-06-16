@@ -50,15 +50,15 @@ SENSITIVE_BLOCKED_TERMS = (
     '"secret"',
     '"password"',
     '"credential"',
-    "fixture-approval-phrase-4-9",
-    "fixture-stdout-tail-4-9",
-    "fixture-stdout-4-9",
-    "fixture-raw-logs-4-9",
-    "fixture-token-4-9",
-    "fixture-api-key-4-9",
-    "fixture-secret-4-9",
-    "fixture-password-4-9",
-    "fixture-credential-4-9",
+    "fixture-approval-phrase-4-10",
+    "fixture-stdout-tail-4-10",
+    "fixture-stdout-4-10",
+    "fixture-raw-logs-4-10",
+    "fixture-token-4-10",
+    "fixture-api-key-4-10",
+    "fixture-secret-4-10",
+    "fixture-password-4-10",
+    "fixture-credential-4-10",
 )
 
 
@@ -103,8 +103,8 @@ def _protected_sensitive_fixture_json() -> str:
 
 
 def test_public_constants():
-    assert GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION == "4.9.0"
-    assert GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION == "4.9.0"
+    assert GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION == "4.10.0"
+    assert GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION == "4.10.0"
     assert (
         GOVERNANCE_DRY_RUN_FIXTURE_PACK_TYPE
         == "governance_dry_run_fixture_pack"
@@ -117,8 +117,8 @@ def test_fixture_pack_shape_is_deterministic():
     second = build_governance_dry_run_fixture_pack()
 
     assert first == second
-    assert first["version"] == "4.9.0"
-    assert first["schema_version"] == "4.9.0"
+    assert first["version"] == "4.10.0"
+    assert first["schema_version"] == "4.10.0"
     assert first["fixture_pack_type"] == "governance_dry_run_fixture_pack"
     assert first["fixture_pack_status"] == "pass"
     assert first["fixture_count"] == len(EXPECTED_FIXTURE_NAMES)
@@ -250,7 +250,7 @@ def test_sensitive_redaction_sequence_keeps_raw_inputs_only_in_events():
     raw_events = json.dumps(fixture["events"], sort_keys=True)
 
     assert '"secret"' in raw_events
-    assert "fixture-secret-4-9" in raw_events
+    assert "fixture-secret-4-10" in raw_events
     assert fixture["validation_summary"]["sensitive_fields_omitted"] is True  # type: ignore[index]
     for blocked in SENSITIVE_BLOCKED_TERMS:
         assert blocked not in _protected_sensitive_fixture_json()

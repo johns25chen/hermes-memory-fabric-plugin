@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
@@ -14,45 +15,50 @@ from hermes_memory_fabric.release_integrity_audit import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_release_integrity_audit_passes():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+@lru_cache(maxsize=1)
+def _release_integrity_result() -> dict[str, object]:
+    return run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "4.9.0"
+
+def test_release_integrity_audit_passes():
+    result = _release_integrity_result()
+
+    assert result["version"] == "4.10.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "4.9.0"
+    assert result["pyproject_version"] == "4.10.0"
 
 
 def test_release_integrity_expected_tags_are_present():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["expected_tags_present"] is True
     assert result["missing_tags"] == []
 
 
 def test_release_integrity_expected_files_are_present():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["expected_files_present"] is True
     assert result["missing_files"] == []
 
 
 def test_release_integrity_provider_tools_are_empty():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["provider_tools"] == []
     assert result["provider_tools_empty"] is True
 
 
 def test_release_integrity_authority_contract_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["authority_contract_status"] == "ready"
     assert result["authority_contract_safe"] is True
 
 
 def test_release_integrity_skill_fabric_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["skill_fabric_verify_status"] == "pass"
     assert result["skill_fabric_safe"] is True
@@ -62,7 +68,7 @@ def test_release_integrity_skill_fabric_safety_remains_true():
 
 
 def test_release_integrity_simulation_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["simulation_status"] == "pass"
     assert result["simulation_safe"] is True
@@ -71,7 +77,7 @@ def test_release_integrity_simulation_safety_remains_true():
 
 
 def test_release_integrity_proposal_pack_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["proposal_pack_status"] == "ready"
     assert result["proposal_pack_safe"] is True
@@ -81,7 +87,7 @@ def test_release_integrity_proposal_pack_safety_remains_true():
 
 
 def test_release_integrity_review_gate_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["review_gate_status"] == "ready"
     assert result["review_gate_safe"] is True
@@ -92,7 +98,7 @@ def test_release_integrity_review_gate_safety_remains_true():
 
 
 def test_release_integrity_approval_request_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["approval_request_status"] == "ready"
     assert result["approval_request_safe"] is True
@@ -101,7 +107,7 @@ def test_release_integrity_approval_request_safety_remains_true():
 
 
 def test_release_integrity_unsafe_source_hits_are_empty():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["unsafe_source_hits"] == []
     assert result["no_network_surface"] is True
@@ -112,7 +118,7 @@ def test_release_integrity_unsafe_source_hits_are_empty():
 
 
 def test_release_integrity_report_is_json_serializable():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     payload = release_integrity_audit_to_json(result)
     decoded = json.loads(payload)
@@ -136,77 +142,84 @@ def test_release_integrity_smoke_script_exits_zero():
 
 
 def test_release_integrity_governance_cli_report_envelope_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_cli_report_envelope_smoke_status"] == "pass"
     assert result["governance_cli_report_envelope_smoke_safe"] is True
 
 
 def test_release_integrity_governance_dry_run_fixture_pack_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_dry_run_fixture_pack_smoke_status"] == "pass"
     assert result["governance_dry_run_fixture_pack_smoke_safe"] is True
 
 
 def test_release_integrity_governance_dry_run_validation_matrix_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_dry_run_validation_matrix_smoke_status"] == "pass"
     assert result["governance_dry_run_validation_matrix_smoke_safe"] is True
 
 
+def test_release_integrity_governance_boundary_readiness_audit_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert result["governance_boundary_readiness_audit_smoke_status"] == "pass"
+    assert result["governance_boundary_readiness_audit_smoke_safe"] is True
+
+
 def test_release_integrity_openclaw_audit_review_safety_remains_true():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["openclaw_audit_review_status"] == "missing_audit_log"
     assert result["openclaw_audit_review_safe"] is True
 
 
 def test_release_integrity_openclaw_audit_review_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["openclaw_audit_review_smoke_status"] == "pass"
     assert result["openclaw_audit_review_smoke_safe"] is True
 
 
 def test_release_integrity_closed_loop_evidence_validation_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["closed_loop_evidence_validation_smoke_status"] == "pass"
     assert result["closed_loop_evidence_validation_smoke_safe"] is True
 
 
 def test_release_integrity_governed_memory_proposal_from_evidence_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_memory_proposal_from_evidence_smoke_status"] == "pass"
     assert result["governed_memory_proposal_from_evidence_smoke_safe"] is True
 
 
 def test_release_integrity_governed_memory_proposal_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_memory_proposal_review_gate_smoke_status"] == "pass"
     assert result["governed_memory_proposal_review_gate_smoke_safe"] is True
 
 
 def test_release_integrity_governed_approval_request_preparation_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_approval_request_preparation_smoke_status"] == "pass"
     assert result["governed_approval_request_preparation_smoke_safe"] is True
 
 
 def test_release_integrity_governed_approval_request_dry_run_envelope_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_approval_request_dry_run_envelope_smoke_status"] == "pass"
     assert result["governed_approval_request_dry_run_envelope_smoke_safe"] is True
 
 
 def test_release_integrity_governed_approval_request_dry_run_envelope_validation_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_approval_request_dry_run_envelope_validation_smoke_status"]
@@ -216,7 +229,7 @@ def test_release_integrity_governed_approval_request_dry_run_envelope_validation
 
 
 def test_release_integrity_governed_human_operator_decision_packet_dry_run_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_human_operator_decision_packet_dry_run_smoke_status"]
@@ -226,7 +239,7 @@ def test_release_integrity_governed_human_operator_decision_packet_dry_run_smoke
 
 
 def test_release_integrity_governed_human_operator_decision_packet_validation_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_human_operator_decision_packet_validation_smoke_status"]
@@ -236,28 +249,28 @@ def test_release_integrity_governed_human_operator_decision_packet_validation_sm
 
 
 def test_release_integrity_governed_star_dome_chain_closure_audit_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_star_dome_chain_closure_audit_smoke_status"] == "pass"
     assert result["governed_star_dome_chain_closure_audit_smoke_safe"] is True
 
 
 def test_release_integrity_governed_star_dome_closure_boundary_manifest_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_star_dome_closure_boundary_manifest_smoke_status"] == "pass"
     assert result["governed_star_dome_closure_boundary_manifest_smoke_safe"] is True
 
 
 def test_release_integrity_governed_star_hub_preflight_boundary_analysis_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_star_hub_preflight_boundary_analysis_smoke_status"] == "pass"
     assert result["governed_star_hub_preflight_boundary_analysis_smoke_safe"] is True
 
 
 def test_release_integrity_governed_star_hub_scheduling_design_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_hub_scheduling_design_boundary_proposal_smoke_status"]
@@ -270,7 +283,7 @@ def test_release_integrity_governed_star_hub_scheduling_design_boundary_proposal
 
 
 def test_release_integrity_governed_star_hub_scheduling_design_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_hub_scheduling_design_boundary_review_gate_smoke_status"]
@@ -283,7 +296,7 @@ def test_release_integrity_governed_star_hub_scheduling_design_boundary_review_g
 
 
 def test_release_integrity_governed_star_hub_scheduling_dry_run_plan_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -300,7 +313,7 @@ def test_release_integrity_governed_star_hub_scheduling_dry_run_plan_boundary_pr
 
 
 def test_release_integrity_governed_star_hub_scheduling_dry_run_plan_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -317,7 +330,7 @@ def test_release_integrity_governed_star_hub_scheduling_dry_run_plan_boundary_re
 
 
 def test_release_integrity_governed_star_hub_scheduling_dry_run_execution_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -334,7 +347,7 @@ def test_release_integrity_governed_star_hub_scheduling_dry_run_execution_bounda
 
 
 def test_release_integrity_governed_star_hub_scheduling_dry_run_execution_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -351,14 +364,14 @@ def test_release_integrity_governed_star_hub_scheduling_dry_run_execution_bounda
 
 
 def test_release_integrity_governed_star_hub_chain_closure_audit_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governed_star_hub_chain_closure_audit_smoke_status"] == "pass"
     assert result["governed_star_hub_chain_closure_audit_smoke_safe"] is True
 
 
 def test_release_integrity_governed_star_hub_closure_boundary_manifest_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_hub_closure_boundary_manifest_smoke_status"] == "pass"
@@ -367,7 +380,7 @@ def test_release_integrity_governed_star_hub_closure_boundary_manifest_smoke_rem
 
 
 def test_release_integrity_governed_star_law_preflight_boundary_analysis_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_law_preflight_boundary_analysis_smoke_status"] == "pass"
@@ -376,7 +389,7 @@ def test_release_integrity_governed_star_law_preflight_boundary_analysis_smoke_r
 
 
 def test_release_integrity_governed_star_law_design_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_law_design_boundary_proposal_smoke_status"] == "pass"
@@ -385,7 +398,7 @@ def test_release_integrity_governed_star_law_design_boundary_proposal_smoke_rema
 
 
 def test_release_integrity_governed_star_law_design_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governed_star_law_design_boundary_review_gate_smoke_status"] == "pass"
@@ -394,7 +407,7 @@ def test_release_integrity_governed_star_law_design_boundary_review_gate_smoke_r
 
 
 def test_release_integrity_governed_star_law_candidate_rule_set_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -409,7 +422,7 @@ def test_release_integrity_governed_star_law_candidate_rule_set_boundary_proposa
 
 
 def test_release_integrity_governed_star_law_candidate_rule_set_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -424,7 +437,7 @@ def test_release_integrity_governed_star_law_candidate_rule_set_boundary_review_
 
 
 def test_release_integrity_governed_star_law_candidate_rule_activation_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -441,7 +454,7 @@ def test_release_integrity_governed_star_law_candidate_rule_activation_boundary_
 
 
 def test_release_integrity_governed_star_law_candidate_rule_activation_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -458,7 +471,7 @@ def test_release_integrity_governed_star_law_candidate_rule_activation_boundary_
 
 
 def test_release_integrity_governed_star_law_candidate_rule_enforcement_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -475,7 +488,7 @@ def test_release_integrity_governed_star_law_candidate_rule_enforcement_boundary
 
 
 def test_release_integrity_governed_star_law_candidate_rule_enforcement_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -492,7 +505,7 @@ def test_release_integrity_governed_star_law_candidate_rule_enforcement_boundary
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_observation_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -509,7 +522,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_observatio
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_observation_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -526,7 +539,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_observatio
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -543,7 +556,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_b
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -560,7 +573,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_b
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -577,7 +590,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -594,7 +607,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_closure_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -611,7 +624,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_closure_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -628,7 +641,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_finalization_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -645,7 +658,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_finalization_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -662,7 +675,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -679,7 +692,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -696,7 +709,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -713,7 +726,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -730,7 +743,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_closure_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -747,7 +760,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_closure_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -764,7 +777,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_finalization_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -781,7 +794,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_finalization_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -798,7 +811,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -815,7 +828,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -832,7 +845,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_closure_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -849,7 +862,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_closure_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -866,7 +879,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_finalization_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -883,7 +896,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_law_candidate_rule_violation_response_audit_completion_attestation_completion_finalization_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -900,7 +913,7 @@ def test_release_integrity_governed_star_law_candidate_rule_violation_response_a
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -917,7 +930,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_proposa
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -934,7 +947,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_review_
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -951,7 +964,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -968,7 +981,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -985,7 +998,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1002,7 +1015,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1019,7 +1032,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1036,7 +1049,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_execution_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1053,7 +1066,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_execution_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1070,7 +1083,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1087,7 +1100,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1104,7 +1117,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1121,7 +1134,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1138,7 +1151,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1155,7 +1168,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_review_gate_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1172,7 +1185,7 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_governed_star_soul_memory_continuity_boundary_approval_request_dry_run_completion_attestation_approval_request_dry_run_proposal_smoke_remains_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result[
@@ -1189,35 +1202,35 @@ def test_release_integrity_governed_star_soul_memory_continuity_boundary_approva
 
 
 def test_release_integrity_event_driven_governance_kernel_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["event_driven_governance_kernel_smoke_status"] == "pass"
     assert result["event_driven_governance_kernel_smoke_safe"] is True
 
 
 def test_release_integrity_governance_event_schema_registry_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_event_schema_registry_smoke_status"] == "pass"
     assert result["governance_event_schema_registry_smoke_safe"] is True
 
 
 def test_release_integrity_governance_event_canonicalizer_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_event_canonicalizer_smoke_status"] == "pass"
     assert result["governance_event_canonicalizer_smoke_safe"] is True
 
 
 def test_release_integrity_governance_replay_audit_report_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_replay_audit_report_smoke_status"] == "pass"
     assert result["governance_replay_audit_report_smoke_safe"] is True
 
 
 def test_release_integrity_governance_transition_policy_registry_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governance_transition_policy_registry_smoke_status"]
@@ -1229,7 +1242,7 @@ def test_release_integrity_governance_transition_policy_registry_smoke_is_safe()
 
 
 def test_release_integrity_governance_local_event_store_dry_run_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert (
         result["governance_local_event_store_dry_run_smoke_status"]
@@ -1241,7 +1254,7 @@ def test_release_integrity_governance_local_event_store_dry_run_smoke_is_safe():
 
 
 def test_release_integrity_governance_kernel_cli_dry_run_smoke_is_safe():
-    result = run_release_integrity_audit(PROJECT_ROOT)
+    result = _release_integrity_result()
 
     assert result["governance_kernel_cli_dry_run_smoke_status"] == "pass"
     assert result["governance_kernel_cli_dry_run_smoke_safe"] is True

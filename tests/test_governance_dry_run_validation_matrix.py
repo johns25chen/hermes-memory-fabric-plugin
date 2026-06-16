@@ -63,15 +63,15 @@ SENSITIVE_BLOCKED_TERMS = (
     '"secret"',
     '"password"',
     '"credential"',
-    "fixture-approval-phrase-4-9",
-    "fixture-stdout-tail-4-9",
-    "fixture-stdout-4-9",
-    "fixture-raw-logs-4-9",
-    "fixture-token-4-9",
-    "fixture-api-key-4-9",
-    "fixture-secret-4-9",
-    "fixture-password-4-9",
-    "fixture-credential-4-9",
+    "fixture-approval-phrase-4-10",
+    "fixture-stdout-tail-4-10",
+    "fixture-stdout-4-10",
+    "fixture-raw-logs-4-10",
+    "fixture-token-4-10",
+    "fixture-api-key-4-10",
+    "fixture-secret-4-10",
+    "fixture-password-4-10",
+    "fixture-credential-4-10",
 )
 
 
@@ -116,8 +116,8 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION == "4.9.0"
-    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_SCHEMA_VERSION == "4.9.0"
+    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION == "4.10.0"
+    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_SCHEMA_VERSION == "4.10.0"
     assert (
         GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_TYPE
         == "governance_dry_run_validation_matrix"
@@ -130,14 +130,14 @@ def test_validation_matrix_shape_is_deterministic():
     second = _matrix()
 
     assert first == second
-    assert first["version"] == "4.9.0"
-    assert first["schema_version"] == "4.9.0"
+    assert first["version"] == "4.10.0"
+    assert first["schema_version"] == "4.10.0"
     assert (
         first["validation_matrix_type"]
         == "governance_dry_run_validation_matrix"
     )
     assert first["validation_matrix_status"] == "pass"
-    assert first["fixture_pack_version"] == "4.9.0"
+    assert first["fixture_pack_version"] == "4.10.0"
     assert first["row_count"] == len(EXPECTED_FIXTURE_NAMES)
     assert first["pass_count"] == 3
     assert first["blocked_count"] == 7
