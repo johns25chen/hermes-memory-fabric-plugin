@@ -54,15 +54,15 @@ SENSITIVE_BLOCKED_TERMS = [
     '"secret"',
     '"password"',
     '"credential"',
-    "fixture-approval-phrase-4-8",
-    "fixture-stdout-tail-4-8",
-    "fixture-stdout-4-8",
-    "fixture-raw-logs-4-8",
-    "fixture-token-4-8",
-    "fixture-api-key-4-8",
-    "fixture-secret-4-8",
-    "fixture-password-4-8",
-    "fixture-credential-4-8",
+    "fixture-approval-phrase-4-9",
+    "fixture-stdout-tail-4-9",
+    "fixture-stdout-4-9",
+    "fixture-raw-logs-4-9",
+    "fixture-token-4-9",
+    "fixture-api-key-4-9",
+    "fixture-secret-4-9",
+    "fixture-password-4-9",
+    "fixture-credential-4-9",
 ]
 
 
@@ -84,7 +84,7 @@ def _assert_safety(value: object) -> None:
 
 def _assert_no_sensitive_metadata_leak(fixture: dict[str, object]) -> None:
     raw_events = json.dumps(fixture["events"], sort_keys=True)
-    if "fixture-secret-4-8" not in raw_events or '"secret"' not in raw_events:
+    if "fixture-secret-4-9" not in raw_events or '"secret"' not in raw_events:
         raise AssertionError("raw_sensitive_input_missing")
 
     protected = {
