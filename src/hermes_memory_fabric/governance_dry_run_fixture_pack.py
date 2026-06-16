@@ -21,8 +21,8 @@ from .governance_replay_audit_report import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION = "4.9.0"
-GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION = "4.9.0"
+GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION = "4.10.0"
+GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION = "4.10.0"
 GOVERNANCE_DRY_RUN_FIXTURE_PACK_TYPE = "governance_dry_run_fixture_pack"
 GOVERNANCE_DRY_RUN_FIXTURE_HASH_ALGORITHM = "sha256"
 
@@ -98,20 +98,20 @@ _PAYLOADS: dict[str, dict[str, str]] = {
 
 _FULL_SEQUENCE_EVENT_TYPES = tuple(_PAYLOADS)[:-1]
 _SENSITIVE_VALUES = {
-    "approval_phrase": "fixture-approval-phrase-4-9",
-    "stdout_tail": "fixture-stdout-tail-4-9",
-    "stdout": "fixture-stdout-4-9",
-    "raw_logs": "fixture-raw-logs-4-9",
-    "token": "fixture-token-4-9",
-    "api_key": "fixture-api-key-4-9",
-    "secret": "fixture-secret-4-9",
-    "password": "fixture-password-4-9",
-    "credential": "fixture-credential-4-9",
+    "approval_phrase": "fixture-approval-phrase-4-10",
+    "stdout_tail": "fixture-stdout-tail-4-10",
+    "stdout": "fixture-stdout-4-10",
+    "raw_logs": "fixture-raw-logs-4-10",
+    "token": "fixture-token-4-10",
+    "api_key": "fixture-api-key-4-10",
+    "secret": "fixture-secret-4-10",
+    "password": "fixture-password-4-10",
+    "credential": "fixture-credential-4-10",
 }
 
 
 def build_governance_dry_run_fixture_pack() -> dict[str, Any]:
-    """Build the v4.9 governance fixture pack."""
+    """Build the v4.10 governance fixture pack."""
 
     fixtures = {
         spec["fixture_name"]: _build_fixture(spec)
