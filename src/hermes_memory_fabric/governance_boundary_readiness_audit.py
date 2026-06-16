@@ -52,8 +52,8 @@ from .governance_transition_policy_registry import (
 )
 
 
-GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION = "4.10.0"
-GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION = "4.10.0"
+GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION = "5.0.0"
+GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION = "5.0.0"
 GOVERNANCE_BOUNDARY_READINESS_AUDIT_TYPE = (
     "governance_boundary_readiness_audit"
 )
@@ -179,7 +179,7 @@ _SENSITIVE_BLOCKED_TERMS = (
 
 
 def build_governance_boundary_readiness_audit() -> dict[str, Any]:
-    """Build deterministic local readiness metadata for the v4.10 boundary."""
+    """Build deterministic local readiness metadata for governance handoff."""
 
     matrix = _detached_json_value(build_governance_dry_run_validation_matrix())
     matrix_repeat = _detached_json_value(
@@ -370,7 +370,7 @@ def _version_alignment_check() -> dict[str, Any]:
             "mismatched_components": mismatches,
         },
         blocking_reasons=[
-            "governance stack versions must align to 4.10.0"
+            "governance stack versions must align to 5.0.0"
         ]
         if mismatches
         else [],
@@ -383,7 +383,7 @@ def _validation_matrix_status_check(
     blocking_reasons = _deduplicate(
         [
             *(
-                ["validation matrix version must equal 4.10.0"]
+                ["validation matrix version must equal 5.0.0"]
                 if matrix.get("version") != GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION
                 else []
             ),
@@ -435,7 +435,7 @@ def _fixture_pack_presence_check(
     blocking_reasons = _deduplicate(
         [
             *(
-                ["fixture pack version must equal 4.10.0"]
+                ["fixture pack version must equal 5.0.0"]
                 if matrix.get("fixture_pack_version")
                 != GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION
                 or fixture_pack.get("version")

@@ -21,8 +21,8 @@ from .governance_replay_audit_report import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION = "4.10.0"
-GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION = "4.10.0"
+GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION = "5.0.0"
+GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION = "5.0.0"
 GOVERNANCE_DRY_RUN_FIXTURE_PACK_TYPE = "governance_dry_run_fixture_pack"
 GOVERNANCE_DRY_RUN_FIXTURE_HASH_ALGORITHM = "sha256"
 
@@ -111,7 +111,7 @@ _SENSITIVE_VALUES = {
 
 
 def build_governance_dry_run_fixture_pack() -> dict[str, Any]:
-    """Build the v4.10 governance fixture pack."""
+    """Build the governance fixture pack."""
 
     fixtures = {
         spec["fixture_name"]: _build_fixture(spec)
