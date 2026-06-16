@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "4.4.0"
+    assert result["version"] == "4.5.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "4.4.0"
+    assert result["pyproject_version"] == "4.5.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -1204,4 +1204,16 @@ def test_release_integrity_governance_transition_policy_registry_smoke_is_safe()
     )
     assert (
         result["governance_transition_policy_registry_smoke_safe"] is True
+    )
+
+
+def test_release_integrity_governance_local_event_store_dry_run_smoke_is_safe():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert (
+        result["governance_local_event_store_dry_run_smoke_status"]
+        == "pass"
+    )
+    assert (
+        result["governance_local_event_store_dry_run_smoke_safe"] is True
     )
