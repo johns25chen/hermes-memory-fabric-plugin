@@ -7,9 +7,9 @@ import json
 from typing import Any
 
 
-TRANSITION_POLICY_REGISTRY_VERSION = "4.4.0"
-TRANSITION_POLICY_SCHEMA_VERSION = "4.4.0"
-GOVERNANCE_STATE_MACHINE_POLICY_VERSION = "4.4.0"
+TRANSITION_POLICY_REGISTRY_VERSION = "4.5.0"
+TRANSITION_POLICY_SCHEMA_VERSION = "4.5.0"
+GOVERNANCE_STATE_MACHINE_POLICY_VERSION = "4.5.0"
 
 ALLOWED_GOVERNANCE_STATES = (
     "initialized",
@@ -60,6 +60,11 @@ GOVERNANCE_TRANSITION_POLICY_REGISTRY: dict[str, dict[str, str]] = {
 
 SAFETY_BOUNDARIES = {
     "unsafe_side_effects_performed": False,
+    "real_execution_performed": False,
+    "execution_adapter_invoked": False,
+    "external_calls_performed": False,
+    "filesystem_written": False,
+    "database_written": False,
     "memory_written": False,
     "durable_memory_written": False,
     "memory_graph_mutated": False,
@@ -67,6 +72,10 @@ SAFETY_BOUNDARIES = {
     "network_called": False,
     "github_api_called": False,
     "openclaw_called": False,
+    "composio_called": False,
+    "request_created": False,
+    "request_submitted": False,
+    "request_executed": False,
     "approval_request_created": False,
     "approval_request_submitted": False,
     "approval_request_executed": False,
@@ -80,6 +89,8 @@ SAFETY_BOUNDARIES = {
     "finalization_executed": False,
     "autonomous_execution_authorized": False,
     "autonomous_governance_created": False,
+    "scheduling_performed": False,
+    "handoff_performed": False,
     "consciousness_claimed": False,
     "self_awareness_claimed": False,
     "personhood_claimed": False,
