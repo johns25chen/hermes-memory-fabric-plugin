@@ -17,10 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 def test_release_integrity_audit_passes():
     result = run_release_integrity_audit(PROJECT_ROOT)
 
-    assert result["version"] == "4.6.0"
+    assert result["version"] == "4.7.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "4.6.0"
+    assert result["pyproject_version"] == "4.7.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -133,6 +133,13 @@ def test_release_integrity_smoke_script_exits_zero():
     assert completed.returncode == 0
     assert completed.stdout == "release_integrity_audit=passed\n"
     assert completed.stderr == ""
+
+
+def test_release_integrity_governance_cli_report_envelope_smoke_remains_safe():
+    result = run_release_integrity_audit(PROJECT_ROOT)
+
+    assert result["governance_cli_report_envelope_smoke_status"] == "pass"
+    assert result["governance_cli_report_envelope_smoke_safe"] is True
 
 
 def test_release_integrity_openclaw_audit_review_safety_remains_true():
