@@ -199,11 +199,11 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 def test_public_constants():
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_VERSION
-        == "5.2.0"
+        == "5.3.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_SCHEMA_VERSION
-        == "5.2.0"
+        == "5.3.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_TYPE
@@ -226,8 +226,8 @@ def test_manifest_dry_run_design_shape_is_deterministic():
     second = _design()
 
     assert first == second
-    assert first["version"] == "5.2.0"
-    assert first["schema_version"] == "5.2.0"
+    assert first["version"] == "5.3.0"
+    assert first["schema_version"] == "5.3.0"
     assert (
         first["manifest_dry_run_design_type"]
         == "governance_execution_adapter_manifest_dry_run_design"
@@ -255,7 +255,7 @@ def test_manifest_dry_run_design_shape_is_deterministic():
         == "ready_for_future_manifest_fixture_pack_design"
     )
     assert first["blocking_reasons"] == []
-    assert first["declaration_schema_registry_version"] == "5.2.0"
+    assert first["declaration_schema_registry_version"] == "5.3.0"
     assert first["declaration_schema_registry_status"] == "pass"
     assert isinstance(first["declaration_schema_registry_hash"], str)
     assert len(first["declaration_schema_registry_hash"]) == 64
