@@ -17,7 +17,7 @@ from hermes_memory_fabric.event_driven_governance_kernel import (  # noqa: E402
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.1.0",
+        "kernel_version": "5.2.0",
         "initialization_scope": "local-smoke",
     },
     "proposal_submitted": {
@@ -74,7 +74,7 @@ def _events() -> list[dict[str, object]]:
                 "created_at": f"2026-06-14T00:00:0{index}Z",
                 "payload": {**_PAYLOADS[event_type], "sequence": index},
                 "previous_event_id": previous_event_id,
-                "schema_version": "5.1.0",
+                "schema_version": "5.2.0",
             }
         )
         previous_event_id = event_id
@@ -92,9 +92,9 @@ def main() -> int:
             raise AssertionError("audit_status")
         if first["replay_safe"] is not True:
             raise AssertionError("replay_safe")
-        if first["transition_policy_version"] != "5.1.0":
+        if first["transition_policy_version"] != "5.2.0":
             raise AssertionError("transition_policy_version")
-        if first["transition_policy_registry_version"] != "5.1.0":
+        if first["transition_policy_registry_version"] != "5.2.0":
             raise AssertionError("transition_policy_registry_version")
         for key in SAFETY_BOUNDARIES:
             if first.get(key) is not False:
