@@ -23,10 +23,10 @@ def _release_integrity_result() -> dict[str, object]:
 def test_release_integrity_audit_passes():
     result = _release_integrity_result()
 
-    assert result["version"] == "5.4.0"
+    assert result["version"] == "5.5.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "5.4.0"
+    assert result["pyproject_version"] == "5.5.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -239,6 +239,23 @@ def test_release_integrity_governance_execution_adapter_manifest_validation_matr
     assert (
         result[
             "governance_execution_adapter_manifest_validation_matrix_smoke_safe"
+        ]
+        is True
+    )
+
+
+def test_release_integrity_governance_execution_adapter_manifest_policy_gate_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert (
+        result[
+            "governance_execution_adapter_manifest_policy_gate_smoke_status"
+        ]
+        == "pass"
+    )
+    assert (
+        result[
+            "governance_execution_adapter_manifest_policy_gate_smoke_safe"
         ]
         is True
     )

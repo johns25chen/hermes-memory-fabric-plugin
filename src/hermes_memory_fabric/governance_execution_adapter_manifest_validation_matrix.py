@@ -14,8 +14,8 @@ from .governance_execution_adapter_manifest_fixture_pack import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_VERSION = "5.4.0"
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_SCHEMA_VERSION = "5.4.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_VERSION = "5.5.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_SCHEMA_VERSION = "5.5.0"
 GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_TYPE = (
     "governance_execution_adapter_manifest_validation_matrix"
 )
@@ -235,7 +235,7 @@ def build_governance_execution_adapter_manifest_validation_matrix() -> dict[str,
     blocking_reasons = _deduplicate(
         [
             *(
-                ["manifest fixture pack must pass at version 5.4.0"]
+                ["manifest fixture pack must pass at version 5.5.0"]
                 if not fixture_pack_passes
                 else []
             ),
@@ -1812,7 +1812,7 @@ def _fixture_pack_blocking_reasons(
                 else []
             ),
             *(
-                ["manifest fixture pack version must equal 5.4.0"]
+                ["manifest fixture pack version must equal 5.5.0"]
                 if fixture_pack.get("version")
                 != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_VERSION
                 else []
