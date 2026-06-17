@@ -14,8 +14,8 @@ from .governance_execution_adapter_manifest_dry_run_design import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_VERSION = "5.5.0"
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_SCHEMA_VERSION = "5.5.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_VERSION = "5.6.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_SCHEMA_VERSION = "5.6.0"
 GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_TYPE = (
     "governance_execution_adapter_manifest_fixture_pack"
 )
@@ -213,7 +213,7 @@ def build_governance_execution_adapter_manifest_fixture_pack() -> dict[str, Any]
     blocking_reasons = _deduplicate(
         [
             *(
-                ["manifest dry-run design must pass at version 5.5.0"]
+                ["manifest dry-run design must pass at version 5.6.0"]
                 if not design_passes
                 else []
             ),
@@ -1498,7 +1498,7 @@ def _design_blocking_reasons(design: Mapping[str, Any]) -> list[str]:
                 else []
             ),
             *(
-                ["manifest dry-run design version must equal 5.5.0"]
+                ["manifest dry-run design version must equal 5.6.0"]
                 if design.get("version")
                 != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_VERSION
                 else []
