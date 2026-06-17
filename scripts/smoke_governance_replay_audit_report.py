@@ -21,7 +21,7 @@ from hermes_memory_fabric.governance_event_schema_registry import (  # noqa: E40
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.3.0",
+        "kernel_version": "5.4.0",
         "initialization_scope": "local-smoke",
     },
     "proposal_submitted": {
@@ -76,7 +76,7 @@ def _events() -> list[dict[str, object]]:
                     "sequence": index,
                 },
                 "previous_event_id": previous_event_id,
-                "schema_version": "5.3.0",
+                "schema_version": "5.4.0",
             }
         )
         previous_event_id = event_id
@@ -100,9 +100,9 @@ def main() -> int:
             raise AssertionError("accepted_event_count")
         if first["rejected_event_count"] != 0:
             raise AssertionError("rejected_event_count")
-        if first["transition_policy_version"] != "5.3.0":
+        if first["transition_policy_version"] != "5.4.0":
             raise AssertionError("transition_policy_version")
-        if first["transition_policy_registry_version"] != "5.3.0":
+        if first["transition_policy_registry_version"] != "5.4.0":
             raise AssertionError("transition_policy_registry_version")
         if len(first["policy_evaluation_summaries"]) != len(events):
             raise AssertionError("policy_evaluation_summaries")
