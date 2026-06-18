@@ -30,7 +30,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.8.0",
+        "kernel_version": "5.9.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -81,7 +81,7 @@ def _event(
             else dict(_PAYLOADS.get(event_type, {}))
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "5.8.0",
+        "schema_version": "5.9.0",
     }
 
 
@@ -114,15 +114,15 @@ def _rechain(events: list[dict[str, object]]) -> None:
 
 
 def test_public_versions_and_hash_algorithm():
-    assert CANONICALIZER_VERSION == "5.8.0"
-    assert CANONICAL_EVENT_SCHEMA_VERSION == "5.8.0"
+    assert CANONICALIZER_VERSION == "5.9.0"
+    assert CANONICAL_EVENT_SCHEMA_VERSION == "5.9.0"
     assert CANONICAL_EVENT_HASH_ALGORITHM == "sha256"
 
 
 def test_valid_full_sequence_canonicalizes_successfully():
     result = canonicalize_governance_event_sequence(_full_events())
 
-    assert result["version"] == "5.8.0"
+    assert result["version"] == "5.9.0"
     assert result["canonicalization_status"] == "pass"
     assert result["event_count"] == 8
     assert result["canonical_event_count"] == 8
@@ -136,7 +136,7 @@ def test_every_canonical_event_has_v450_canonicalization_version():
     result = canonicalize_governance_event_sequence(_full_events())
 
     assert all(
-        event["canonicalization_version"] == "5.8.0"
+        event["canonicalization_version"] == "5.9.0"
         for event in result["canonical_events"]
     )
 
@@ -148,7 +148,7 @@ def test_canonical_mappings_are_recursively_sorted():
         None,
         {
             "z": {"d": 4, "b": 2},
-            "kernel_version": "5.8.0",
+            "kernel_version": "5.9.0",
             "initialization_scope": "test",
             "a": {"y": 2, "x": 1},
         },
@@ -242,7 +242,7 @@ def test_invalid_payload_schema_is_rejected():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "5.8.0"},
+        {"kernel_version": "5.9.0"},
     )
 
     result = canonicalize_governance_event_sequence([event])
