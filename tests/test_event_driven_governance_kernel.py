@@ -23,7 +23,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.7.0",
+        "kernel_version": "5.8.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -77,7 +77,7 @@ def _event(
             else dict(_PAYLOADS.get(event_type, {}))
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "5.7.0",
+        "schema_version": "5.8.0",
     }
 
 
@@ -111,8 +111,8 @@ def _full_events() -> list[dict[str, object]]:
 def test_valid_full_event_sequence_reaches_finalized():
     result = replay_governance_events(_full_events())
 
-    assert KERNEL_VERSION == "5.7.0"
-    assert result["version"] == "5.7.0"
+    assert KERNEL_VERSION == "5.8.0"
+    assert result["version"] == "5.8.0"
     assert result["kernel_name"] == "event_driven_governance_kernel"
     assert result["current_state"] == "finalized"
     assert result["previous_state"] == "attestation_ready"
@@ -122,8 +122,8 @@ def test_valid_full_event_sequence_reaches_finalized():
     assert result["audit_status"] == "pass"
     assert result["replay_safe"] is True
     assert result["next_allowed_events"] == ["blocked"]
-    assert result["transition_policy_version"] == "5.7.0"
-    assert result["transition_policy_registry_version"] == "5.7.0"
+    assert result["transition_policy_version"] == "5.8.0"
+    assert result["transition_policy_registry_version"] == "5.8.0"
     assert all(
         transition["policy_evaluation"]["valid_transition"] is True
         for transition in result["transition_history"]
@@ -201,7 +201,7 @@ def test_invalid_payload_schema_is_rejected():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "5.7.0"},
+        {"kernel_version": "5.8.0"},
     )
 
     result = replay_governance_events([event])
@@ -221,7 +221,7 @@ def test_blocked_event_moves_to_blocked_state():
     assert result["current_state"] == "blocked"
     assert len(result["accepted_events"]) == 1
     assert result["accepted_events"][0]["event_id"] == event["event_id"]
-    assert result["accepted_events"][0]["canonicalization_version"] == "5.7.0"
+    assert result["accepted_events"][0]["canonicalization_version"] == "5.8.0"
     assert result["rejected_events"] == []
     assert result["audit_status"] == "blocked"
     assert result["blocking_reasons"] == ["blocked event received"]

@@ -26,7 +26,7 @@ SCRIPT = REPO_ROOT / "scripts" / "governance_kernel_cli_dry_run.py"
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.7.0",
+        "kernel_version": "5.8.0",
         "initialization_scope": "cli-smoke",
     },
     "proposal_submitted": {
@@ -82,7 +82,7 @@ def _events() -> list[dict[str, object]]:
                     "sequence": index,
                 },
                 "previous_event_id": previous_event_id,
-                "schema_version": "5.7.0",
+                "schema_version": "5.8.0",
             }
         )
         previous_event_id = event_id
