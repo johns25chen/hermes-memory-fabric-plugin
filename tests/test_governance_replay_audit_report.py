@@ -29,7 +29,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.8.0",
+        "kernel_version": "5.9.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -83,7 +83,7 @@ def _event(
             else dict(_PAYLOADS.get(event_type, {}))
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "5.8.0",
+        "schema_version": "5.9.0",
     }
 
 
@@ -113,15 +113,15 @@ def _rechain(events: list[dict[str, object]]) -> None:
 
 
 def test_public_versions_and_hash_algorithm():
-    assert REPLAY_AUDIT_REPORT_VERSION == "5.8.0"
-    assert REPLAY_AUDIT_SCHEMA_VERSION == "5.8.0"
+    assert REPLAY_AUDIT_REPORT_VERSION == "5.9.0"
+    assert REPLAY_AUDIT_SCHEMA_VERSION == "5.9.0"
     assert REPLAY_AUDIT_HASH_ALGORITHM == "sha256"
 
 
 def test_valid_full_sequence_reports_pass_and_finalized():
     result = build_governance_replay_audit_report(_full_events())
 
-    assert result["version"] == "5.8.0"
+    assert result["version"] == "5.9.0"
     assert result["audit_report_status"] == "pass"
     assert result["replay_status"] == "pass"
     assert result["canonicalization_status"] == "pass"
@@ -130,8 +130,8 @@ def test_valid_full_sequence_reports_pass_and_finalized():
     assert result["rejected_event_count"] == 0
     assert result["blocking_reasons"] == []
     assert result["error_categories"] == []
-    assert result["transition_policy_version"] == "5.8.0"
-    assert result["transition_policy_registry_version"] == "5.8.0"
+    assert result["transition_policy_version"] == "5.9.0"
+    assert result["transition_policy_registry_version"] == "5.9.0"
     assert len(result["policy_evaluation_summaries"]) == 8
     assert all(
         summary["valid_transition"] is True
@@ -290,7 +290,7 @@ def test_invalid_payload_schema_is_blocked_and_categorized():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "5.8.0"},
+        {"kernel_version": "5.9.0"},
     )
 
     result = build_governance_replay_audit_report([event])

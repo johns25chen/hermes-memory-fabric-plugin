@@ -14,8 +14,8 @@ from .governance_execution_adapter_boundary import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_VERSION = "5.8.0"
-GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_SCHEMA_VERSION = "5.8.0"
+GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_VERSION = "5.9.0"
+GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_SCHEMA_VERSION = "5.9.0"
 GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_TYPE = (
     "governance_execution_adapter_declaration_schema_registry"
 )
@@ -199,7 +199,7 @@ def build_governance_execution_adapter_declaration_schema_registry() -> dict[str
     blocking_reasons = _deduplicate(
         [
             *(
-                ["execution adapter boundary must pass at version 5.8.0"]
+                ["execution adapter boundary must pass at version 5.9.0"]
                 if not boundary_passes
                 else []
             ),
@@ -865,7 +865,7 @@ def _build_declaration_schema_checks(
                         else []
                     ),
                     *(
-                        ["execution adapter boundary version must equal 5.8.0"]
+                        ["execution adapter boundary version must equal 5.9.0"]
                         if boundary.get("version")
                         != GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_VERSION
                         else []
