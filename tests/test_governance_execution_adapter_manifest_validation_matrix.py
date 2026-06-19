@@ -246,11 +246,11 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 def test_public_constants():
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_VERSION
-        == "5.9.0"
+        == "5.10.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_SCHEMA_VERSION
-        == "5.9.0"
+        == "5.10.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_VALIDATION_MATRIX_TYPE
@@ -273,8 +273,8 @@ def test_manifest_validation_matrix_shape_is_deterministic():
     second = _matrix()
 
     assert first == second
-    assert first["version"] == "5.9.0"
-    assert first["schema_version"] == "5.9.0"
+    assert first["version"] == "5.10.0"
+    assert first["schema_version"] == "5.10.0"
     assert (
         first["manifest_validation_matrix_type"]
         == "governance_execution_adapter_manifest_validation_matrix"
@@ -290,7 +290,7 @@ def test_manifest_validation_matrix_shape_is_deterministic():
         assert first[key] is False
     assert first["handoff_status"] == "ready_for_future_manifest_policy_gate_design"
     assert first["blocking_reasons"] == []
-    assert first["manifest_fixture_pack_version"] == "5.9.0"
+    assert first["manifest_fixture_pack_version"] == "5.10.0"
     assert first["manifest_fixture_pack_status"] == "pass"
     assert isinstance(first["manifest_fixture_pack_hash"], str)
     assert len(first["manifest_fixture_pack_hash"]) == 64
