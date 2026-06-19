@@ -14,8 +14,8 @@ from .governance_execution_adapter_manifest_validation_matrix import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_VERSION = "5.11.0"
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_SCHEMA_VERSION = "5.11.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_VERSION = "5.12.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_SCHEMA_VERSION = "5.12.0"
 GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_TYPE = (
     "governance_execution_adapter_manifest_policy_gate"
 )
@@ -184,7 +184,7 @@ def build_governance_execution_adapter_manifest_policy_gate() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["manifest validation matrix must pass at version 5.11.0"]
+                ["manifest validation matrix must pass at version 5.12.0"]
                 if not matrix_passes
                 else []
             ),
@@ -1360,7 +1360,7 @@ def _manifest_validation_matrix_blocking_reasons(
                 else []
             ),
             *(
-                ["manifest validation matrix version must equal 5.11.0"]
+                ["manifest validation matrix version must equal 5.12.0"]
                 if matrix.get("version")
                 != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_VERSION
                 else []
