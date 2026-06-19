@@ -247,10 +247,10 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_VERSION == "5.11.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_VERSION == "5.12.0"
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_SCHEMA_VERSION
-        == "5.11.0"
+        == "5.12.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_POLICY_GATE_TYPE
@@ -273,8 +273,8 @@ def test_manifest_policy_gate_shape_is_deterministic():
     second = _gate()
 
     assert first == second
-    assert first["version"] == "5.11.0"
-    assert first["schema_version"] == "5.11.0"
+    assert first["version"] == "5.12.0"
+    assert first["schema_version"] == "5.12.0"
     assert (
         first["manifest_policy_gate_type"]
         == "governance_execution_adapter_manifest_policy_gate"
@@ -293,7 +293,7 @@ def test_manifest_policy_gate_shape_is_deterministic():
         == "ready_for_future_manifest_approval_gate_design"
     )
     assert first["blocking_reasons"] == []
-    assert first["manifest_validation_matrix_version"] == "5.11.0"
+    assert first["manifest_validation_matrix_version"] == "5.12.0"
     assert first["manifest_validation_matrix_status"] == "pass"
     assert isinstance(first["manifest_validation_matrix_hash"], str)
     assert len(first["manifest_validation_matrix_hash"]) == 64

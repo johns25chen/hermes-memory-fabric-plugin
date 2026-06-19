@@ -103,8 +103,8 @@ def _protected_sensitive_fixture_json() -> str:
 
 
 def test_public_constants():
-    assert GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION == "5.11.0"
-    assert GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION == "5.11.0"
+    assert GOVERNANCE_DRY_RUN_FIXTURE_PACK_VERSION == "5.12.0"
+    assert GOVERNANCE_DRY_RUN_FIXTURE_SCHEMA_VERSION == "5.12.0"
     assert (
         GOVERNANCE_DRY_RUN_FIXTURE_PACK_TYPE
         == "governance_dry_run_fixture_pack"
@@ -117,8 +117,8 @@ def test_fixture_pack_shape_is_deterministic():
     second = build_governance_dry_run_fixture_pack()
 
     assert first == second
-    assert first["version"] == "5.11.0"
-    assert first["schema_version"] == "5.11.0"
+    assert first["version"] == "5.12.0"
+    assert first["schema_version"] == "5.12.0"
     assert first["fixture_pack_type"] == "governance_dry_run_fixture_pack"
     assert first["fixture_pack_status"] == "pass"
     assert first["fixture_count"] == len(EXPECTED_FIXTURE_NAMES)

@@ -22,7 +22,7 @@ from hermes_memory_fabric.governance_event_schema_registry import (  # noqa: E40
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "5.11.0",
+        "kernel_version": "5.12.0",
         "initialization_scope": "local-smoke",
     },
     "proposal_submitted": {
@@ -100,7 +100,7 @@ def main() -> int:
                 raise AssertionError(event_type)
             if not isinstance(first["sanitized_event"], Mapping):
                 raise AssertionError("sanitized_event")
-            if first["schema_version"] != "5.11.0":
+            if first["schema_version"] != "5.12.0":
                 raise AssertionError("schema_version")
             for key in SAFETY_BOUNDARIES:
                 if first.get(key) is not False:
