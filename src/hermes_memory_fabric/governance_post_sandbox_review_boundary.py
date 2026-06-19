@@ -15,8 +15,8 @@ from .governance_controlled_adapter_sandbox_candidate import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_POST_SANDBOX_REVIEW_BOUNDARY_VERSION = "5.12.0"
-GOVERNANCE_POST_SANDBOX_REVIEW_BOUNDARY_SCHEMA_VERSION = "5.12.0"
+GOVERNANCE_POST_SANDBOX_REVIEW_BOUNDARY_VERSION = "5.13.0"
+GOVERNANCE_POST_SANDBOX_REVIEW_BOUNDARY_SCHEMA_VERSION = "5.13.0"
 GOVERNANCE_POST_SANDBOX_REVIEW_BOUNDARY_TYPE = (
     "governance_post_sandbox_review_boundary"
 )
@@ -505,7 +505,7 @@ def build_governance_post_sandbox_review_boundary() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["controlled adapter sandbox candidate must pass at version 5.12.0"]
+                ["controlled adapter sandbox candidate must pass at version 5.13.0"]
                 if not candidate_passes
                 else []
             ),
