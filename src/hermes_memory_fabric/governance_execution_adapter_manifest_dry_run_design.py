@@ -14,8 +14,8 @@ from .governance_execution_adapter_declaration_schema_registry import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_VERSION = "5.10.0"
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_SCHEMA_VERSION = "5.10.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_VERSION = "5.11.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_SCHEMA_VERSION = "5.11.0"
 GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_TYPE = (
     "governance_execution_adapter_manifest_dry_run_design"
 )
@@ -214,7 +214,7 @@ def build_governance_execution_adapter_manifest_dry_run_design() -> dict[str, An
     blocking_reasons = _deduplicate(
         [
             *(
-                ["declaration schema registry must pass at version 5.10.0"]
+                ["declaration schema registry must pass at version 5.11.0"]
                 if not registry_passes
                 else []
             ),
@@ -527,7 +527,7 @@ def _build_manifest_design_contracts(
                         else []
                     ),
                     *(
-                        ["declaration schema registry version must equal 5.10.0"]
+                        ["declaration schema registry version must equal 5.11.0"]
                         if registry.get("version")
                         != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_VERSION
                         else []
@@ -651,7 +651,7 @@ def _build_manifest_design_checks(
                         else []
                     ),
                     *(
-                        ["declaration schema registry version must equal 5.10.0"]
+                        ["declaration schema registry version must equal 5.11.0"]
                         if registry.get("version")
                         != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_DRY_RUN_DESIGN_VERSION
                         else []

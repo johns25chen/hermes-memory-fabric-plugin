@@ -23,10 +23,10 @@ def _release_integrity_result() -> dict[str, object]:
 def test_release_integrity_audit_passes():
     result = _release_integrity_result()
 
-    assert result["version"] == "5.10.0"
+    assert result["version"] == "5.11.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "5.10.0"
+    assert result["pyproject_version"] == "5.11.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -327,6 +327,23 @@ def test_release_integrity_governance_cross_system_coordination_boundary_smoke_r
     )
     assert (
         result["governance_cross_system_coordination_boundary_smoke_safe"]
+        is True
+    )
+
+
+def test_release_integrity_governance_controlled_adapter_sandbox_candidate_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert (
+        result[
+            "governance_controlled_adapter_sandbox_candidate_smoke_status"
+        ]
+        == "pass"
+    )
+    assert (
+        result[
+            "governance_controlled_adapter_sandbox_candidate_smoke_safe"
+        ]
         is True
     )
 
