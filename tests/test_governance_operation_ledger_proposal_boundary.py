@@ -279,8 +279,8 @@ def _assert_safety(value: object) -> None:
 
 
 def test_operation_ledger_proposal_boundary_constants():
-    assert GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_VERSION == "5.13.0"
-    assert GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_SCHEMA_VERSION == "5.13.0"
+    assert GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_VERSION == "6.0.0"
+    assert GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_SCHEMA_VERSION == "6.0.0"
     assert GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_TYPE == (
         "governance_operation_ledger_proposal_boundary"
     )
@@ -303,8 +303,8 @@ def test_operation_ledger_proposal_boundary_shape_is_deterministic():
     second = build_governance_operation_ledger_proposal_boundary()
 
     assert first == second
-    assert first["version"] == "5.13.0"
-    assert first["schema_version"] == "5.13.0"
+    assert first["version"] == "6.0.0"
+    assert first["schema_version"] == "6.0.0"
     assert first["operation_ledger_proposal_boundary_type"] == (
         "governance_operation_ledger_proposal_boundary"
     )
@@ -320,7 +320,7 @@ def test_operation_ledger_proposal_boundary_shape_is_deterministic():
     assert first["operation_ledger_write_status"] == "not_written"
     assert first["future_cross_system_coordination_status"] == "not_entered"
     assert first["star_cosmos_entry_status"] == "candidate_only"
-    assert first["adapter_handoff_audit_version"] == "5.13.0"
+    assert first["adapter_handoff_audit_version"] == "6.0.0"
     assert first["adapter_handoff_audit_status"] == "pass"
     assert len(first["adapter_handoff_audit_hash"]) == 64
     assert first["blocking_reasons"] == []

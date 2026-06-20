@@ -502,7 +502,7 @@ def test_top_level_candidate_boundary_statuses():
         "sandbox_policy_status": SANDBOX_POLICY_STATUS,
         "future_post_sandbox_review_status": FUTURE_POST_SANDBOX_REVIEW_STATUS,
         "star_cosmos_entry_status": STAR_COSMOS_ENTRY_STATUS,
-        "cross_system_coordination_boundary_version": "5.13.0",
+        "cross_system_coordination_boundary_version": "6.0.0",
         "cross_system_coordination_boundary_status": "pass",
         "handoff_status": "ready_for_post_sandbox_review_boundary_design",
     }

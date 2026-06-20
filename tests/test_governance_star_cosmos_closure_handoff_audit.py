@@ -201,10 +201,10 @@ def _assert_no_sensitive_terms(value: object) -> None:
 
 
 def test_constants_match_v5_13_contract():
-    assert GOVERNANCE_STAR_COSMOS_CLOSURE_HANDOFF_AUDIT_VERSION == "5.13.0"
+    assert GOVERNANCE_STAR_COSMOS_CLOSURE_HANDOFF_AUDIT_VERSION == "6.0.0"
     assert (
         GOVERNANCE_STAR_COSMOS_CLOSURE_HANDOFF_AUDIT_SCHEMA_VERSION
-        == "5.13.0"
+        == "6.0.0"
     )
     assert (
         GOVERNANCE_STAR_COSMOS_CLOSURE_HANDOFF_AUDIT_TYPE
@@ -232,8 +232,8 @@ def test_audit_shape_is_deterministic_and_passes(audit):
     repeated = build_governance_star_cosmos_closure_handoff_audit()
 
     assert repeated == audit
-    assert audit["version"] == "5.13.0"
-    assert audit["schema_version"] == "5.13.0"
+    assert audit["version"] == "6.0.0"
+    assert audit["schema_version"] == "6.0.0"
     assert audit["star_cosmos_closure_handoff_audit_status"] == "pass"
     assert (
         audit["star_cosmos_closure_handoff_audit_stage"]
@@ -253,7 +253,7 @@ def test_audit_shape_is_deterministic_and_passes(audit):
     assert audit["star_source_entry_status"] == "not_entered"
     assert audit["star_source_memory_active_status"] == "not_active"
     assert audit["star_cosmos_entry_status"] == "candidate_only"
-    assert audit["post_sandbox_review_boundary_version"] == "5.13.0"
+    assert audit["post_sandbox_review_boundary_version"] == "6.0.0"
     assert audit["post_sandbox_review_boundary_status"] == "pass"
     assert len(audit["post_sandbox_review_boundary_hash"]) == 64
     assert (

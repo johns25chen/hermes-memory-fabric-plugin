@@ -23,10 +23,10 @@ def _release_integrity_result() -> dict[str, object]:
 def test_release_integrity_audit_passes():
     result = _release_integrity_result()
 
-    assert result["version"] == "5.13.0"
+    assert result["version"] == "6.0.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "5.13.0"
+    assert result["pyproject_version"] == "6.0.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -367,6 +367,19 @@ def test_release_integrity_governance_star_cosmos_closure_handoff_audit_smoke_re
     )
     assert (
         result["governance_star_cosmos_closure_handoff_audit_smoke_safe"]
+        is True
+    )
+
+
+def test_release_integrity_governance_star_source_memory_entry_candidate_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert (
+        result["governance_star_source_memory_entry_candidate_smoke_status"]
+        == "pass"
+    )
+    assert (
+        result["governance_star_source_memory_entry_candidate_smoke_safe"]
         is True
     )
 
