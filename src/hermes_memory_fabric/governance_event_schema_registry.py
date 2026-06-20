@@ -10,8 +10,8 @@ from typing import Any
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-SCHEMA_REGISTRY_VERSION = "5.13.0"
-CANONICAL_EVENT_SCHEMA_VERSION = "5.13.0"
+SCHEMA_REGISTRY_VERSION = "6.0.0"
+CANONICAL_EVENT_SCHEMA_VERSION = "6.0.0"
 
 ALLOWED_EVENT_TYPES = (
     "governance_kernel_initialized",
