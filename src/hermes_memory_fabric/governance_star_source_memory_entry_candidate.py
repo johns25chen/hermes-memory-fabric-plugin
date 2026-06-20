@@ -36,8 +36,10 @@ V6_ENTRY_STATUS = "entry_candidate_only"
 V6_HANDOFF_ACCEPTANCE_STATUS = "accepted_as_metadata_only"
 
 READY_HANDOFF_STATUS = (
-    "ready_for_star_source_provenance_boundary_candidate_design"
+    "ready_for_source_constitution_registry_design"
 )
+STAR_SOURCE_ENTRY_NEXT_STAGE = "v6.1_source_constitution_registry"
+STAR_SOURCE_ENTRY_NEXT_STAGE_TITLE = "Source Constitution Registry"
 UPSTREAM_READY_HANDOFF_STATUS = (
     "ready_for_v6_star_source_entry_candidate_design"
 )
@@ -254,7 +256,7 @@ REQUIRED_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_SECTION_NAMES = (
     "operation_ledger_write_disabled_section",
     "approval_authorization_disabled_section",
     "star_source_active_entry_disabled_section",
-    "next_stage_provenance_boundary_candidate_section",
+    "next_stage_source_constitution_registry_section",
 )
 
 REQUIRED_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_CONTRACT_NAMES = (
@@ -345,7 +347,7 @@ REQUIRED_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_CHECK_NAMES = (
     "no_authorization_grant_created_check",
     "no_star_source_active_entry_check",
     "deterministic_star_source_memory_entry_candidate_hash_check",
-    "ready_for_star_source_provenance_boundary_candidate_design_check",
+    "ready_for_source_constitution_registry_design_check",
 )
 
 _UPSTREAM_REFS = (
@@ -810,8 +812,9 @@ def _build_star_source_entry_metadata(
             "star_source_entry_readiness_conditions": list(
                 REQUIRED_STAR_SOURCE_ENTRY_READINESS_CONDITION_NAMES
             ),
-            "star_source_entry_next_stage": (
-                "v6.1_star_source_provenance_boundary_candidate"
+            "star_source_entry_next_stage": STAR_SOURCE_ENTRY_NEXT_STAGE,
+            "star_source_entry_next_stage_title": (
+                STAR_SOURCE_ENTRY_NEXT_STAGE_TITLE
             ),
             "star_source_entry_handoff_status": (
                 READY_HANDOFF_STATUS if ready else BLOCKED_HANDOFF_STATUS
@@ -919,7 +922,7 @@ def _build_sections(context: Mapping[str, Any]) -> list[dict[str, Any]]:
         "star_source_active_entry_disabled_section": (
             not context["star_source_active_entry_claimed"]
         ),
-        "next_stage_provenance_boundary_candidate_section": (
+        "next_stage_source_constitution_registry_section": (
             context["metadata_valid"]
         ),
     }
@@ -980,7 +983,7 @@ def _build_checks(context: Mapping[str, Any]) -> list[dict[str, Any]]:
         "star_source_entry_sections_pass_check": context["sections_pass"],
         "star_source_entry_contracts_pass_check": context["contracts_pass"],
         "deterministic_star_source_memory_entry_candidate_hash_check": True,
-        "ready_for_star_source_provenance_boundary_candidate_design_check": (
+        "ready_for_source_constitution_registry_design_check": (
             context["metadata_valid"]
             and context["provenance_valid"]
             and context["methodology_valid"]
@@ -1219,7 +1222,9 @@ def _star_source_entry_metadata_valid(metadata: Mapping[str, Any]) -> bool:
         and metadata.get("star_source_entry_readiness_conditions")
         == list(REQUIRED_STAR_SOURCE_ENTRY_READINESS_CONDITION_NAMES)
         and metadata.get("star_source_entry_next_stage")
-        == "v6.1_star_source_provenance_boundary_candidate"
+        == STAR_SOURCE_ENTRY_NEXT_STAGE
+        and metadata.get("star_source_entry_next_stage_title")
+        == STAR_SOURCE_ENTRY_NEXT_STAGE_TITLE
         and metadata.get("star_source_entry_handoff_status")
         == READY_HANDOFF_STATUS
         and _all_common_disabled_flags_false(metadata)

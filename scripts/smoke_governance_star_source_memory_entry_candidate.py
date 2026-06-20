@@ -121,9 +121,7 @@ def main() -> int:
             "v6_handoff_acceptance_status": "accepted_as_metadata_only",
             "star_cosmos_closure_handoff_audit_version": "6.0.0",
             "star_cosmos_closure_handoff_audit_status": "pass",
-            "handoff_status": (
-                "ready_for_star_source_provenance_boundary_candidate_design"
-            ),
+            "handoff_status": "ready_for_source_constitution_registry_design",
         }
         for key, expected_value in expected.items():
             if first[key] != expected_value:
@@ -140,6 +138,15 @@ def main() -> int:
             or metadata["star_source_entry_metadata_mode"] != "metadata_only"
         ):
             raise AssertionError("star_source_entry_metadata")
+        if (
+            metadata["star_source_entry_next_stage"]
+            != "v6.1_source_constitution_registry"
+            or metadata["star_source_entry_next_stage_title"]
+            != "Source Constitution Registry"
+            or metadata["star_source_entry_handoff_status"]
+            != "ready_for_source_constitution_registry_design"
+        ):
+            raise AssertionError("star_source_entry_next_stage")
         for key in (
             "source_provenance_entry_metadata",
             "methodology_reverse_inference_entry_metadata",

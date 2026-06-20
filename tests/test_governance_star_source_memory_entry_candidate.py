@@ -25,6 +25,8 @@ from hermes_memory_fabric.governance_star_source_memory_entry_candidate import (
     SELF_EVOLUTION_STATUS,
     SOURCE_PROVENANCE_STATUS,
     STAR_SOURCE_ENTRY_STATUS,
+    STAR_SOURCE_ENTRY_NEXT_STAGE,
+    STAR_SOURCE_ENTRY_NEXT_STAGE_TITLE,
     STAR_SOURCE_MEMORY_ACTIVE_STATUS,
     STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_MODE,
     STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_STAGE,
@@ -212,6 +214,8 @@ def test_constants_match_v6_contract():
     assert SELF_EVOLUTION_STATUS == "not_active"
     assert V6_ENTRY_STATUS == "entry_candidate_only"
     assert V6_HANDOFF_ACCEPTANCE_STATUS == "accepted_as_metadata_only"
+    assert STAR_SOURCE_ENTRY_NEXT_STAGE == "v6.1_source_constitution_registry"
+    assert STAR_SOURCE_ENTRY_NEXT_STAGE_TITLE == "Source Constitution Registry"
 
 
 def test_candidate_shape_is_deterministic_and_passes(candidate):
@@ -243,7 +247,7 @@ def test_candidate_shape_is_deterministic_and_passes(candidate):
     assert len(candidate["star_cosmos_closure_handoff_audit_hash"]) == 64
     assert (
         candidate["handoff_status"]
-        == "ready_for_star_source_provenance_boundary_candidate_design"
+        == "ready_for_source_constitution_registry_design"
     )
     assert candidate["blocking_reasons"] == []
 
@@ -266,11 +270,15 @@ def test_entry_metadata_is_deterministic_metadata_only_and_inactive(candidate):
     assert metadata["star_cosmos_handoff_ready"] is True
     assert (
         metadata["star_source_entry_next_stage"]
-        == "v6.1_star_source_provenance_boundary_candidate"
+        == "v6.1_source_constitution_registry"
+    )
+    assert (
+        metadata["star_source_entry_next_stage_title"]
+        == "Source Constitution Registry"
     )
     assert (
         metadata["star_source_entry_handoff_status"]
-        == "ready_for_star_source_provenance_boundary_candidate_design"
+        == "ready_for_source_constitution_registry_design"
     )
 
 
