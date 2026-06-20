@@ -97,8 +97,8 @@ def main() -> int:
             raise AssertionError("boundary changed between builds")
 
         expected_top_level = {
-            "version": "6.0.0",
-            "schema_version": "6.0.0",
+            "version": "6.1.0",
+            "schema_version": "6.1.0",
             "post_sandbox_review_boundary_status": "pass",
             "post_sandbox_review_boundary_stage": (
                 "v5.12_post_sandbox_review_boundary"
@@ -117,7 +117,7 @@ def main() -> int:
             "failure_handling_status": "metadata_only",
             "layer_14_closure_readiness_status": "candidate_only",
             "star_cosmos_entry_status": "candidate_only",
-            "controlled_adapter_sandbox_candidate_version": "6.0.0",
+            "controlled_adapter_sandbox_candidate_version": "6.1.0",
             "controlled_adapter_sandbox_candidate_status": "pass",
             "handoff_status": (
                 "ready_for_star_cosmos_closure_handoff_audit_design"

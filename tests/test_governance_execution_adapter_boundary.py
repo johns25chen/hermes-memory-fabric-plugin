@@ -148,8 +148,8 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_VERSION == "6.0.0"
-    assert GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_SCHEMA_VERSION == "6.0.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_VERSION == "6.1.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_SCHEMA_VERSION == "6.1.0"
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_TYPE
         == "governance_execution_adapter_boundary"
@@ -164,8 +164,8 @@ def test_execution_adapter_boundary_shape_is_deterministic():
     second = _boundary()
 
     assert first == second
-    assert first["version"] == "6.0.0"
-    assert first["schema_version"] == "6.0.0"
+    assert first["version"] == "6.1.0"
+    assert first["schema_version"] == "6.1.0"
     assert (
         first["execution_adapter_boundary_type"]
         == "governance_execution_adapter_boundary"
@@ -176,7 +176,7 @@ def test_execution_adapter_boundary_shape_is_deterministic():
     assert first["star_cosmos_entry_status"] == "candidate_only"
     assert first["handoff_status"] == "ready_for_future_adapter_contract_design"
     assert first["blocking_reasons"] == []
-    assert first["readiness_audit_version"] == "6.0.0"
+    assert first["readiness_audit_version"] == "6.1.0"
     assert isinstance(first["readiness_audit_hash"], str)
     assert len(first["readiness_audit_hash"]) == 64
     assert len(first["deterministic_execution_adapter_boundary_hash"]) == 64
