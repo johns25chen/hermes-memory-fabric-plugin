@@ -489,7 +489,7 @@ def test_top_level_statuses_and_upstream_candidate_are_aligned():
             LAYER_14_CLOSURE_READINESS_STATUS
         ),
         "star_cosmos_entry_status": STAR_COSMOS_ENTRY_STATUS,
-        "controlled_adapter_sandbox_candidate_version": "6.1.0",
+        "controlled_adapter_sandbox_candidate_version": "6.2.0",
         "controlled_adapter_sandbox_candidate_status": "pass",
     }
     for key, value in expected.items():

@@ -52,8 +52,8 @@ from .governance_transition_policy_registry import (
 )
 
 
-GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION = "6.1.0"
-GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION = "6.1.0"
+GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION = "6.2.0"
+GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION = "6.2.0"
 GOVERNANCE_BOUNDARY_READINESS_AUDIT_TYPE = (
     "governance_boundary_readiness_audit"
 )
@@ -370,7 +370,7 @@ def _version_alignment_check() -> dict[str, Any]:
             "mismatched_components": mismatches,
         },
         blocking_reasons=[
-            "governance stack versions must align to 6.1.0"
+            "governance stack versions must align to 6.2.0"
         ]
         if mismatches
         else [],
@@ -383,7 +383,7 @@ def _validation_matrix_status_check(
     blocking_reasons = _deduplicate(
         [
             *(
-                ["validation matrix version must equal 6.1.0"]
+                ["validation matrix version must equal 6.2.0"]
                 if matrix.get("version") != GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION
                 else []
             ),
@@ -435,7 +435,7 @@ def _fixture_pack_presence_check(
     blocking_reasons = _deduplicate(
         [
             *(
-                ["fixture pack version must equal 6.1.0"]
+                ["fixture pack version must equal 6.2.0"]
                 if matrix.get("fixture_pack_version")
                 != GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION
                 or fixture_pack.get("version")
