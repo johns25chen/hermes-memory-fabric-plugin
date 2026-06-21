@@ -368,10 +368,10 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_AUTHORIZATION_GATE_VERSION == "6.0.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_AUTHORIZATION_GATE_VERSION == "6.1.0"
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_AUTHORIZATION_GATE_SCHEMA_VERSION
-        == "6.0.0"
+        == "6.1.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_AUTHORIZATION_GATE_TYPE
@@ -394,8 +394,8 @@ def test_manifest_authorization_gate_shape_is_deterministic():
     second = _gate()
 
     assert first == second
-    assert first["version"] == "6.0.0"
-    assert first["schema_version"] == "6.0.0"
+    assert first["version"] == "6.1.0"
+    assert first["schema_version"] == "6.1.0"
     assert (
         first["manifest_authorization_gate_type"]
         == "governance_execution_adapter_manifest_authorization_gate"
@@ -407,7 +407,7 @@ def test_manifest_authorization_gate_shape_is_deterministic():
     )
     assert first["manifest_authorization_gate_mode"] == "authorization_gate_only"
     assert first["star_cosmos_entry_status"] == "candidate_only"
-    assert first["manifest_approval_gate_version"] == "6.0.0"
+    assert first["manifest_approval_gate_version"] == "6.1.0"
     assert first["manifest_approval_gate_status"] == "pass"
     assert isinstance(first["manifest_approval_gate_hash"], str)
     assert len(first["manifest_approval_gate_hash"]) == 64
