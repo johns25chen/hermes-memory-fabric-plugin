@@ -127,8 +127,8 @@ def _rule_by_id(registry: dict[str, object], rule_id: str) -> dict[str, object]:
 
 
 def test_constants_match_v6_1_contract():
-    assert GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_VERSION == "6.2.0"
-    assert GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_SCHEMA_VERSION == "6.2.0"
+    assert GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_VERSION == "6.3.0"
+    assert GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_SCHEMA_VERSION == "6.3.0"
     assert (
         GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_TYPE
         == "governance_source_constitution_registry"
@@ -153,8 +153,8 @@ def test_registry_shape_is_deterministic_and_passes(registry):
     repeated = build_governance_source_constitution_registry()
 
     assert repeated == registry
-    assert registry["version"] == "6.2.0"
-    assert registry["schema_version"] == "6.2.0"
+    assert registry["version"] == "6.3.0"
+    assert registry["schema_version"] == "6.3.0"
     assert registry["source_constitution_registry_status"] == "pass"
     assert (
         registry["source_constitution_registry_stage"]
@@ -180,7 +180,7 @@ def test_registry_shape_is_deterministic_and_passes(registry):
 
 
 def test_upstream_v6_0_handoff_verification(registry):
-    assert registry["upstream_star_source_entry_candidate_version"] == "6.2.0"
+    assert registry["upstream_star_source_entry_candidate_version"] == "6.3.0"
     assert registry["upstream_star_source_entry_candidate_status"] == "pass"
     assert len(registry["upstream_star_source_entry_candidate_hash"]) == 64
     assert (

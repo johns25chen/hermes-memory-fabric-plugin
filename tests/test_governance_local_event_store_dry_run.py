@@ -32,7 +32,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "6.2.0",
+        "kernel_version": "6.3.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -83,7 +83,7 @@ def _event(
             else dict(_PAYLOADS[event_type])
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "6.2.0",
+        "schema_version": "6.3.0",
     }
 
 
@@ -124,11 +124,11 @@ def test_empty_store_shape_is_deterministic():
     second = create_governance_local_event_store_dry_run()
 
     assert first == second
-    assert LOCAL_EVENT_STORE_DRY_RUN_VERSION == "6.2.0"
-    assert LOCAL_EVENT_STORE_SCHEMA_VERSION == "6.2.0"
+    assert LOCAL_EVENT_STORE_DRY_RUN_VERSION == "6.3.0"
+    assert LOCAL_EVENT_STORE_SCHEMA_VERSION == "6.3.0"
     assert LOCAL_EVENT_STORE_MODE == "in_memory_dry_run_only"
     assert LOCAL_EVENT_STORE_HASH_ALGORITHM == "sha256"
-    assert first["version"] == "6.2.0"
+    assert first["version"] == "6.3.0"
     assert first["store_mode"] == "in_memory_dry_run_only"
     assert first["event_count"] == 0
     assert first["canonical_events"] == []
@@ -150,7 +150,7 @@ def test_append_valid_event_succeeds():
     assert result["blocking_reasons"] == []
     assert result["store"]["event_count"] == 1
     assert result["store"]["event_ids"] == ["event-1"]
-    assert result["appended_event"]["canonicalization_version"] == "6.2.0"
+    assert result["appended_event"]["canonicalization_version"] == "6.3.0"
 
 
 def test_append_full_valid_sequence_succeeds():
@@ -242,7 +242,7 @@ def test_invalid_schema_version_is_rejected():
     )
 
     assert result["append_status"] == "blocked"
-    assert "schema_version must equal 6.2.0" in result["blocking_reasons"]
+    assert "schema_version must equal 6.3.0" in result["blocking_reasons"]
 
 
 def test_invalid_payload_schema_is_rejected():
@@ -250,7 +250,7 @@ def test_invalid_payload_schema_is_rejected():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "6.2.0"},
+        {"kernel_version": "6.3.0"},
     )
 
     result = append_governance_event_to_local_store_dry_run(
