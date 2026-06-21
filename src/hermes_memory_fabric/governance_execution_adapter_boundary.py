@@ -14,8 +14,8 @@ from .governance_boundary_readiness_audit import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_VERSION = "6.2.0"
-GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_SCHEMA_VERSION = "6.2.0"
+GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_VERSION = "6.3.0"
+GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_SCHEMA_VERSION = "6.3.0"
 GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_TYPE = (
     "governance_execution_adapter_boundary"
 )
@@ -514,7 +514,7 @@ def _build_boundary_checks(
                         else []
                     ),
                     *(
-                        ["readiness audit version must equal 6.2.0"]
+                        ["readiness audit version must equal 6.3.0"]
                         if readiness_audit.get("version")
                         != GOVERNANCE_EXECUTION_ADAPTER_BOUNDARY_VERSION
                         else []

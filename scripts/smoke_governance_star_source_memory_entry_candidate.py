@@ -101,8 +101,8 @@ def main() -> int:
             raise AssertionError("candidate changed between builds")
 
         expected = {
-            "version": "6.2.0",
-            "schema_version": "6.2.0",
+            "version": "6.3.0",
+            "schema_version": "6.3.0",
             "star_source_memory_entry_candidate_status": "pass",
             "star_source_memory_entry_candidate_stage": (
                 "v6.0_star_source_memory_entry_candidate"
@@ -119,7 +119,7 @@ def main() -> int:
             "self_evolution_status": "not_active",
             "v6_entry_status": "entry_candidate_only",
             "v6_handoff_acceptance_status": "accepted_as_metadata_only",
-            "star_cosmos_closure_handoff_audit_version": "6.2.0",
+            "star_cosmos_closure_handoff_audit_version": "6.3.0",
             "star_cosmos_closure_handoff_audit_status": "pass",
             "handoff_status": "ready_for_source_constitution_registry_design",
         }
