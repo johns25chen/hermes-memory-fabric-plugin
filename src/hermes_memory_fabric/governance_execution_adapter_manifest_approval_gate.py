@@ -15,8 +15,8 @@ from .governance_execution_adapter_manifest_policy_gate import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_VERSION = "6.3.0"
-GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_SCHEMA_VERSION = "6.3.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_VERSION = "6.4.0"
+GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_SCHEMA_VERSION = "6.4.0"
 GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_TYPE = (
     "governance_execution_adapter_manifest_approval_gate"
 )
@@ -265,7 +265,7 @@ def build_governance_execution_adapter_manifest_approval_gate() -> dict[str, Any
     blocking_reasons = _deduplicate(
         [
             *(
-                ["manifest policy gate must pass at version 6.3.0"]
+                ["manifest policy gate must pass at version 6.4.0"]
                 if not policy_gate_passes
                 else []
             ),
@@ -1800,7 +1800,7 @@ def _manifest_policy_gate_blocking_reasons(
                 else []
             ),
             *(
-                ["manifest policy gate version must equal 6.3.0"]
+                ["manifest policy gate version must equal 6.4.0"]
                 if policy_gate.get("version")
                 != GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_APPROVAL_GATE_VERSION
                 else []

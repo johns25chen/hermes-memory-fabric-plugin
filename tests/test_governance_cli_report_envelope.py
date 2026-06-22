@@ -30,7 +30,7 @@ CORE_MODULE = (
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "6.3.0",
+        "kernel_version": "6.4.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -81,7 +81,7 @@ def _event(
             else dict(_PAYLOADS[event_type])
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "6.3.0",
+        "schema_version": "6.4.0",
     }
 
 
@@ -123,8 +123,8 @@ def _assert_safety(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_CLI_REPORT_ENVELOPE_VERSION == "6.3.0"
-    assert GOVERNANCE_CLI_REPORT_ENVELOPE_SCHEMA_VERSION == "6.3.0"
+    assert GOVERNANCE_CLI_REPORT_ENVELOPE_VERSION == "6.4.0"
+    assert GOVERNANCE_CLI_REPORT_ENVELOPE_SCHEMA_VERSION == "6.4.0"
     assert GOVERNANCE_CLI_REPORT_ENVELOPE_TYPE == "governance_cli_report_envelope"
     assert GOVERNANCE_CLI_REPORT_ENVELOPE_HASH_ALGORITHM == "sha256"
 
@@ -132,11 +132,11 @@ def test_public_constants():
 def test_valid_cli_result_wraps_successfully():
     envelope = build_governance_cli_report_envelope(_cli_result())
 
-    assert envelope["version"] == "6.3.0"
-    assert envelope["schema_version"] == "6.3.0"
+    assert envelope["version"] == "6.4.0"
+    assert envelope["schema_version"] == "6.4.0"
     assert envelope["envelope_type"] == "governance_cli_report_envelope"
     assert envelope["source_report_type"] == "governance_kernel_cli_dry_run"
-    assert envelope["source_report_version"] == "6.3.0"
+    assert envelope["source_report_version"] == "6.4.0"
     assert envelope["report"]["dry_run_status"] == "pass"
 
 

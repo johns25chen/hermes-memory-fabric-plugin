@@ -96,8 +96,8 @@ def main() -> int:
             raise AssertionError("registry changed between builds")
 
         expected = {
-            "version": "6.3.0",
-            "schema_version": "6.3.0",
+            "version": "6.4.0",
+            "schema_version": "6.4.0",
             "source_constitution_registry_status": "pass",
             "source_constitution_registry_stage": (
                 "v6.1_source_constitution_registry"
@@ -114,7 +114,7 @@ def main() -> int:
             "origin_provenance_ledger_status": "not_created",
             "methodology_reverse_inference_status": "not_active",
             "self_evolution_status": "not_active",
-            "upstream_star_source_entry_candidate_version": "6.3.0",
+            "upstream_star_source_entry_candidate_version": "6.4.0",
             "upstream_star_source_entry_candidate_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_source_constitution_registry_design"

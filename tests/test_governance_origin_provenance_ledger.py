@@ -181,8 +181,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_2_contract():
-    assert GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_VERSION == "6.3.0"
-    assert GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_SCHEMA_VERSION == "6.3.0"
+    assert GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_VERSION == "6.4.0"
+    assert GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_SCHEMA_VERSION == "6.4.0"
     assert (
         GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_TYPE
         == "governance_origin_provenance_ledger"
@@ -210,8 +210,8 @@ def test_ledger_shape_is_deterministic_and_passes(ledger):
     repeated = build_governance_origin_provenance_ledger()
 
     assert repeated == ledger
-    assert ledger["version"] == "6.3.0"
-    assert ledger["schema_version"] == "6.3.0"
+    assert ledger["version"] == "6.4.0"
+    assert ledger["schema_version"] == "6.4.0"
     assert ledger["origin_provenance_ledger_status"] == "pass"
     assert (
         ledger["origin_provenance_ledger_stage"]
@@ -243,7 +243,7 @@ def test_ledger_shape_is_deterministic_and_passes(ledger):
 
 
 def test_upstream_v6_1_handoff_verification(ledger):
-    assert ledger["upstream_source_constitution_registry_version"] == "6.3.0"
+    assert ledger["upstream_source_constitution_registry_version"] == "6.4.0"
     assert ledger["upstream_source_constitution_registry_status"] == "pass"
     assert len(ledger["upstream_source_constitution_registry_hash"]) == 64
     assert (
@@ -275,7 +275,7 @@ def test_all_records_are_registered_metadata_only(ledger):
         assert record["provenance_record_status"] == "registered_metadata_only"
         assert record["required"] is True
         assert record["introduced_in_version"] == "6.1.0"
-        assert record["recorded_in_version"] == "6.3.0"
+        assert record["recorded_in_version"] == "6.4.0"
         assert record["introduced_in_stage"] == "v6.1_source_constitution_registry"
         assert record["recorded_in_stage"] == "v6.2_origin_provenance_ledger"
         assert record["introduced_in_layer"] == "layer_15_star_source_memory"
