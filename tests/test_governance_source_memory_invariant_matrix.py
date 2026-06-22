@@ -271,8 +271,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_4_contract():
-    assert GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_VERSION == "6.4.0"
-    assert GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_SCHEMA_VERSION == "6.4.0"
+    assert GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_VERSION == "6.5.0"
+    assert GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_SCHEMA_VERSION == "6.5.0"
     assert (
         GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_TYPE
         == "governance_source_memory_invariant_matrix"
@@ -312,8 +312,8 @@ def test_matrix_shape_is_deterministic_and_passes(matrix):
     repeated = build_governance_source_memory_invariant_matrix()
 
     assert repeated == matrix
-    assert matrix["version"] == "6.4.0"
-    assert matrix["schema_version"] == "6.4.0"
+    assert matrix["version"] == "6.5.0"
+    assert matrix["schema_version"] == "6.5.0"
     assert matrix["source_memory_invariant_matrix_status"] == "pass"
     assert (
         matrix["source_memory_invariant_matrix_stage"]
@@ -344,7 +344,7 @@ def test_matrix_shape_is_deterministic_and_passes(matrix):
 
 
 def test_upstream_v6_3_handoff_verification(matrix):
-    assert matrix["upstream_civilizational_identity_boundary_version"] == "6.4.0"
+    assert matrix["upstream_civilizational_identity_boundary_version"] == "6.5.0"
     assert matrix["upstream_civilizational_identity_boundary_status"] == "pass"
     assert len(matrix["upstream_civilizational_identity_boundary_hash"]) == 64
     assert matrix["upstream_handoff_status"] == (

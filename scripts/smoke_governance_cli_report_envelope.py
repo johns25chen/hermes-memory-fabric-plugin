@@ -25,7 +25,7 @@ from hermes_memory_fabric.governance_transition_policy_registry import (  # noqa
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "6.4.0",
+        "kernel_version": "6.5.0",
         "initialization_scope": "cli-envelope-smoke",
     },
     "proposal_submitted": {
@@ -81,7 +81,7 @@ def _events() -> list[dict[str, object]]:
                     "sequence": index,
                 },
                 "previous_event_id": previous_event_id,
-                "schema_version": "6.4.0",
+                "schema_version": "6.5.0",
             }
         )
         previous_event_id = event_id
@@ -123,7 +123,7 @@ def _assert_envelope(payload: dict[str, object]) -> dict[str, object]:
         raise AssertionError(str(payload["mode"]))
     if first["envelope_type"] != "governance_cli_report_envelope":
         raise AssertionError("envelope_type")
-    if first["source_report_version"] != "6.4.0":
+    if first["source_report_version"] != "6.5.0":
         raise AssertionError("source_report_version")
     if first["deterministic_report_hash"] != second["deterministic_report_hash"]:
         raise AssertionError("report_hash_stability")

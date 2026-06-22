@@ -101,8 +101,8 @@ def main() -> int:
             raise AssertionError("audit changed between builds")
 
         expected_top_level = {
-            "version": "6.4.0",
-            "schema_version": "6.4.0",
+            "version": "6.5.0",
+            "schema_version": "6.5.0",
             "star_cosmos_closure_handoff_audit_status": "pass",
             "star_cosmos_closure_handoff_audit_stage": (
                 "v5.13_star_cosmos_closure_handoff_audit"
@@ -119,7 +119,7 @@ def main() -> int:
             "star_source_entry_status": "not_entered",
             "star_source_memory_active_status": "not_active",
             "star_cosmos_entry_status": "candidate_only",
-            "post_sandbox_review_boundary_version": "6.4.0",
+            "post_sandbox_review_boundary_version": "6.5.0",
             "post_sandbox_review_boundary_status": "pass",
             "star_cosmos_closure_handoff_status": (
                 "ready_for_v6_star_source_entry_candidate_design"

@@ -15,8 +15,8 @@ from .governance_cross_system_coordination_boundary import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_CONTROLLED_ADAPTER_SANDBOX_CANDIDATE_VERSION = "6.4.0"
-GOVERNANCE_CONTROLLED_ADAPTER_SANDBOX_CANDIDATE_SCHEMA_VERSION = "6.4.0"
+GOVERNANCE_CONTROLLED_ADAPTER_SANDBOX_CANDIDATE_VERSION = "6.5.0"
+GOVERNANCE_CONTROLLED_ADAPTER_SANDBOX_CANDIDATE_SCHEMA_VERSION = "6.5.0"
 GOVERNANCE_CONTROLLED_ADAPTER_SANDBOX_CANDIDATE_TYPE = (
     "governance_controlled_adapter_sandbox_candidate"
 )
@@ -490,7 +490,7 @@ def build_governance_controlled_adapter_sandbox_candidate() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["cross-system coordination boundary must pass at version 6.4.0"]
+                ["cross-system coordination boundary must pass at version 6.5.0"]
                 if not boundary_passes
                 else []
             ),
