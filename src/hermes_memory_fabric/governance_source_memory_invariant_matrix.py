@@ -17,8 +17,8 @@ from .governance_civilizational_identity_boundary import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_VERSION = "6.4.0"
-GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_SCHEMA_VERSION = "6.4.0"
+GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_VERSION = "6.5.0"
+GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_SCHEMA_VERSION = "6.5.0"
 GOVERNANCE_SOURCE_MEMORY_INVARIANT_MATRIX_TYPE = (
     "governance_source_memory_invariant_matrix"
 )
@@ -815,7 +815,7 @@ def build_governance_source_memory_invariant_matrix() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["Civilizational Identity Boundary version must be 6.4.0"]
+                ["Civilizational Identity Boundary version must be 6.5.0"]
                 if not upstream_version_ready
                 else []
             ),

@@ -219,11 +219,11 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 def test_public_constants():
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_VERSION
-        == "6.4.0"
+        == "6.5.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_SCHEMA_VERSION
-        == "6.4.0"
+        == "6.5.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_MANIFEST_FIXTURE_PACK_TYPE
@@ -246,8 +246,8 @@ def test_manifest_fixture_pack_shape_is_deterministic():
     second = _pack()
 
     assert first == second
-    assert first["version"] == "6.4.0"
-    assert first["schema_version"] == "6.4.0"
+    assert first["version"] == "6.5.0"
+    assert first["schema_version"] == "6.5.0"
     assert (
         first["manifest_fixture_pack_type"]
         == "governance_execution_adapter_manifest_fixture_pack"
@@ -266,7 +266,7 @@ def test_manifest_fixture_pack_shape_is_deterministic():
         == "ready_for_future_manifest_validation_matrix_design"
     )
     assert first["blocking_reasons"] == []
-    assert first["manifest_dry_run_design_version"] == "6.4.0"
+    assert first["manifest_dry_run_design_version"] == "6.5.0"
     assert first["manifest_dry_run_design_status"] == "pass"
     assert isinstance(first["manifest_dry_run_design_hash"], str)
     assert len(first["manifest_dry_run_design_hash"]) == 64

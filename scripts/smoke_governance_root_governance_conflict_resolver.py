@@ -11,19 +11,19 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from hermes_memory_fabric.governance_source_memory_invariant_matrix import (  # noqa: E402
+from hermes_memory_fabric.governance_root_governance_conflict_resolver import (  # noqa: E402
     COMMON_DISABLED_FLAGS,
-    REQUIRED_SOURCE_MEMORY_INVARIANT_CHECK_NAMES,
-    REQUIRED_SOURCE_MEMORY_INVARIANT_CONTRACT_NAMES,
-    REQUIRED_SOURCE_MEMORY_INVARIANT_RECORD_IDS,
-    REQUIRED_SOURCE_MEMORY_INVARIANT_SECTION_NAMES,
+    REQUIRED_ROOT_GOVERNANCE_CONFLICT_CHECK_NAMES,
+    REQUIRED_ROOT_GOVERNANCE_CONFLICT_CONTRACT_NAMES,
+    REQUIRED_ROOT_GOVERNANCE_CONFLICT_RECORD_IDS,
+    REQUIRED_ROOT_GOVERNANCE_CONFLICT_SECTION_NAMES,
     SAFETY_BOUNDARIES,
-    build_governance_source_memory_invariant_matrix,
-    governance_source_memory_invariant_matrix_to_json,
-    list_governance_source_memory_invariant_check_names,
-    list_governance_source_memory_invariant_contract_names,
-    list_governance_source_memory_invariant_record_ids,
-    list_governance_source_memory_invariant_section_names,
+    build_governance_root_governance_conflict_resolver,
+    governance_root_governance_conflict_resolver_to_json,
+    list_governance_root_governance_conflict_check_names,
+    list_governance_root_governance_conflict_contract_names,
+    list_governance_root_governance_conflict_record_ids,
+    list_governance_root_governance_conflict_section_names,
 )
 
 
@@ -65,9 +65,9 @@ FORBIDDEN_RECORD_FLAGS = (
     "direct_mutation_allowed",
     "autonomous_override_allowed",
     "self_authorization_allowed",
-    "invariant_runtime_created",
-    "invariant_enforcement_runtime_created",
-    "invariant_self_repair_created",
+    "conflict_runtime_created",
+    "conflict_enforcement_runtime_created",
+    "conflict_self_repair_created",
     "source_graph_created",
     "source_graph_mutated",
     "memory_graph_mutated",
@@ -98,11 +98,28 @@ FORBIDDEN_RECORD_FLAGS = (
 )
 
 TOP_LEVEL_FALSE_FIELDS = (
+    "root_governance_conflict_resolver_active",
+    "root_governance_conflict_resolved",
+    "root_governance_conflict_resolution_executed",
+    "conflict_runtime_created",
+    "conflict_enforcement_runtime_created",
+    "conflict_self_repair_created",
+    "conflict_runtime_activated",
+    "conflict_enforcement_runtime_activated",
+    "autonomous_mutation_resolver_created",
+    "active_conflict_execution_runtime_created",
+    "source_rule_mutation_engine_created",
+    "source_graph_creation_performed",
+    "source_graph_mutation_performed",
     "source_memory_invariant_matrix_active",
     "invariant_runtime_created",
     "invariant_enforcement_runtime_created",
     "invariant_self_repair_created",
+    "civilizational_identity_active",
     "identity_activation_claimed",
+    "identity_claim_escalated",
+    "identity_boundary_mutated",
+    "identity_boundary_mutation_without_review",
     "star_source_memory_active",
     "layer_15_active",
     "personhood_claimed",
@@ -129,8 +146,10 @@ TOP_LEVEL_FALSE_FIELDS = (
     "filesystem_write_performed",
     "database_write_performed",
     "memory_graph_mutated",
+    "review_notification_sent",
     "approval_notification_sent",
     "execution_authorization_created",
+    "authorization_surface_created",
     "authorization_token_created",
     "authorization_grant_created",
     "autonomous_override_allowed",
@@ -170,29 +189,29 @@ def _assert_no_sensitive_leak(value: object) -> None:
 
 def main() -> int:
     try:
-        first = build_governance_source_memory_invariant_matrix()
-        second = build_governance_source_memory_invariant_matrix()
+        first = build_governance_root_governance_conflict_resolver()
+        second = build_governance_root_governance_conflict_resolver()
         if first != second:
-            raise AssertionError("matrix changed between builds")
+            raise AssertionError("resolver changed between builds")
 
         expected = {
             "version": "6.5.0",
             "schema_version": "6.5.0",
-            "source_memory_invariant_matrix_status": "pass",
-            "source_memory_invariant_matrix_stage": (
-                "v6.4_source_memory_invariant_matrix"
+            "root_governance_conflict_resolver_status": "pass",
+            "root_governance_conflict_resolver_stage": (
+                "v6.5_root_governance_conflict_resolver"
             ),
-            "source_memory_invariant_matrix_mode": (
-                "source_memory_invariant_matrix_only"
+            "root_governance_conflict_resolver_mode": (
+                "root_governance_conflict_resolver_only"
             ),
-            "source_memory_invariant_mode": "metadata_only",
-            "source_memory_invariant_matrix_candidate_status": (
-                "matrix_candidate_only"
+            "root_governance_conflict_mode": "metadata_only",
+            "root_governance_conflict_resolver_candidate_status": (
+                "resolver_candidate_only"
             ),
-            "source_memory_invariant_matrix_active_status": "not_active",
-            "invariant_runtime_status": "not_active",
-            "invariant_enforcement_status": "not_active",
-            "invariant_mutation_status": "forbidden_without_source_proposal",
+            "root_governance_conflict_resolver_active_status": "not_active",
+            "conflict_runtime_status": "not_active",
+            "conflict_enforcement_status": "not_active",
+            "conflict_mutation_status": "forbidden_without_human_review",
             "star_source_memory_active_status": "not_active",
             "layer_15_active_status": "not_active",
             "source_graph_status": "not_created",
@@ -205,112 +224,121 @@ def main() -> int:
             "legal_subject_claim_status": "forbidden",
             "religious_object_claim_status": "forbidden",
             "autonomous_authority_status": "forbidden",
-            "upstream_civilizational_identity_boundary_version": "6.5.0",
-            "upstream_civilizational_identity_boundary_status": "pass",
+            "upstream_source_memory_invariant_matrix_version": "6.5.0",
+            "upstream_source_memory_invariant_matrix_status": "pass",
             "upstream_handoff_status": (
-                "ready_for_source_memory_invariant_matrix_design"
-            ),
-            "upstream_next_stage": "v6.4_source_memory_invariant_matrix",
-            "upstream_next_stage_title": "Source Memory Invariant Matrix",
-            "handoff_status": (
                 "ready_for_root_governance_conflict_resolver_design"
             ),
-            "next_stage": "v6.5_root_governance_conflict_resolver",
-            "next_stage_title": "Root Governance Conflict Resolver",
+            "upstream_next_stage": (
+                "v6.5_root_governance_conflict_resolver"
+            ),
+            "upstream_next_stage_title": "Root Governance Conflict Resolver",
+            "handoff_status": (
+                "ready_for_multi_cycle_continuity_protocol_design"
+            ),
+            "next_stage": "v6.6_multi_cycle_continuity_protocol",
+            "next_stage_title": "Multi-Cycle Continuity Protocol",
         }
         for key, expected_value in expected.items():
             if first[key] != expected_value:
                 raise AssertionError(key)
 
-        upstream_hash = first["upstream_civilizational_identity_boundary_hash"]
+        upstream_hash = first["upstream_source_memory_invariant_matrix_hash"]
         if not isinstance(upstream_hash, str) or len(upstream_hash) != 64:
             raise AssertionError("upstream hash")
-        if upstream_hash != second["upstream_civilizational_identity_boundary_hash"]:
+        if upstream_hash != second["upstream_source_memory_invariant_matrix_hash"]:
             raise AssertionError("upstream hash stability")
 
-        if list_governance_source_memory_invariant_record_ids() != list(
-            REQUIRED_SOURCE_MEMORY_INVARIANT_RECORD_IDS
+        if list_governance_root_governance_conflict_record_ids() != list(
+            REQUIRED_ROOT_GOVERNANCE_CONFLICT_RECORD_IDS
         ):
             raise AssertionError("record ids")
-        if list_governance_source_memory_invariant_section_names() != list(
-            REQUIRED_SOURCE_MEMORY_INVARIANT_SECTION_NAMES
+        if list_governance_root_governance_conflict_section_names() != list(
+            REQUIRED_ROOT_GOVERNANCE_CONFLICT_SECTION_NAMES
         ):
             raise AssertionError("section names")
-        if list_governance_source_memory_invariant_contract_names() != list(
-            REQUIRED_SOURCE_MEMORY_INVARIANT_CONTRACT_NAMES
+        if list_governance_root_governance_conflict_contract_names() != list(
+            REQUIRED_ROOT_GOVERNANCE_CONFLICT_CONTRACT_NAMES
         ):
             raise AssertionError("contract names")
-        if list_governance_source_memory_invariant_check_names() != list(
-            REQUIRED_SOURCE_MEMORY_INVARIANT_CHECK_NAMES
+        if list_governance_root_governance_conflict_check_names() != list(
+            REQUIRED_ROOT_GOVERNANCE_CONFLICT_CHECK_NAMES
         ):
             raise AssertionError("check names")
 
-        for record in first["source_memory_invariant_records"]:
-            if record["invariant_record_status"] != "registered_metadata_only":
-                raise AssertionError(record["invariant_record_id"])
+        for record in first["root_governance_conflict_records"]:
+            if record["conflict_record_status"] != "registered_metadata_only":
+                raise AssertionError(record["conflict_record_id"])
             for required_field in (
-                "protected_scope",
-                "forbidden_violation_scope",
-                "invariant_boundary_hash",
-                "invariant_record_hash",
+                "conflict_trigger_scope",
+                "protected_governance_scope",
+                "forbidden_resolution_scope",
+                "deterministic_resolution_disposition",
+                "conflict_boundary_hash",
+                "conflict_record_hash",
             ):
                 if not record[required_field]:
                     raise AssertionError(required_field)
-            if record["human_review_required_for_change"] is not True:
-                raise AssertionError(record["invariant_record_id"])
-            if record["source_mutation_proposal_required"] is not True:
-                raise AssertionError(record["invariant_record_id"])
-            if record["invariant_conflict_resolver_required"] is not True:
-                raise AssertionError(record["invariant_record_id"])
+            for required_flag in (
+                "human_review_required",
+                "source_mutation_proposal_required",
+                "invariant_validation_required",
+                "audit_replay_required",
+            ):
+                if record[required_flag] is not True:
+                    raise AssertionError(required_flag)
             for forbidden_flag in FORBIDDEN_RECORD_FLAGS:
                 if record[forbidden_flag] is not False:
                     raise AssertionError(forbidden_flag)
+            if record["blocking_reasons"] != []:
+                raise AssertionError(record["conflict_record_id"])
 
-        if any(
-            item["section_status"] != "pass"
-            for item in first["source_memory_invariant_sections"]
+        if not all(
+            section["section_status"] == "pass"
+            and section["blocking_reasons"] == []
+            for section in first["root_governance_conflict_sections"]
         ):
-            raise AssertionError("section status")
-        if any(
-            item["contract_status"] != "pass"
-            for item in first["source_memory_invariant_contracts"]
+            raise AssertionError("sections")
+        if not all(
+            contract["contract_status"] == "pass"
+            and contract["blocking_reasons"] == []
+            for contract in first["root_governance_conflict_contracts"]
         ):
-            raise AssertionError("contract status")
-        if any(
-            item["check_status"] != "pass"
-            for item in first["source_memory_invariant_checks"]
+            raise AssertionError("contracts")
+        if not all(
+            check["check_status"] == "pass" and check["blocking_reasons"] == []
+            for check in first["root_governance_conflict_checks"]
         ):
-            raise AssertionError("check status")
-
-        first_hash = first["deterministic_source_memory_invariant_matrix_hash"]
-        second_hash = second["deterministic_source_memory_invariant_matrix_hash"]
-        if first_hash != second_hash or len(first_hash) != 64:
-            raise AssertionError("deterministic hash")
-        if first["blocking_reasons"] != []:
-            raise AssertionError("blocking_reasons")
+            raise AssertionError("checks")
 
         for field_name in TOP_LEVEL_FALSE_FIELDS:
             if first[field_name] is not False:
                 raise AssertionError(field_name)
-
         _assert_safety(first)
+
+        if (
+            first["deterministic_root_governance_conflict_resolver_hash"]
+            != second["deterministic_root_governance_conflict_resolver_hash"]
+        ):
+            raise AssertionError("resolver hash stability")
+        if len(first["deterministic_root_governance_conflict_resolver_hash"]) != 64:
+            raise AssertionError("resolver hash shape")
+
         _assert_no_sensitive_leak(
             {
-                "records": first["source_memory_invariant_records"],
-                "sections": first["source_memory_invariant_sections"],
-                "contracts": first["source_memory_invariant_contracts"],
-                "checks": first["source_memory_invariant_checks"],
-                "summary": first["source_memory_invariant_summary"],
-                "hash": first_hash,
-                "json": governance_source_memory_invariant_matrix_to_json(
-                    first
-                ),
+                "records": first["root_governance_conflict_records"],
+                "sections": first["root_governance_conflict_sections"],
+                "contracts": first["root_governance_conflict_contracts"],
+                "checks": first["root_governance_conflict_checks"],
+                "summary": first["root_governance_conflict_summary"],
+                "json": governance_root_governance_conflict_resolver_to_json(first),
             }
         )
-    except (AssertionError, KeyError, TypeError, ValueError):
+    except AssertionError as exc:
+        print(f"governance_root_governance_conflict_resolver=failed:{exc}", file=sys.stderr)
         return 1
 
-    print("governance_source_memory_invariant_matrix=passed")
+    print("governance_root_governance_conflict_resolver=passed")
     return 0
 
 
