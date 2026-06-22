@@ -176,8 +176,8 @@ def main() -> int:
             raise AssertionError("matrix changed between builds")
 
         expected = {
-            "version": "6.5.0",
-            "schema_version": "6.5.0",
+            "version": "6.6.0",
+            "schema_version": "6.6.0",
             "source_memory_invariant_matrix_status": "pass",
             "source_memory_invariant_matrix_stage": (
                 "v6.4_source_memory_invariant_matrix"
@@ -205,7 +205,7 @@ def main() -> int:
             "legal_subject_claim_status": "forbidden",
             "religious_object_claim_status": "forbidden",
             "autonomous_authority_status": "forbidden",
-            "upstream_civilizational_identity_boundary_version": "6.5.0",
+            "upstream_civilizational_identity_boundary_version": "6.6.0",
             "upstream_civilizational_identity_boundary_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_source_memory_invariant_matrix_design"

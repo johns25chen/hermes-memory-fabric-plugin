@@ -190,8 +190,8 @@ def _assert_no_sensitive_terms(value: object) -> None:
 
 
 def test_constants_match_v6_contract():
-    assert GOVERNANCE_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_VERSION == "6.5.0"
-    assert GOVERNANCE_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_SCHEMA_VERSION == "6.5.0"
+    assert GOVERNANCE_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_VERSION == "6.6.0"
+    assert GOVERNANCE_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_SCHEMA_VERSION == "6.6.0"
     assert (
         GOVERNANCE_STAR_SOURCE_MEMORY_ENTRY_CANDIDATE_TYPE
         == "governance_star_source_memory_entry_candidate"
@@ -222,8 +222,8 @@ def test_candidate_shape_is_deterministic_and_passes(candidate):
     repeated = build_governance_star_source_memory_entry_candidate()
 
     assert repeated == candidate
-    assert candidate["version"] == "6.5.0"
-    assert candidate["schema_version"] == "6.5.0"
+    assert candidate["version"] == "6.6.0"
+    assert candidate["schema_version"] == "6.6.0"
     assert candidate["star_source_memory_entry_candidate_status"] == "pass"
     assert (
         candidate["star_source_memory_entry_candidate_stage"]
@@ -242,7 +242,7 @@ def test_candidate_shape_is_deterministic_and_passes(candidate):
     assert candidate["self_evolution_status"] == "not_active"
     assert candidate["v6_entry_status"] == "entry_candidate_only"
     assert candidate["v6_handoff_acceptance_status"] == "accepted_as_metadata_only"
-    assert candidate["star_cosmos_closure_handoff_audit_version"] == "6.5.0"
+    assert candidate["star_cosmos_closure_handoff_audit_version"] == "6.6.0"
     assert candidate["star_cosmos_closure_handoff_audit_status"] == "pass"
     assert len(candidate["star_cosmos_closure_handoff_audit_hash"]) == 64
     assert (

@@ -64,9 +64,9 @@ EXPECTED_TRANSITIONS = {
 
 
 def test_public_versions_and_expected_states():
-    assert TRANSITION_POLICY_REGISTRY_VERSION == "6.5.0"
-    assert TRANSITION_POLICY_SCHEMA_VERSION == "6.5.0"
-    assert GOVERNANCE_STATE_MACHINE_POLICY_VERSION == "6.5.0"
+    assert TRANSITION_POLICY_REGISTRY_VERSION == "6.6.0"
+    assert TRANSITION_POLICY_SCHEMA_VERSION == "6.6.0"
+    assert GOVERNANCE_STATE_MACHINE_POLICY_VERSION == "6.6.0"
     assert tuple(EXPECTED_TRANSITIONS) == ALLOWED_GOVERNANCE_STATES
     assert GOVERNANCE_TRANSITION_POLICY_REGISTRY == EXPECTED_TRANSITIONS
 
@@ -101,7 +101,7 @@ def test_valid_transitions_return_expected_next_state(
     assert result["event_type"] == event_type
     assert result["next_state"] == expected_state
     assert result["blocking_reasons"] == []
-    assert result["policy_version"] == "6.5.0"
+    assert result["policy_version"] == "6.6.0"
 
 
 def test_unknown_state_is_rejected_with_empty_blocked_policy():
