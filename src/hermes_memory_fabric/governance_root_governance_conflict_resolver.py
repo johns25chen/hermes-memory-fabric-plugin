@@ -17,8 +17,8 @@ from .governance_source_memory_invariant_matrix import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_VERSION = "6.6.0"
-GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_SCHEMA_VERSION = "6.6.0"
+GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_VERSION = "6.7.0"
+GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_SCHEMA_VERSION = "6.7.0"
 GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_TYPE = (
     "governance_root_governance_conflict_resolver"
 )
@@ -982,7 +982,7 @@ def build_governance_root_governance_conflict_resolver() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["Source Memory Invariant Matrix version must be 6.6.0"]
+                ["Source Memory Invariant Matrix version must be 6.7.0"]
                 if not upstream_version_ready
                 else []
             ),

@@ -15,8 +15,8 @@ from .governance_execution_adapter_handoff_audit import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_VERSION = "6.6.0"
-GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_SCHEMA_VERSION = "6.6.0"
+GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_VERSION = "6.7.0"
+GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_SCHEMA_VERSION = "6.7.0"
 GOVERNANCE_OPERATION_LEDGER_PROPOSAL_BOUNDARY_TYPE = (
     "governance_operation_ledger_proposal_boundary"
 )
@@ -364,7 +364,7 @@ def build_governance_operation_ledger_proposal_boundary() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["adapter handoff audit must pass at version 6.6.0"]
+                ["adapter handoff audit must pass at version 6.7.0"]
                 if not handoff_passes
                 else []
             ),
