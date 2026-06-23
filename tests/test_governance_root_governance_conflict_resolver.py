@@ -314,8 +314,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_5_contract():
-    assert GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_VERSION == "6.6.0"
-    assert GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_SCHEMA_VERSION == "6.6.0"
+    assert GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_VERSION == "6.7.0"
+    assert GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_SCHEMA_VERSION == "6.7.0"
     assert (
         GOVERNANCE_ROOT_GOVERNANCE_CONFLICT_RESOLVER_TYPE
         == "governance_root_governance_conflict_resolver"
@@ -353,8 +353,8 @@ def test_resolver_shape_is_deterministic_and_passes(resolver):
     repeated = build_governance_root_governance_conflict_resolver()
 
     assert repeated == resolver
-    assert resolver["version"] == "6.6.0"
-    assert resolver["schema_version"] == "6.6.0"
+    assert resolver["version"] == "6.7.0"
+    assert resolver["schema_version"] == "6.7.0"
     assert resolver["root_governance_conflict_resolver_status"] == "pass"
     assert (
         resolver["root_governance_conflict_resolver_stage"]
@@ -383,7 +383,7 @@ def test_resolver_shape_is_deterministic_and_passes(resolver):
 
 
 def test_upstream_v6_4_handoff_verification(resolver):
-    assert resolver["upstream_source_memory_invariant_matrix_version"] == "6.6.0"
+    assert resolver["upstream_source_memory_invariant_matrix_version"] == "6.7.0"
     assert resolver["upstream_source_memory_invariant_matrix_status"] == "pass"
     assert len(resolver["upstream_source_memory_invariant_matrix_hash"]) == 64
     assert resolver["upstream_handoff_status"] == (

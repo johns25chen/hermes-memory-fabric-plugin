@@ -147,8 +147,8 @@ def main() -> int:
             raise AssertionError("protocol changed between builds")
 
         expected = {
-            "version": "6.6.0",
-            "schema_version": "6.6.0",
+            "version": "6.7.0",
+            "schema_version": "6.7.0",
             "multi_cycle_continuity_protocol_status": "pass",
             "multi_cycle_continuity_protocol_stage": (
                 "v6.6_multi_cycle_continuity_protocol"
@@ -178,7 +178,7 @@ def main() -> int:
             "legal_subject_claim_status": "forbidden",
             "religious_object_claim_status": "forbidden",
             "autonomous_authority_status": "forbidden",
-            "upstream_root_governance_conflict_resolver_version": "6.6.0",
+            "upstream_root_governance_conflict_resolver_version": "6.7.0",
             "upstream_root_governance_conflict_resolver_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_multi_cycle_continuity_protocol_design"

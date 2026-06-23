@@ -15,8 +15,8 @@ from .governance_operation_ledger_proposal_boundary import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_CROSS_SYSTEM_COORDINATION_BOUNDARY_VERSION = "6.6.0"
-GOVERNANCE_CROSS_SYSTEM_COORDINATION_BOUNDARY_SCHEMA_VERSION = "6.6.0"
+GOVERNANCE_CROSS_SYSTEM_COORDINATION_BOUNDARY_VERSION = "6.7.0"
+GOVERNANCE_CROSS_SYSTEM_COORDINATION_BOUNDARY_SCHEMA_VERSION = "6.7.0"
 GOVERNANCE_CROSS_SYSTEM_COORDINATION_BOUNDARY_TYPE = (
     "governance_cross_system_coordination_boundary"
 )
@@ -463,7 +463,7 @@ def build_governance_cross_system_coordination_boundary() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["operation ledger proposal boundary must pass at version 6.6.0"]
+                ["operation ledger proposal boundary must pass at version 6.7.0"]
                 if not proposal_boundary_passes
                 else []
             ),

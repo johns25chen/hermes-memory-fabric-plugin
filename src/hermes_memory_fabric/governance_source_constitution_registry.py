@@ -15,8 +15,8 @@ from .governance_star_source_memory_entry_candidate import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_VERSION = "6.6.0"
-GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_SCHEMA_VERSION = "6.6.0"
+GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_VERSION = "6.7.0"
+GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_SCHEMA_VERSION = "6.7.0"
 GOVERNANCE_SOURCE_CONSTITUTION_REGISTRY_TYPE = (
     "governance_source_constitution_registry"
 )
@@ -598,7 +598,7 @@ def build_governance_source_constitution_registry() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(["Star-Source entry boundary must pass"] if not upstream_pass else []),
-            *(["Star-Source entry boundary version must be 6.6.0"] if not upstream_version_ready else []),
+            *(["Star-Source entry boundary version must be 6.7.0"] if not upstream_version_ready else []),
             *(["Star-Source entry boundary hash must be present"] if not hash_present else []),
             *(["Star-Source entry boundary hash must be stable"] if not hash_stable else []),
             *(["Star-Source entry handoff must target Source Constitution Registry"] if not handoff_ready else []),
