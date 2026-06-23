@@ -16,8 +16,8 @@ from .governance_source_constitution_registry import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_VERSION = "6.8.0"
-GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_SCHEMA_VERSION = "6.8.0"
+GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_VERSION = "6.9.0"
+GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_SCHEMA_VERSION = "6.9.0"
 GOVERNANCE_ORIGIN_PROVENANCE_LEDGER_TYPE = (
     "governance_origin_provenance_ledger"
 )
@@ -565,7 +565,7 @@ def build_governance_origin_provenance_ledger() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["Source Constitution Registry version must be 6.8.0"]
+                ["Source Constitution Registry version must be 6.9.0"]
                 if not upstream_version_ready
                 else []
             ),

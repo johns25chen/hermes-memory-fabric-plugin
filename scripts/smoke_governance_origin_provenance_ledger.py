@@ -96,8 +96,8 @@ def main() -> int:
             raise AssertionError("ledger changed between builds")
 
         expected = {
-            "version": "6.8.0",
-            "schema_version": "6.8.0",
+            "version": "6.9.0",
+            "schema_version": "6.9.0",
             "origin_provenance_ledger_status": "pass",
             "origin_provenance_ledger_stage": (
                 "v6.2_origin_provenance_ledger"
@@ -111,7 +111,7 @@ def main() -> int:
             ),
             "origin_provenance_ledger_active_status": "not_active",
             "origin_provenance_ledger_write_status": "not_written",
-            "upstream_source_constitution_registry_version": "6.8.0",
+            "upstream_source_constitution_registry_version": "6.9.0",
             "upstream_source_constitution_registry_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_origin_provenance_ledger_design"

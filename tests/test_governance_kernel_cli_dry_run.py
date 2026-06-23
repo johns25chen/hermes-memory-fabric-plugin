@@ -30,7 +30,7 @@ SCRIPT = PROJECT_ROOT / "scripts" / "governance_kernel_cli_dry_run.py"
 
 _PAYLOADS: dict[str, dict[str, str]] = {
     "governance_kernel_initialized": {
-        "kernel_version": "6.8.0",
+        "kernel_version": "6.9.0",
         "initialization_scope": "test",
     },
     "proposal_submitted": {
@@ -81,7 +81,7 @@ def _event(
             else dict(_PAYLOADS[event_type])
         ),
         "previous_event_id": previous_event_id,
-        "schema_version": "6.8.0",
+        "schema_version": "6.9.0",
     }
 
 
@@ -117,8 +117,8 @@ def _assert_safety(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_KERNEL_CLI_DRY_RUN_VERSION == "6.8.0"
-    assert GOVERNANCE_KERNEL_CLI_SCHEMA_VERSION == "6.8.0"
+    assert GOVERNANCE_KERNEL_CLI_DRY_RUN_VERSION == "6.9.0"
+    assert GOVERNANCE_KERNEL_CLI_SCHEMA_VERSION == "6.9.0"
     assert GOVERNANCE_KERNEL_CLI_MODE == "local_cli_dry_run_only"
     assert GOVERNANCE_KERNEL_CLI_HASH_ALGORITHM == "sha256"
 
@@ -139,7 +139,7 @@ def test_canonicalize_event_mode_returns_v460_canonicalization_version():
     )
 
     assert result["dry_run_status"] == "pass"
-    assert result["result"]["canonicalization_version"] == "6.8.0"
+    assert result["result"]["canonicalization_version"] == "6.9.0"
 
 
 def test_canonicalize_sequence_mode_is_deterministic():
@@ -222,7 +222,7 @@ def test_invalid_schema_version_is_blocked():
     )
 
     assert result["dry_run_status"] == "blocked"
-    assert "schema_version must equal 6.8.0" in result["blocking_reasons"]
+    assert "schema_version must equal 6.9.0" in result["blocking_reasons"]
 
 
 def test_invalid_payload_schema_is_blocked():
@@ -230,7 +230,7 @@ def test_invalid_payload_schema_is_blocked():
         "event-1",
         "governance_kernel_initialized",
         None,
-        {"kernel_version": "6.8.0"},
+        {"kernel_version": "6.9.0"},
     )
 
     result = build_governance_kernel_cli_dry_run_result(

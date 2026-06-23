@@ -17,8 +17,8 @@ from .governance_multi_cycle_continuity_protocol import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_SOURCE_MUTATION_PROPOSAL_BOUNDARY_VERSION = "6.8.0"
-GOVERNANCE_SOURCE_MUTATION_PROPOSAL_BOUNDARY_SCHEMA_VERSION = "6.8.0"
+GOVERNANCE_SOURCE_MUTATION_PROPOSAL_BOUNDARY_VERSION = "6.9.0"
+GOVERNANCE_SOURCE_MUTATION_PROPOSAL_BOUNDARY_SCHEMA_VERSION = "6.9.0"
 GOVERNANCE_SOURCE_MUTATION_PROPOSAL_BOUNDARY_TYPE = (
     "governance_source_mutation_proposal_boundary"
 )
@@ -59,7 +59,7 @@ NEXT_STAGE = "v6.8_source_mutation_review_gate"
 NEXT_STAGE_TITLE = "Source Mutation Review Gate"
 BLOCKED_HANDOFF_STATUS = "blocked"
 
-INTRODUCED_IN_VERSION = "6.8.0"
+INTRODUCED_IN_VERSION = "6.9.0"
 INTRODUCED_IN_STAGE = SOURCE_MUTATION_PROPOSAL_BOUNDARY_STAGE
 INTRODUCED_IN_LAYER = "layer_15_star_source_memory"
 INHERITED_FROM_STAGE = "v6.6_multi_cycle_continuity_protocol"
@@ -923,7 +923,7 @@ def build_governance_source_mutation_proposal_boundary() -> dict[str, Any]:
         [
             message
             for condition, message in (
-                (upstream_version_ready, "Multi-Cycle Continuity Protocol version must be 6.8.0"),
+                (upstream_version_ready, "Multi-Cycle Continuity Protocol version must be 6.9.0"),
                 (upstream_pass, "Multi-Cycle Continuity Protocol must pass"),
                 (upstream_hash_present, "Multi-Cycle Continuity Protocol hash must be present"),
                 (upstream_hash_stable, "Multi-Cycle Continuity Protocol hash must be stable"),
