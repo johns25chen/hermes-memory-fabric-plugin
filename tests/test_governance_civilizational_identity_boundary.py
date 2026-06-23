@@ -201,8 +201,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_3_contract():
-    assert GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_VERSION == "6.8.0"
-    assert GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_SCHEMA_VERSION == "6.8.0"
+    assert GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_VERSION == "6.9.0"
+    assert GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_SCHEMA_VERSION == "6.9.0"
     assert (
         GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_TYPE
         == "governance_civilizational_identity_boundary"
@@ -241,8 +241,8 @@ def test_boundary_shape_is_deterministic_and_passes(boundary):
     repeated = build_governance_civilizational_identity_boundary()
 
     assert repeated == boundary
-    assert boundary["version"] == "6.8.0"
-    assert boundary["schema_version"] == "6.8.0"
+    assert boundary["version"] == "6.9.0"
+    assert boundary["schema_version"] == "6.9.0"
     assert boundary["civilizational_identity_boundary_status"] == "pass"
     assert (
         boundary["civilizational_identity_boundary_stage"]
@@ -276,7 +276,7 @@ def test_boundary_shape_is_deterministic_and_passes(boundary):
 
 
 def test_upstream_v6_2_handoff_verification(boundary):
-    assert boundary["upstream_origin_provenance_ledger_version"] == "6.8.0"
+    assert boundary["upstream_origin_provenance_ledger_version"] == "6.9.0"
     assert boundary["upstream_origin_provenance_ledger_status"] == "pass"
     assert len(boundary["upstream_origin_provenance_ledger_hash"]) == 64
     assert (

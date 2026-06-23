@@ -116,8 +116,8 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION == "6.8.0"
-    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_SCHEMA_VERSION == "6.8.0"
+    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION == "6.9.0"
+    assert GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_SCHEMA_VERSION == "6.9.0"
     assert (
         GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_TYPE
         == "governance_dry_run_validation_matrix"
@@ -130,14 +130,14 @@ def test_validation_matrix_shape_is_deterministic():
     second = _matrix()
 
     assert first == second
-    assert first["version"] == "6.8.0"
-    assert first["schema_version"] == "6.8.0"
+    assert first["version"] == "6.9.0"
+    assert first["schema_version"] == "6.9.0"
     assert (
         first["validation_matrix_type"]
         == "governance_dry_run_validation_matrix"
     )
     assert first["validation_matrix_status"] == "pass"
-    assert first["fixture_pack_version"] == "6.8.0"
+    assert first["fixture_pack_version"] == "6.9.0"
     assert first["row_count"] == len(EXPECTED_FIXTURE_NAMES)
     assert first["pass_count"] == 3
     assert first["blocked_count"] == 7

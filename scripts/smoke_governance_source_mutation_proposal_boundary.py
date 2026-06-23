@@ -158,8 +158,8 @@ def main() -> int:
             raise AssertionError("boundary changed between builds")
 
         expected = {
-            "version": "6.8.0",
-            "schema_version": "6.8.0",
+            "version": "6.9.0",
+            "schema_version": "6.9.0",
             "source_mutation_proposal_boundary_status": "pass",
             "source_mutation_proposal_boundary_stage": (
                 "v6.7_source_mutation_proposal_boundary"
@@ -191,7 +191,7 @@ def main() -> int:
             "legal_subject_claim_status": "forbidden",
             "religious_object_claim_status": "forbidden",
             "autonomous_authority_status": "forbidden",
-            "upstream_multi_cycle_continuity_protocol_version": "6.8.0",
+            "upstream_multi_cycle_continuity_protocol_version": "6.9.0",
             "upstream_multi_cycle_continuity_protocol_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_source_mutation_proposal_boundary_design"

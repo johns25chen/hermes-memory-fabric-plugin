@@ -486,8 +486,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_8_contract():
-    assert GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_VERSION == "6.8.0"
-    assert GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_SCHEMA_VERSION == "6.8.0"
+    assert GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_VERSION == "6.9.0"
+    assert GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_SCHEMA_VERSION == "6.9.0"
     assert GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_TYPE == (
         "governance_source_mutation_review_gate"
     )
@@ -528,8 +528,8 @@ def test_constants_match_v6_8_contract():
 def test_public_shape_is_deterministic_and_passes(boundary):
     repeated = build_governance_source_mutation_review_gate()
     assert repeated == boundary
-    assert boundary["version"] == "6.8.0"
-    assert boundary["schema_version"] == "6.8.0"
+    assert boundary["version"] == "6.9.0"
+    assert boundary["schema_version"] == "6.9.0"
     assert boundary["source_mutation_review_gate_status"] == "pass"
     assert boundary["source_mutation_review_gate_stage"] == (
         "v6.8_source_mutation_review_gate"
@@ -547,7 +547,7 @@ def test_public_shape_is_deterministic_and_passes(boundary):
 
 
 def test_upstream_v6_6_handoff_verification(boundary):
-    assert boundary["upstream_source_mutation_proposal_boundary_version"] == "6.8.0"
+    assert boundary["upstream_source_mutation_proposal_boundary_version"] == "6.9.0"
     assert boundary["upstream_source_mutation_proposal_boundary_status"] == "pass"
     assert len(boundary["upstream_source_mutation_proposal_boundary_hash"]) == 64
     assert boundary["upstream_handoff_status"] == (
@@ -597,7 +597,7 @@ def test_all_records_registered_metadata_only(boundary):
         assert record["review_gate_record_status"] == (
             "registered_metadata_only"
         )
-        assert record["introduced_in_version"] == "6.8.0"
+        assert record["introduced_in_version"] == "6.9.0"
         assert record["introduced_in_stage"] == (
             "v6.8_source_mutation_review_gate"
         )

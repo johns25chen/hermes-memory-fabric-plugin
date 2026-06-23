@@ -17,8 +17,8 @@ from .governance_source_mutation_proposal_boundary import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_VERSION = "6.8.0"
-GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_SCHEMA_VERSION = "6.8.0"
+GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_VERSION = "6.9.0"
+GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_SCHEMA_VERSION = "6.9.0"
 GOVERNANCE_SOURCE_MUTATION_REVIEW_GATE_TYPE = (
     "governance_source_mutation_review_gate"
 )
@@ -63,7 +63,7 @@ NEXT_STAGE = "v6.9_human_sovereignty_lock"
 NEXT_STAGE_TITLE = "Human Sovereignty Lock"
 BLOCKED_HANDOFF_STATUS = "blocked"
 
-INTRODUCED_IN_VERSION = "6.8.0"
+INTRODUCED_IN_VERSION = "6.9.0"
 INTRODUCED_IN_STAGE = SOURCE_MUTATION_REVIEW_GATE_STAGE
 INTRODUCED_IN_LAYER = "layer_15_star_source_memory"
 INHERITED_FROM_STAGE = "v6.7_source_mutation_proposal_boundary"
@@ -977,7 +977,7 @@ def build_governance_source_mutation_review_gate() -> dict[str, Any]:
         [
             message
             for condition, message in (
-                (upstream_version_ready, "Source Mutation Proposal Boundary version must be 6.8.0"),
+                (upstream_version_ready, "Source Mutation Proposal Boundary version must be 6.9.0"),
                 (upstream_pass, "Source Mutation Proposal Boundary must pass"),
                 (upstream_hash_present, "Source Mutation Proposal Boundary hash must be present"),
                 (upstream_hash_stable, "Source Mutation Proposal Boundary hash must be stable"),
