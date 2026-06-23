@@ -15,8 +15,8 @@ from .governance_execution_adapter_manifest_authorization_gate import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_VERSION = "6.7.0"
-GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_SCHEMA_VERSION = "6.7.0"
+GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_VERSION = "6.8.0"
+GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_SCHEMA_VERSION = "6.8.0"
 GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_TYPE = (
     "governance_execution_adapter_handoff_audit"
 )
@@ -345,7 +345,7 @@ def build_governance_execution_adapter_handoff_audit() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["manifest authorization gate must pass at version 6.7.0"]
+                ["manifest authorization gate must pass at version 6.8.0"]
                 if not authorization_gate_passes
                 else []
             ),

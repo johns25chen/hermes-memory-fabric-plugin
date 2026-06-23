@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v6.7.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v6.8.0."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skil
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "6.7.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "6.8.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -473,6 +473,10 @@ EXPECTED_RELEASE_FILES = (
     "scripts/smoke_governance_source_mutation_proposal_boundary.py",
     "tests/test_governance_source_mutation_proposal_boundary.py",
     "tests/test_smoke_governance_source_mutation_proposal_boundary.py",
+    "src/hermes_memory_fabric/governance_source_mutation_review_gate.py",
+    "scripts/smoke_governance_source_mutation_review_gate.py",
+    "tests/test_governance_source_mutation_review_gate.py",
+    "tests/test_smoke_governance_source_mutation_review_gate.py",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -905,6 +909,10 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_governance_source_mutation_proposal_boundary.py",
     "tests/test_governance_source_mutation_proposal_boundary.py",
     "tests/test_smoke_governance_source_mutation_proposal_boundary.py",
+    "src/hermes_memory_fabric/governance_source_mutation_review_gate.py",
+    "scripts/smoke_governance_source_mutation_review_gate.py",
+    "tests/test_governance_source_mutation_review_gate.py",
+    "tests/test_smoke_governance_source_mutation_review_gate.py",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
@@ -1336,6 +1344,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     governance_source_mutation_proposal_boundary_smoke = (
         _run_governance_source_mutation_proposal_boundary_smoke_check(root)
     )
+    governance_source_mutation_review_gate_smoke = (
+        _run_governance_source_mutation_review_gate_smoke_check(root)
+    )
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -1669,6 +1680,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         ]
         and governance_source_mutation_proposal_boundary_smoke[
             "governance_source_mutation_proposal_boundary_smoke_safe"
+        ]
+        and governance_source_mutation_review_gate_smoke[
+            "governance_source_mutation_review_gate_smoke_safe"
         ]
         and no_network_surface
         and no_hermes_memory_write
@@ -2737,6 +2751,16 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governance_source_mutation_proposal_boundary_smoke_safe"
             ]
         ),
+        "governance_source_mutation_review_gate_smoke_status": (
+            governance_source_mutation_review_gate_smoke[
+                "governance_source_mutation_review_gate_smoke_status"
+            ]
+        ),
+        "governance_source_mutation_review_gate_smoke_safe": (
+            governance_source_mutation_review_gate_smoke[
+                "governance_source_mutation_review_gate_smoke_safe"
+            ]
+        ),
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -3272,6 +3296,11 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governance_source_mutation_proposal_boundary_smoke_safe": (
                     governance_source_mutation_proposal_boundary_smoke[
                         "governance_source_mutation_proposal_boundary_smoke_safe"
+                    ]
+                ),
+                "governance_source_mutation_review_gate_smoke_safe": (
+                    governance_source_mutation_review_gate_smoke[
+                        "governance_source_mutation_review_gate_smoke_safe"
                     ]
                 ),
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
@@ -6481,6 +6510,33 @@ def _run_governance_source_mutation_proposal_boundary_smoke_check(
             "pass" if safe else "fail"
         ),
         "governance_source_mutation_proposal_boundary_smoke_safe": safe,
+    }
+
+
+def _run_governance_source_mutation_review_gate_smoke_check(
+    root: Path,
+) -> dict[str, Any]:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(root / "scripts" / "smoke_governance_source_mutation_review_gate.py"),
+        ],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=480,
+    )
+    safe = (
+        completed.returncode == 0
+        and completed.stdout == "governance_source_mutation_review_gate=passed\n"
+        and completed.stderr == ""
+    )
+    return {
+        "governance_source_mutation_review_gate_smoke_status": (
+            "pass" if safe else "fail"
+        ),
+        "governance_source_mutation_review_gate_smoke_safe": safe,
     }
 
 

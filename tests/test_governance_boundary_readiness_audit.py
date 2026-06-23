@@ -99,8 +99,8 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION == "6.7.0"
-    assert GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION == "6.7.0"
+    assert GOVERNANCE_BOUNDARY_READINESS_AUDIT_VERSION == "6.8.0"
+    assert GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION == "6.8.0"
     assert (
         GOVERNANCE_BOUNDARY_READINESS_AUDIT_TYPE
         == "governance_boundary_readiness_audit"
@@ -113,8 +113,8 @@ def test_readiness_audit_shape_is_deterministic():
     second = _audit()
 
     assert first == second
-    assert first["version"] == "6.7.0"
-    assert first["schema_version"] == "6.7.0"
+    assert first["version"] == "6.8.0"
+    assert first["schema_version"] == "6.8.0"
     assert (
         first["readiness_audit_type"]
         == "governance_boundary_readiness_audit"
@@ -128,7 +128,7 @@ def test_readiness_audit_shape_is_deterministic():
     assert first["star_cosmos_entry_claimed"] is False
     assert first["execution_adapter_implemented"] is False
     assert first["real_execution_enabled"] is False
-    assert first["validation_matrix_version"] == "6.7.0"
+    assert first["validation_matrix_version"] == "6.8.0"
     assert len(first["validation_matrix_hash"]) == 64
     assert len(first["deterministic_readiness_audit_hash"]) == 64
 
@@ -155,7 +155,7 @@ def test_get_readiness_check_by_name_returns_detached_copies():
     )
 
     assert second == original
-    assert second["observed"]["versions"]["kernel_version"] == "6.7.0"  # type: ignore[index]
+    assert second["observed"]["versions"]["kernel_version"] == "6.8.0"  # type: ignore[index]
     assert second["blocking_reasons"] == []
 
 
@@ -197,7 +197,7 @@ def test_all_readiness_checks_pass_without_blocking_reasons():
 def test_validation_matrix_metadata_is_present():
     audit = _audit()
 
-    assert audit["validation_matrix_version"] == "6.7.0"
+    assert audit["validation_matrix_version"] == "6.8.0"
     assert isinstance(audit["validation_matrix_hash"], str)
     assert len(audit["validation_matrix_hash"]) == 64
 

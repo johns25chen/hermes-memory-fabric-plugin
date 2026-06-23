@@ -443,8 +443,8 @@ def _repo_text() -> str:
 
 
 def test_constants_match_v6_6_contract():
-    assert GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_VERSION == "6.7.0"
-    assert GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_SCHEMA_VERSION == "6.7.0"
+    assert GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_VERSION == "6.8.0"
+    assert GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_SCHEMA_VERSION == "6.8.0"
     assert GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_TYPE == (
         "governance_multi_cycle_continuity_protocol"
     )
@@ -485,8 +485,8 @@ def test_protocol_shape_is_deterministic_and_passes(protocol):
     repeated = build_governance_multi_cycle_continuity_protocol()
 
     assert repeated == protocol
-    assert protocol["version"] == "6.7.0"
-    assert protocol["schema_version"] == "6.7.0"
+    assert protocol["version"] == "6.8.0"
+    assert protocol["schema_version"] == "6.8.0"
     assert protocol["multi_cycle_continuity_protocol_status"] == "pass"
     assert protocol["multi_cycle_continuity_protocol_stage"] == (
         "v6.6_multi_cycle_continuity_protocol"
@@ -505,7 +505,7 @@ def test_protocol_shape_is_deterministic_and_passes(protocol):
 
 def test_upstream_v6_5_handoff_verification(protocol):
     assert protocol["upstream_root_governance_conflict_resolver_version"] == (
-        "6.7.0"
+        "6.8.0"
     )
     assert protocol["upstream_root_governance_conflict_resolver_status"] == "pass"
     assert len(protocol["upstream_root_governance_conflict_resolver_hash"]) == 64

@@ -17,8 +17,8 @@ from .governance_origin_provenance_ledger import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_VERSION = "6.7.0"
-GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_SCHEMA_VERSION = "6.7.0"
+GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_VERSION = "6.8.0"
+GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_SCHEMA_VERSION = "6.8.0"
 GOVERNANCE_CIVILIZATIONAL_IDENTITY_BOUNDARY_TYPE = (
     "governance_civilizational_identity_boundary"
 )
@@ -789,7 +789,7 @@ def build_governance_civilizational_identity_boundary() -> dict[str, Any]:
     blocking_reasons = _deduplicate(
         [
             *(
-                ["Origin Provenance Ledger version must be 6.7.0"]
+                ["Origin Provenance Ledger version must be 6.8.0"]
                 if not upstream_version_ready
                 else []
             ),

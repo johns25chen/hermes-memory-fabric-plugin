@@ -487,7 +487,7 @@ def test_top_level_status_and_coordination_boundaries():
             FUTURE_CONTROLLED_ADAPTER_SANDBOX_STATUS
         ),
         "star_cosmos_entry_status": STAR_COSMOS_ENTRY_STATUS,
-        "operation_ledger_proposal_boundary_version": "6.7.0",
+        "operation_ledger_proposal_boundary_version": "6.8.0",
         "operation_ledger_proposal_boundary_status": "pass",
     }
     for key, value in expected.items():

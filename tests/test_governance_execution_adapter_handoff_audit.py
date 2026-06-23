@@ -387,8 +387,8 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 
 
 def test_public_constants():
-    assert GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_VERSION == "6.7.0"
-    assert GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_SCHEMA_VERSION == "6.7.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_VERSION == "6.8.0"
+    assert GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_SCHEMA_VERSION == "6.8.0"
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_HANDOFF_AUDIT_TYPE
         == "governance_execution_adapter_handoff_audit"
@@ -405,8 +405,8 @@ def test_adapter_handoff_audit_shape_is_deterministic():
     second = _audit()
 
     assert first == second
-    assert first["version"] == "6.7.0"
-    assert first["schema_version"] == "6.7.0"
+    assert first["version"] == "6.8.0"
+    assert first["schema_version"] == "6.8.0"
     assert (
         first["adapter_handoff_audit_type"]
         == "governance_execution_adapter_handoff_audit"
@@ -416,7 +416,7 @@ def test_adapter_handoff_audit_shape_is_deterministic():
     assert first["adapter_handoff_audit_mode"] == "adapter_handoff_audit_only"
     assert first["future_adapter_sandbox_status"] == "not_entered"
     assert first["star_cosmos_entry_status"] == "candidate_only"
-    assert first["manifest_authorization_gate_version"] == "6.7.0"
+    assert first["manifest_authorization_gate_version"] == "6.8.0"
     assert first["manifest_authorization_gate_status"] == "pass"
     assert isinstance(first["manifest_authorization_gate_hash"], str)
     assert len(first["manifest_authorization_gate_hash"]) == 64
