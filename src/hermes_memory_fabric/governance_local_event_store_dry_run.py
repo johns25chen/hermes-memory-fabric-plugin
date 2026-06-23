@@ -17,8 +17,8 @@ from .governance_replay_audit_report import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-LOCAL_EVENT_STORE_DRY_RUN_VERSION = "6.7.0"
-LOCAL_EVENT_STORE_SCHEMA_VERSION = "6.7.0"
+LOCAL_EVENT_STORE_DRY_RUN_VERSION = "6.8.0"
+LOCAL_EVENT_STORE_SCHEMA_VERSION = "6.8.0"
 LOCAL_EVENT_STORE_MODE = "in_memory_dry_run_only"
 LOCAL_EVENT_STORE_HASH_ALGORITHM = "sha256"
 

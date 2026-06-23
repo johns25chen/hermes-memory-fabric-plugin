@@ -195,8 +195,8 @@ def main() -> int:
             raise AssertionError("resolver changed between builds")
 
         expected = {
-            "version": "6.7.0",
-            "schema_version": "6.7.0",
+            "version": "6.8.0",
+            "schema_version": "6.8.0",
             "root_governance_conflict_resolver_status": "pass",
             "root_governance_conflict_resolver_stage": (
                 "v6.5_root_governance_conflict_resolver"
@@ -224,7 +224,7 @@ def main() -> int:
             "legal_subject_claim_status": "forbidden",
             "religious_object_claim_status": "forbidden",
             "autonomous_authority_status": "forbidden",
-            "upstream_source_memory_invariant_matrix_version": "6.7.0",
+            "upstream_source_memory_invariant_matrix_version": "6.8.0",
             "upstream_source_memory_invariant_matrix_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_root_governance_conflict_resolver_design"

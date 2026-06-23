@@ -17,8 +17,8 @@ from .governance_root_governance_conflict_resolver import (
 from .governance_transition_policy_registry import SAFETY_BOUNDARIES
 
 
-GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_VERSION = "6.7.0"
-GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_SCHEMA_VERSION = "6.7.0"
+GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_VERSION = "6.8.0"
+GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_SCHEMA_VERSION = "6.8.0"
 GOVERNANCE_MULTI_CYCLE_CONTINUITY_PROTOCOL_TYPE = (
     "governance_multi_cycle_continuity_protocol"
 )
@@ -855,7 +855,7 @@ def build_governance_multi_cycle_continuity_protocol() -> dict[str, Any]:
         [
             message
             for condition, message in (
-                (upstream_version_ready, "Root Governance Conflict Resolver version must be 6.7.0"),
+                (upstream_version_ready, "Root Governance Conflict Resolver version must be 6.8.0"),
                 (upstream_pass, "Root Governance Conflict Resolver must pass"),
                 (upstream_hash_present, "Root Governance Conflict Resolver hash must be present"),
                 (upstream_hash_stable, "Root Governance Conflict Resolver hash must be stable"),

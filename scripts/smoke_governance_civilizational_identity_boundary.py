@@ -97,8 +97,8 @@ def main() -> int:
             raise AssertionError("boundary changed between builds")
 
         expected = {
-            "version": "6.7.0",
-            "schema_version": "6.7.0",
+            "version": "6.8.0",
+            "schema_version": "6.8.0",
             "civilizational_identity_boundary_status": "pass",
             "civilizational_identity_boundary_stage": (
                 "v6.3_civilizational_identity_boundary"
@@ -125,7 +125,7 @@ def main() -> int:
             "source_provenance_runtime_status": "not_active",
             "methodology_reverse_inference_status": "not_active",
             "self_evolution_status": "not_active",
-            "upstream_origin_provenance_ledger_version": "6.7.0",
+            "upstream_origin_provenance_ledger_version": "6.8.0",
             "upstream_origin_provenance_ledger_status": "pass",
             "upstream_handoff_status": (
                 "ready_for_civilizational_identity_boundary_design"

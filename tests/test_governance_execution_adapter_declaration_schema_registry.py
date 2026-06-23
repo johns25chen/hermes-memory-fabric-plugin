@@ -187,11 +187,11 @@ def _assert_string_keys_and_finite_values(value: object) -> None:
 def test_public_constants():
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_VERSION
-        == "6.7.0"
+        == "6.8.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_SCHEMA_VERSION
-        == "6.7.0"
+        == "6.8.0"
     )
     assert (
         GOVERNANCE_EXECUTION_ADAPTER_DECLARATION_SCHEMA_REGISTRY_TYPE
@@ -214,8 +214,8 @@ def test_declaration_schema_registry_shape_is_deterministic():
     second = _registry()
 
     assert first == second
-    assert first["version"] == "6.7.0"
-    assert first["schema_version"] == "6.7.0"
+    assert first["version"] == "6.8.0"
+    assert first["schema_version"] == "6.8.0"
     assert (
         first["declaration_schema_registry_type"]
         == "governance_execution_adapter_declaration_schema_registry"
@@ -241,7 +241,7 @@ def test_declaration_schema_registry_shape_is_deterministic():
         == "ready_for_future_adapter_manifest_dry_run_design"
     )
     assert first["blocking_reasons"] == []
-    assert first["boundary_version"] == "6.7.0"
+    assert first["boundary_version"] == "6.8.0"
     assert first["boundary_status"] == "pass"
     assert isinstance(first["boundary_hash"], str)
     assert len(first["boundary_hash"]) == 64
