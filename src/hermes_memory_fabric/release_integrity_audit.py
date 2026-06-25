@@ -1,4 +1,4 @@
-"""Deterministic local release integrity audit for v2.0.0 through v6.9.0."""
+"""Deterministic local release integrity audit for v2.0.0 through v6.10.0."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from .skill_fabric import SkillFabricPaths, initialize_skill_fabric, verify_skil
 from .skill_fabric_simulation import run_skill_fabric_github_archive_simulation
 
 
-RELEASE_INTEGRITY_AUDIT_VERSION = "6.9.0"
+RELEASE_INTEGRITY_AUDIT_VERSION = "6.10.0"
 
 EXPECTED_RELEASE_TAGS = ("v2.0.0", "v2.1.0", "v2.2.0")
 EXPECTED_RELEASE_FILES = (
@@ -481,6 +481,10 @@ EXPECTED_RELEASE_FILES = (
     "scripts/smoke_governance_human_sovereignty_lock.py",
     "tests/test_governance_human_sovereignty_lock.py",
     "tests/test_smoke_governance_human_sovereignty_lock.py",
+    "src/hermes_memory_fabric/governance_anti_overreach_governance_firewall.py",
+    "scripts/smoke_governance_anti_overreach_governance_firewall.py",
+    "tests/test_governance_anti_overreach_governance_firewall.py",
+    "tests/test_smoke_governance_anti_overreach_governance_firewall.py",
 )
 SURFACE_AUDIT_FILES = (
     "src/hermes_memory_fabric/skill_fabric.py",
@@ -921,6 +925,10 @@ SURFACE_AUDIT_FILES = (
     "scripts/smoke_governance_human_sovereignty_lock.py",
     "tests/test_governance_human_sovereignty_lock.py",
     "tests/test_smoke_governance_human_sovereignty_lock.py",
+    "src/hermes_memory_fabric/governance_anti_overreach_governance_firewall.py",
+    "scripts/smoke_governance_anti_overreach_governance_firewall.py",
+    "tests/test_governance_anti_overreach_governance_firewall.py",
+    "tests/test_smoke_governance_anti_overreach_governance_firewall.py",
     "docs/SHARED_SKILL_FABRIC.md",
     "README.md",
 )
@@ -1358,6 +1366,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
     governance_human_sovereignty_lock_smoke = (
         _run_governance_human_sovereignty_lock_smoke_check(root)
     )
+    governance_anti_overreach_governance_firewall_smoke = (
+        _run_governance_anti_overreach_governance_firewall_smoke_check(root)
+    )
     surface = _scan_unsafe_surfaces(root)
 
     no_network_surface = not any(hit["category"] == "network" for hit in surface["unsafe_source_hits"])
@@ -1697,6 +1708,9 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
         ]
         and governance_human_sovereignty_lock_smoke[
             "governance_human_sovereignty_lock_smoke_safe"
+        ]
+        and governance_anti_overreach_governance_firewall_smoke[
+            "governance_anti_overreach_governance_firewall_smoke_safe"
         ]
         and no_network_surface
         and no_hermes_memory_write
@@ -2785,6 +2799,16 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governance_human_sovereignty_lock_smoke_safe"
             ]
         ),
+        "governance_anti_overreach_governance_firewall_smoke_status": (
+            governance_anti_overreach_governance_firewall_smoke[
+                "governance_anti_overreach_governance_firewall_smoke_status"
+            ]
+        ),
+        "governance_anti_overreach_governance_firewall_smoke_safe": (
+            governance_anti_overreach_governance_firewall_smoke[
+                "governance_anti_overreach_governance_firewall_smoke_safe"
+            ]
+        ),
         "unsafe_source_hits": surface["unsafe_source_hits"],
         "allowed_documentation_hits": surface["allowed_documentation_hits"],
         "no_network_surface": no_network_surface,
@@ -3330,6 +3354,11 @@ def run_release_integrity_audit(repo_root: str | Path = ".") -> dict[str, Any]:
                 "governance_human_sovereignty_lock_smoke_safe": (
                     governance_human_sovereignty_lock_smoke[
                         "governance_human_sovereignty_lock_smoke_safe"
+                    ]
+                ),
+                "governance_anti_overreach_governance_firewall_smoke_safe": (
+                    governance_anti_overreach_governance_firewall_smoke[
+                        "governance_anti_overreach_governance_firewall_smoke_safe"
                     ]
                 ),
                 "surface_scan_safe": surface["unsafe_source_hits"] == [],
@@ -6593,6 +6622,38 @@ def _run_governance_human_sovereignty_lock_smoke_check(
             "pass" if safe else "fail"
         ),
         "governance_human_sovereignty_lock_smoke_safe": safe,
+    }
+
+
+def _run_governance_anti_overreach_governance_firewall_smoke_check(
+    root: Path,
+) -> dict[str, Any]:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(
+                root
+                / "scripts"
+                / "smoke_governance_anti_overreach_governance_firewall.py"
+            ),
+        ],
+        cwd=root,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=480,
+    )
+    safe = (
+        completed.returncode == 0
+        and completed.stdout
+        == "governance_anti_overreach_governance_firewall=passed\n"
+        and completed.stderr == ""
+    )
+    return {
+        "governance_anti_overreach_governance_firewall_smoke_status": (
+            "pass" if safe else "fail"
+        ),
+        "governance_anti_overreach_governance_firewall_smoke_safe": safe,
     }
 
 
