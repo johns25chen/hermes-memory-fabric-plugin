@@ -489,6 +489,21 @@ def test_release_integrity_governance_human_sovereignty_lock_smoke_remains_safe(
     assert result["governance_human_sovereignty_lock_smoke_safe"] is True
 
 
+def test_release_integrity_governance_anti_overreach_governance_firewall_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert (
+        result[
+            "governance_anti_overreach_governance_firewall_smoke_status"
+        ]
+        == "pass"
+    )
+    assert (
+        result["governance_anti_overreach_governance_firewall_smoke_safe"]
+        is True
+    )
+
+
 def test_release_integrity_openclaw_audit_review_safety_remains_true():
     result = _release_integrity_result()
 
