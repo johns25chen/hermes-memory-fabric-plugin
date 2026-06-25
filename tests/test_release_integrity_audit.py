@@ -23,10 +23,10 @@ def _release_integrity_result() -> dict[str, object]:
 def test_release_integrity_audit_passes():
     result = _release_integrity_result()
 
-    assert result["version"] == "6.11.0"
+    assert result["version"] == "6.12.0"
     assert result["audit_status"] == "pass"
     assert result["release_chain_status"] == "pass"
-    assert result["pyproject_version"] == "6.11.0"
+    assert result["pyproject_version"] == "6.12.0"
 
 
 def test_release_integrity_expected_tags_are_present():
@@ -511,6 +511,18 @@ def test_release_integrity_governance_source_audit_replay_engine_smoke_remains_s
         result["governance_source_audit_replay_engine_smoke_status"] == "pass"
     )
     assert result["governance_source_audit_replay_engine_smoke_safe"] is True
+
+
+def test_release_integrity_governance_cross_layer_integrity_validator_smoke_remains_safe():
+    result = _release_integrity_result()
+
+    assert (
+        result["governance_cross_layer_integrity_validator_smoke_status"]
+        == "pass"
+    )
+    assert (
+        result["governance_cross_layer_integrity_validator_smoke_safe"] is True
+    )
 
 
 def test_release_integrity_openclaw_audit_review_safety_remains_true():
