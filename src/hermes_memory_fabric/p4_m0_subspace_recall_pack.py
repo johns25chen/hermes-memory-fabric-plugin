@@ -26,6 +26,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--workspace-root", default=".")
     parser.add_argument("--title", default=DEFAULT_TITLE)
     parser.add_argument("--include-empty", action="store_true")
+    parser.add_argument("--include-stale", action="store_true")
+    parser.add_argument("--include-archived", action="store_true")
     parser.add_argument("--output")
     return parser
 
@@ -116,6 +118,8 @@ def _run_parsed_export(args: argparse.Namespace) -> str:
         project=args.project,
         namespace=args.namespace,
         limit=args.limit,
+        include_stale=args.include_stale,
+        include_archived=args.include_archived,
     )
     if not results and not args.include_empty:
         raise ValueError("no_recall_results")
@@ -145,6 +149,7 @@ def _format_result(index: int, result: RecallResult) -> list[str]:
         f"- Project: {record['project']}",
         f"- Namespace: {record['namespace']}",
         f"- Source: {record['source']}",
+        f"- Lifecycle: {record['lifecycle']}",
         f"- Matched Terms: {matched_terms}",
         "",
         record["content"],
