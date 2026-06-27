@@ -154,6 +154,8 @@ def test_recall_command_returns_approved_memory_with_deterministic_json_output(t
     assert payload["results"] == [
         {
             "content": "Deterministic recall returns approved operator memory.",
+            "do_not_retry": None,
+            "do_not_retry_warning": None,
             "matched_terms": ["deterministic", "approved"],
             "memory_id": memory_id,
             "namespace": "operator",

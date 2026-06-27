@@ -145,7 +145,7 @@ def _format_result(index: int, result: RecallResult) -> list[str]:
     trace = record["trace"]
     query_terms = ", ".join(trace["query_terms"]) if trace["query_terms"] else "none"
     trace_matched_terms = ", ".join(trace["matched_terms"]) if trace["matched_terms"] else "none"
-    return [
+    lines = [
         f"### {index}. {record['memory_id']}",
         "",
         f"- Score: {record['score']}",
@@ -157,6 +157,23 @@ def _format_result(index: int, result: RecallResult) -> list[str]:
         "",
         record["content"],
         "",
+    ]
+    if record["do_not_retry"] is not None:
+        warning = record["do_not_retry"]
+        lines.extend(
+            [
+                "#### Do-Not-Retry Warning",
+                "",
+                f"- Enabled: {str(warning['enabled']).lower()}",
+                f"- Reason: {warning['reason']}",
+                f"- Alternative: {_optional_value(warning['alternative'])}",
+                f"- Actor: {warning['actor']}",
+                "- Advisory: This warning is human-provided context only. It does not automatically block or authorize action.",
+                "",
+            ]
+        )
+    lines.extend(
+        [
         "#### Explainable Trace",
         "",
         f"- Rank: {trace['rank']}",
@@ -173,12 +190,20 @@ def _format_result(index: int, result: RecallResult) -> list[str]:
         f"- Include Archived: {str(trace['include_archived']).lower()}",
         f"- Explanation: {trace['explanation']}",
         "",
-    ]
+        ]
+    )
+    return lines
 
 
 def _scope_value(value: str | None) -> str:
     if value is None or not str(value).strip():
         return "all"
+    return str(value).strip()
+
+
+def _optional_value(value: str | None) -> str:
+    if value is None or not str(value).strip():
+        return "none"
     return str(value).strip()
 
 

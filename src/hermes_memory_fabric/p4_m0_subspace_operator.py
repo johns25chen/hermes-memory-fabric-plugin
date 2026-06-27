@@ -56,6 +56,22 @@ def build_parser() -> argparse.ArgumentParser:
     lifecycle.add_argument("--actor", required=True)
     lifecycle.add_argument("--reason")
 
+    do_not_retry = subparsers.add_parser("do-not-retry")
+    do_not_retry_subparsers = do_not_retry.add_subparsers(dest="do_not_retry_command", required=True)
+
+    do_not_retry_set = do_not_retry_subparsers.add_parser("set")
+    _add_workspace_root(do_not_retry_set)
+    do_not_retry_set.add_argument("--memory-id", required=True)
+    do_not_retry_set.add_argument("--reason", required=True)
+    do_not_retry_set.add_argument("--actor", required=True)
+    do_not_retry_set.add_argument("--alternative")
+
+    do_not_retry_clear = do_not_retry_subparsers.add_parser("clear")
+    _add_workspace_root(do_not_retry_clear)
+    do_not_retry_clear.add_argument("--memory-id", required=True)
+    do_not_retry_clear.add_argument("--actor", required=True)
+    do_not_retry_clear.add_argument("--reason")
+
     audit = subparsers.add_parser("audit")
     _add_workspace_root(audit)
     audit.add_argument("--limit", type=int, default=50)
@@ -175,6 +191,38 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
             "storage_root": storage_root,
         }
 
+    if args.command == "do-not-retry":
+        if args.do_not_retry_command == "set":
+            memory = store.set_do_not_retry(
+                args.memory_id,
+                reason=args.reason,
+                actor=args.actor,
+                alternative=args.alternative,
+            )
+            return {
+                "memory_id": memory.id,
+                "status": memory.status,
+                "do_not_retry": asdict(memory.do_not_retry) if memory.do_not_retry is not None else None,
+                "storage_root": storage_root,
+            }
+
+        if args.do_not_retry_command == "clear":
+            memory = store.clear_do_not_retry(
+                args.memory_id,
+                actor=args.actor,
+                reason=args.reason,
+            )
+            previous = _latest_do_not_retry_clear_previous(store, memory.id)
+            return {
+                "memory_id": memory.id,
+                "status": memory.status,
+                "do_not_retry": None,
+                "previous_do_not_retry": previous,
+                "storage_root": storage_root,
+            }
+
+        raise ValueError(f"unsupported_do_not_retry_command:{args.do_not_retry_command}")
+
     if args.command == "audit":
         _validate_positive_limit(args.limit)
         events = store.list_audit_events()
@@ -193,6 +241,16 @@ def _latest_lifecycle_audit_previous(store: Any, memory_id: str) -> str:
         if event.event_type == "memory_lifecycle_updated" and event.target_id == memory_id:
             return str(event.detail["previous_lifecycle"])
     raise ValueError("memory_lifecycle_audit_not_found")
+
+
+def _latest_do_not_retry_clear_previous(store: Any, memory_id: str) -> dict[str, Any] | None:
+    for event in reversed(store.list_audit_events()):
+        if event.event_type == "memory_do_not_retry_cleared" and event.target_id == memory_id:
+            previous = event.detail["previous_do_not_retry"]
+            if previous is None:
+                return None
+            return dict(previous)
+    raise ValueError("memory_do_not_retry_clear_audit_not_found")
 
 
 def _validate_positive_limit(limit: int) -> None:
