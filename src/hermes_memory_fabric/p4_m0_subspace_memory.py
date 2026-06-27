@@ -42,6 +42,15 @@ class MemoryProposal:
 
 
 @dataclass(frozen=True)
+class DoNotRetryWarning:
+    enabled: bool
+    reason: str
+    alternative: str | None
+    actor: str
+    updated_at: str
+
+
+@dataclass(frozen=True)
 class ApprovedMemory:
     schema_version: str
     id: str
@@ -59,6 +68,7 @@ class ApprovedMemory:
     approver: str
     note: str | None = None
     lifecycle: str = "active"
+    do_not_retry: DoNotRetryWarning | None = None
 
 
 @dataclass(frozen=True)
@@ -88,6 +98,8 @@ class RecallResult:
     namespace: str
     source: str
     lifecycle: str
+    do_not_retry: DoNotRetryWarning | None
+    do_not_retry_warning: str | None
     trace: RecallTrace
 
 
@@ -292,6 +304,84 @@ class SubspaceMemoryStore:
         )
         return updated
 
+    def set_do_not_retry(
+        self,
+        memory_id: str,
+        *,
+        reason: str,
+        actor: str,
+        alternative: str | None = None,
+    ) -> ApprovedMemory:
+        clean_id = _required_text(memory_id, "memory_id")
+        reason_value = _required_text(reason, "reason")
+        actor_value = _required_text(actor, "actor")
+        alternative_value = _optional_text(alternative)
+        records = self._read_jsonl(self._memories_path)
+        memory_index, memory = self._memory_record_or_raise(records, clean_id)
+        warning = DoNotRetryWarning(
+            enabled=True,
+            reason=reason_value,
+            alternative=alternative_value,
+            actor=actor_value,
+            updated_at=_utc_now(),
+        )
+        updated = ApprovedMemory(
+            **{
+                **asdict(memory),
+                "do_not_retry": warning,
+                "updated_at": warning.updated_at,
+            }
+        )
+        records[memory_index] = asdict(updated)
+        self._write_jsonl(self._memories_path, records)
+        self._append_audit_event(
+            event_type="memory_do_not_retry_set",
+            target_id=updated.id,
+            project=updated.project,
+            namespace=updated.namespace,
+            actor=actor_value,
+            detail={
+                "reason": reason_value,
+                "alternative": alternative_value,
+            },
+        )
+        return updated
+
+    def clear_do_not_retry(
+        self,
+        memory_id: str,
+        *,
+        actor: str,
+        reason: str | None = None,
+    ) -> ApprovedMemory:
+        clean_id = _required_text(memory_id, "memory_id")
+        actor_value = _required_text(actor, "actor")
+        reason_value = _optional_text(reason)
+        records = self._read_jsonl(self._memories_path)
+        memory_index, memory = self._memory_record_or_raise(records, clean_id)
+        previous = asdict(memory.do_not_retry) if memory.do_not_retry is not None else None
+        updated = ApprovedMemory(
+            **{
+                **asdict(memory),
+                "do_not_retry": None,
+                "updated_at": _utc_now(),
+            }
+        )
+        records[memory_index] = asdict(updated)
+        self._write_jsonl(self._memories_path, records)
+        self._append_audit_event(
+            event_type="memory_do_not_retry_cleared",
+            target_id=updated.id,
+            project=updated.project,
+            namespace=updated.namespace,
+            actor=actor_value,
+            detail={
+                "previous_do_not_retry": previous,
+                "reason": reason_value,
+            },
+        )
+        return updated
+
     def recall(
         self,
         query: str,
@@ -354,6 +444,8 @@ class SubspaceMemoryStore:
                     namespace=memory.namespace,
                     source=memory.source,
                     lifecycle=memory.lifecycle,
+                    do_not_retry=memory.do_not_retry,
+                    do_not_retry_warning=_do_not_retry_warning_text(memory.do_not_retry),
                     trace=trace,
                 )
             )
@@ -379,6 +471,21 @@ class SubspaceMemoryStore:
 
     def _read_memories(self) -> list[ApprovedMemory]:
         return [_memory_from_record(record) for record in self._read_jsonl(self._memories_path)]
+
+    def _memory_record_or_raise(
+        self,
+        records: list[dict[str, Any]],
+        memory_id: str,
+    ) -> tuple[int, ApprovedMemory]:
+        memory_index: int | None = None
+        memory: ApprovedMemory | None = None
+        for index, record in enumerate(records):
+            if str(record.get("id")) == memory_id:
+                memory_index = index
+                memory = _memory_from_record(record)
+        if memory is None or memory_index is None:
+            raise ValueError("memory_not_found")
+        return memory_index, memory
 
     def _append_audit_event(
         self,
@@ -500,8 +607,37 @@ def _trace_explanation(matched_terms: tuple[str, ...]) -> str:
     return f"Matched {len(matched_terms)} query {term_label}: {', '.join(matched_terms)}."
 
 
+def _do_not_retry_warning_text(warning: DoNotRetryWarning | None) -> str | None:
+    if warning is None:
+        return None
+    text = (
+        f"DO NOT RETRY: This memory is marked do-not-retry by {warning.actor}. "
+        f"Reason: {_warning_sentence(warning.reason)}."
+    )
+    if warning.alternative is not None:
+        text = f"{text} Alternative: {_warning_sentence(warning.alternative)}."
+    return text
+
+
+def _warning_sentence(value: str) -> str:
+    return value.rstrip(".!?")
+
+
 def _proposal_from_record(record: dict[str, Any]) -> MemoryProposal:
     return MemoryProposal(**{**record, "tags": tuple(record.get("tags", ()))})
+
+
+def _do_not_retry_from_record(record: dict[str, Any]) -> DoNotRetryWarning | None:
+    warning = record.get("do_not_retry")
+    if warning is None:
+        return None
+    return DoNotRetryWarning(
+        enabled=bool(warning.get("enabled", True)),
+        reason=_required_text(warning.get("reason"), "reason"),
+        alternative=_optional_text(warning.get("alternative")),
+        actor=_required_text(warning.get("actor"), "actor"),
+        updated_at=_required_text(warning.get("updated_at"), "updated_at"),
+    )
 
 
 def _memory_from_record(record: dict[str, Any]) -> ApprovedMemory:
@@ -509,6 +645,7 @@ def _memory_from_record(record: dict[str, Any]) -> ApprovedMemory:
         **record,
         "tags": tuple(record.get("tags", ())),
         "lifecycle": _normalize_lifecycle(record.get("lifecycle", "active")),
+        "do_not_retry": _do_not_retry_from_record(record),
     }
     return ApprovedMemory(**normalized)
 
