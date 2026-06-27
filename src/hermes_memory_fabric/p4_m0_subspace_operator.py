@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from .p4_m0_subspace_memory import VALID_LIFECYCLE_STATES
+from .p4_m0_subspace_project_seed import (
+    get_project_memory_seed,
+    list_project_memory_seeds,
+    render_project_memory_seed_pack,
+)
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 
 
@@ -72,6 +77,24 @@ def build_parser() -> argparse.ArgumentParser:
     do_not_retry_clear.add_argument("--actor", required=True)
     do_not_retry_clear.add_argument("--reason")
 
+    project_seed = subparsers.add_parser("project-seed")
+    project_seed_subparsers = project_seed.add_subparsers(dest="project_seed_command", required=True)
+
+    project_seed_list = project_seed_subparsers.add_parser("list")
+    _add_workspace_root(project_seed_list)
+
+    project_seed_show = project_seed_subparsers.add_parser("show")
+    _add_workspace_root(project_seed_show)
+    project_seed_show.add_argument("--seed-id", required=True)
+
+    project_seed_pack = project_seed_subparsers.add_parser("pack")
+    _add_workspace_root(project_seed_pack)
+
+    project_seed_propose = project_seed_subparsers.add_parser("propose")
+    _add_workspace_root(project_seed_propose)
+    project_seed_propose.add_argument("--seed-id", required=True)
+    project_seed_propose.add_argument("--actor", required=True)
+
     audit = subparsers.add_parser("audit")
     _add_workspace_root(audit)
     audit.add_argument("--limit", type=int, default=50)
@@ -99,7 +122,10 @@ def run_operator_command(
         err.write(f"{exc}\n")
         return 1
 
-    _write_json(out, payload)
+    if isinstance(payload, str):
+        out.write(payload)
+    else:
+        _write_json(out, payload)
     return 0
 
 
@@ -111,11 +137,10 @@ def _add_workspace_root(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--workspace-root", default=".")
 
 
-def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
-    store = create_workspace_subspace_memory_store(Path(args.workspace_root))
-    storage_root = str(store.storage_root)
-
+def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
     if args.command == "propose":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         proposal = store.propose_memory(
             project=args.project,
             namespace=args.namespace,
@@ -133,6 +158,8 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "approve":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         memory = store.approve_proposal(
             args.proposal_id,
             approver=args.approver,
@@ -146,6 +173,8 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "reject":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         rejected = store.reject_proposal(
             args.proposal_id,
             reviewer=args.reviewer,
@@ -159,6 +188,8 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "recall":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         _validate_positive_limit(args.limit)
         results = store.recall(
             args.query,
@@ -176,6 +207,8 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "lifecycle":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         memory = store.set_memory_lifecycle(
             args.memory_id,
             args.state,
@@ -192,6 +225,8 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "do-not-retry":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         if args.do_not_retry_command == "set":
             memory = store.set_do_not_retry(
                 args.memory_id,
@@ -223,7 +258,48 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
 
         raise ValueError(f"unsupported_do_not_retry_command:{args.do_not_retry_command}")
 
+    if args.command == "project-seed":
+        if args.project_seed_command == "list":
+            seeds = list_project_memory_seeds()
+            return {
+                "count": len(seeds),
+                "seeds": [_seed_summary(seed) for seed in seeds],
+            }
+
+        if args.project_seed_command == "show":
+            seed = get_project_memory_seed(args.seed_id)
+            return _seed_detail(seed)
+
+        if args.project_seed_command == "pack":
+            return render_project_memory_seed_pack()
+
+        if args.project_seed_command == "propose":
+            seed = get_project_memory_seed(args.seed_id)
+            actor = _required_text(args.actor, "actor")
+            store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+            proposal = store.propose_memory(
+                project=seed.project,
+                namespace=seed.namespace,
+                content=seed.content,
+                source=f"{seed.source}:proposed-by:{actor}",
+                tags=seed.tags,
+                confidence=seed.confidence,
+            )
+            return {
+                "seed_id": seed.seed_id,
+                "proposal_id": proposal.id,
+                "status": proposal.status,
+                "project": proposal.project,
+                "namespace": proposal.namespace,
+                "storage_root": str(store.storage_root),
+                "requires_human_approval": True,
+            }
+
+        raise ValueError(f"unsupported_project_seed_command:{args.project_seed_command}")
+
     if args.command == "audit":
+        store = create_workspace_subspace_memory_store(Path(args.workspace_root))
+        storage_root = str(store.storage_root)
         _validate_positive_limit(args.limit)
         events = store.list_audit_events()
         limited_events = events[-args.limit :]
@@ -234,6 +310,24 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     raise ValueError(f"unsupported_command:{args.command}")
+
+
+def _seed_summary(seed: Any) -> dict[str, Any]:
+    return {
+        "seed_id": seed.seed_id,
+        "project": seed.project,
+        "namespace": seed.namespace,
+        "source": seed.source,
+        "tags": list(seed.tags),
+        "confidence": seed.confidence,
+    }
+
+
+def _seed_detail(seed: Any) -> dict[str, Any]:
+    return {
+        **_seed_summary(seed),
+        "content": seed.content,
+    }
 
 
 def _latest_lifecycle_audit_previous(store: Any, memory_id: str) -> str:
@@ -256,6 +350,13 @@ def _latest_do_not_retry_clear_previous(store: Any, memory_id: str) -> dict[str,
 def _validate_positive_limit(limit: int) -> None:
     if limit < 1:
         raise ValueError("limit_must_be_positive")
+
+
+def _required_text(value: object, field: str) -> str:
+    cleaned = str(value or "").strip()
+    if not cleaned:
+        raise ValueError(f"{field}_must_be_non_empty")
+    return cleaned
 
 
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:
