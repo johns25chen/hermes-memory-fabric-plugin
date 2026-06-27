@@ -62,6 +62,23 @@ class ApprovedMemory:
 
 
 @dataclass(frozen=True)
+class RecallTrace:
+    query: str
+    query_terms: tuple[str, ...]
+    matched_terms: tuple[str, ...]
+    score: int
+    rank: int
+    memory_id: str
+    project: str
+    namespace: str
+    source: str
+    lifecycle: str
+    include_stale: bool
+    include_archived: bool
+    explanation: str
+
+
+@dataclass(frozen=True)
 class RecallResult:
     memory_id: str
     score: int
@@ -71,6 +88,7 @@ class RecallResult:
     namespace: str
     source: str
     lifecycle: str
+    trace: RecallTrace
 
 
 @dataclass(frozen=True)
@@ -284,12 +302,13 @@ class SubspaceMemoryStore:
         include_stale: bool = False,
         include_archived: bool = False,
     ) -> list[RecallResult]:
-        terms = _query_terms(query)
+        query_value = _required_text(query, "query")
+        terms = _query_terms(query_value)
         if limit < 1:
             return []
         project_filter = _optional_text(project)
         namespace_filter = _optional_text(namespace)
-        results: list[RecallResult] = []
+        candidates: list[tuple[ApprovedMemory, tuple[str, ...]]] = []
         for memory in self._read_memories():
             if memory.status != "approved":
                 continue
@@ -305,20 +324,40 @@ class SubspaceMemoryStore:
             matched = tuple(term for term in terms if term in content_lower)
             if not matched:
                 continue
+            candidates.append((memory, matched))
+        candidates.sort(key=lambda item: (-len(item[1]), item[0].project, item[0].namespace, item[0].id))
+        results: list[RecallResult] = []
+        for rank, (memory, matched) in enumerate(candidates[:limit], start=1):
+            score = len(matched)
+            trace = RecallTrace(
+                query=query_value,
+                query_terms=terms,
+                matched_terms=matched,
+                score=score,
+                rank=rank,
+                memory_id=memory.id,
+                project=memory.project,
+                namespace=memory.namespace,
+                source=memory.source,
+                lifecycle=memory.lifecycle,
+                include_stale=bool(include_stale),
+                include_archived=bool(include_archived),
+                explanation=_trace_explanation(matched),
+            )
             results.append(
                 RecallResult(
                     memory_id=memory.id,
-                    score=len(matched),
+                    score=score,
                     matched_terms=matched,
                     content=memory.content,
                     project=memory.project,
                     namespace=memory.namespace,
                     source=memory.source,
                     lifecycle=memory.lifecycle,
+                    trace=trace,
                 )
             )
-        results.sort(key=lambda item: (-item.score, item.project, item.namespace, item.memory_id))
-        return results[:limit]
+        return results
 
     def list_audit_events(self) -> list[AuditEvent]:
         return [AuditEvent(**record) for record in self._read_jsonl(self._audit_path)]
@@ -454,6 +493,11 @@ def _query_terms(query: str) -> tuple[str, ...]:
     if not terms:
         raise ValueError("query_must_include_keyword")
     return terms
+
+
+def _trace_explanation(matched_terms: tuple[str, ...]) -> str:
+    term_label = "term" if len(matched_terms) == 1 else "terms"
+    return f"Matched {len(matched_terms)} query {term_label}: {', '.join(matched_terms)}."
 
 
 def _proposal_from_record(record: dict[str, Any]) -> MemoryProposal:
