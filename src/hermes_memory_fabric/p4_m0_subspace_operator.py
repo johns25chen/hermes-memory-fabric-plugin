@@ -8,6 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, TextIO
 
+from .p4_m0_subspace_memory import VALID_LIFECYCLE_STATES
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 
 
@@ -45,6 +46,15 @@ def build_parser() -> argparse.ArgumentParser:
     recall.add_argument("--project")
     recall.add_argument("--namespace")
     recall.add_argument("--limit", type=int, default=10)
+    recall.add_argument("--include-stale", action="store_true")
+    recall.add_argument("--include-archived", action="store_true")
+
+    lifecycle = subparsers.add_parser("lifecycle")
+    _add_workspace_root(lifecycle)
+    lifecycle.add_argument("--memory-id", required=True)
+    lifecycle.add_argument("--state", choices=VALID_LIFECYCLE_STATES, required=True)
+    lifecycle.add_argument("--actor", required=True)
+    lifecycle.add_argument("--reason")
 
     audit = subparsers.add_parser("audit")
     _add_workspace_root(audit)
@@ -139,11 +149,29 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
             project=args.project,
             namespace=args.namespace,
             limit=args.limit,
+            include_stale=args.include_stale,
+            include_archived=args.include_archived,
         )
         return {
             "query": args.query,
             "count": len(results),
             "results": [asdict(result) for result in results],
+            "storage_root": storage_root,
+        }
+
+    if args.command == "lifecycle":
+        memory = store.set_memory_lifecycle(
+            args.memory_id,
+            args.state,
+            actor=args.actor,
+            reason=args.reason,
+        )
+        previous_lifecycle = _latest_lifecycle_audit_previous(store, memory.id)
+        return {
+            "memory_id": memory.id,
+            "lifecycle": memory.lifecycle,
+            "previous_lifecycle": previous_lifecycle,
+            "status": memory.status,
             "storage_root": storage_root,
         }
 
@@ -158,6 +186,13 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     raise ValueError(f"unsupported_command:{args.command}")
+
+
+def _latest_lifecycle_audit_previous(store: Any, memory_id: str) -> str:
+    for event in reversed(store.list_audit_events()):
+        if event.event_type == "memory_lifecycle_updated" and event.target_id == memory_id:
+            return str(event.detail["previous_lifecycle"])
+    raise ValueError("memory_lifecycle_audit_not_found")
 
 
 def _validate_positive_limit(limit: int) -> None:

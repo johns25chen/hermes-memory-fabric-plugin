@@ -159,6 +159,7 @@ def test_recall_command_returns_approved_memory_with_deterministic_json_output(t
             "project": "hermes-memory-fabric",
             "score": 2,
             "source": "operator-test",
+            "lifecycle": "active",
         }
     ]
 

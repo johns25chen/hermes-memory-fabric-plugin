@@ -13,6 +13,7 @@ SCHEMA_VERSION = "p4-m0.subspace-memory.v1"
 PROPOSAL_KIND = "subspace_memory_proposal"
 APPROVED_MEMORY_KIND = "approved_subspace_memory"
 AUDIT_KIND = "subspace_memory_audit_event"
+VALID_LIFECYCLE_STATES = ("active", "stale", "archived")
 
 _PROPOSALS_FILE = "proposals.jsonl"
 _MEMORIES_FILE = "memories.jsonl"
@@ -57,6 +58,7 @@ class ApprovedMemory:
     updated_at: str
     approver: str
     note: str | None = None
+    lifecycle: str = "active"
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,7 @@ class RecallResult:
     project: str
     namespace: str
     source: str
+    lifecycle: str
 
 
 @dataclass(frozen=True)
@@ -181,6 +184,7 @@ class SubspaceMemoryStore:
             tags=proposal.tags,
             confidence=proposal.confidence,
             status="approved",
+            lifecycle="active",
             created_at=now,
             updated_at=now,
             approver=approver_value,
@@ -223,6 +227,53 @@ class SubspaceMemoryStore:
         )
         return rejected
 
+    def set_memory_lifecycle(
+        self,
+        memory_id: str,
+        lifecycle: str,
+        *,
+        actor: str,
+        reason: str | None = None,
+    ) -> ApprovedMemory:
+        clean_id = _required_text(memory_id, "memory_id")
+        lifecycle_value = _normalize_lifecycle(lifecycle)
+        actor_value = _required_text(actor, "actor")
+        reason_value = _optional_text(reason)
+        records = self._read_jsonl(self._memories_path)
+        memory_index: int | None = None
+        memory: ApprovedMemory | None = None
+        for index, record in enumerate(records):
+            if str(record.get("id")) == clean_id:
+                memory_index = index
+                memory = _memory_from_record(record)
+        if memory is None or memory_index is None:
+            raise ValueError("memory_not_found")
+
+        previous_lifecycle = memory.lifecycle
+        now = _utc_now()
+        updated = ApprovedMemory(
+            **{
+                **asdict(memory),
+                "lifecycle": lifecycle_value,
+                "updated_at": now,
+            }
+        )
+        records[memory_index] = asdict(updated)
+        self._write_jsonl(self._memories_path, records)
+        self._append_audit_event(
+            event_type="memory_lifecycle_updated",
+            target_id=updated.id,
+            project=updated.project,
+            namespace=updated.namespace,
+            actor=actor_value,
+            detail={
+                "previous_lifecycle": previous_lifecycle,
+                "lifecycle": lifecycle_value,
+                "reason": reason_value,
+            },
+        )
+        return updated
+
     def recall(
         self,
         query: str,
@@ -230,6 +281,8 @@ class SubspaceMemoryStore:
         project: str | None = None,
         namespace: str | None = None,
         limit: int = 10,
+        include_stale: bool = False,
+        include_archived: bool = False,
     ) -> list[RecallResult]:
         terms = _query_terms(query)
         if limit < 1:
@@ -239,6 +292,10 @@ class SubspaceMemoryStore:
         results: list[RecallResult] = []
         for memory in self._read_memories():
             if memory.status != "approved":
+                continue
+            if memory.lifecycle == "stale" and not include_stale:
+                continue
+            if memory.lifecycle == "archived" and not include_archived:
                 continue
             if project_filter is not None and memory.project != project_filter:
                 continue
@@ -257,6 +314,7 @@ class SubspaceMemoryStore:
                     project=memory.project,
                     namespace=memory.namespace,
                     source=memory.source,
+                    lifecycle=memory.lifecycle,
                 )
             )
         results.sort(key=lambda item: (-item.score, item.project, item.namespace, item.memory_id))
@@ -324,6 +382,13 @@ class SubspaceMemoryStore:
             handle.write(_stable_json(asdict(record)))
             handle.write("\n")
 
+    def _write_jsonl(self, path: Path, records: list[dict[str, Any]]) -> None:
+        self._assert_store_path(path)
+        with path.open("w", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(_stable_json(record))
+                handle.write("\n")
+
     def _read_jsonl(self, path: Path) -> list[dict[str, Any]]:
         self._assert_store_path(path)
         if not path.exists():
@@ -376,6 +441,13 @@ def _normalize_confidence(confidence: float) -> float:
     return value
 
 
+def _normalize_lifecycle(lifecycle: str) -> str:
+    value = _required_text(lifecycle, "lifecycle")
+    if value not in VALID_LIFECYCLE_STATES:
+        raise ValueError("invalid_lifecycle_state")
+    return value
+
+
 def _query_terms(query: str) -> tuple[str, ...]:
     cleaned = _required_text(query, "query")
     terms = tuple(dict.fromkeys(match.group(0).lower() for match in _TOKEN_RE.finditer(cleaned)))
@@ -389,7 +461,12 @@ def _proposal_from_record(record: dict[str, Any]) -> MemoryProposal:
 
 
 def _memory_from_record(record: dict[str, Any]) -> ApprovedMemory:
-    return ApprovedMemory(**{**record, "tags": tuple(record.get("tags", ()))})
+    normalized = {
+        **record,
+        "tags": tuple(record.get("tags", ())),
+        "lifecycle": _normalize_lifecycle(record.get("lifecycle", "active")),
+    }
+    return ApprovedMemory(**normalized)
 
 
 def _utc_now() -> str:
