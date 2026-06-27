@@ -7,43 +7,46 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_human_gated_memory_loop_checklist import (
-    HUMAN_GATED_MEMORY_LOOP_BOUNDARY,
-    HumanGatedMemoryLoopChecklistItem,
-    human_gated_memory_loop_checklist_as_dicts,
-    human_gated_memory_loop_checklist_gate_ids,
-    human_gated_memory_loop_status_report,
-    list_human_gated_memory_loop_checklist_items,
-    render_human_gated_memory_loop_checklist_markdown,
+from hermes_memory_fabric.p4_m1_human_gated_proposal_review_status import (
+    HUMAN_GATED_PROPOSAL_REVIEW_STATUS_BOUNDARY,
+    HumanGatedProposalReviewStatusItem,
+    human_gated_proposal_review_status_as_dicts,
+    human_gated_proposal_review_status_ids,
+    human_gated_proposal_review_status_report,
+    list_human_gated_proposal_review_status_items,
+    render_human_gated_proposal_review_status_markdown,
 )
 
 
-GATE_IDS = (
-    "human-intent-requested",
-    "candidate-presented",
-    "human-content-review",
-    "human-approve-or-reject",
-    "recall-verification",
-    "lifecycle-optional",
-    "do-not-retry-optional",
-    "automation-boundary-confirmed",
+REVIEW_IDS = (
+    "proposal-visible",
+    "scope-boundary-visible",
+    "source-visible",
+    "content-review-required",
+    "decision-not-taken",
+    "recall-plan-visible",
+    "lifecycle-plan-visible",
+    "do-not-retry-plan-visible",
+    "automation-boundary-intact",
 )
 
 DATACLASS_FIELDS = {
-    "gate_order",
-    "gate_id",
-    "gate_name",
-    "required_human_action",
+    "review_order",
+    "review_id",
+    "review_name",
+    "human_review_question",
     "allowed_system_output",
     "prohibited_automation",
-    "validation_signal",
-    "p4_m0_dependency",
+    "ready_signal",
+    "blocking_signal",
+    "p4_m0_or_p4_m1_dependency",
 }
 
 DISABLED_STATUS_FLAGS = (
     "memory_write_enabled",
     "approval_enabled",
     "rejection_enabled",
+    "proposal_mutation_enabled",
     "bulk_import_enabled",
     "auto_ingest_enabled",
     "agent_call_enabled",
@@ -64,6 +67,8 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "auto-approve",
     "auto-reject",
     "write-memory",
+    "mutate-proposal",
+    "update-proposal",
     "inject",
     "call-agent",
     "execute",
@@ -74,98 +79,109 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_checklist_gate_order_is_deterministic():
-    assert [item.gate_order for item in list_human_gated_memory_loop_checklist_items()] == list(range(1, 9))
-    assert human_gated_memory_loop_checklist_gate_ids() == GATE_IDS
-    assert human_gated_memory_loop_checklist_gate_ids() == human_gated_memory_loop_checklist_gate_ids()
+def test_review_status_order_is_deterministic():
+    assert [item.review_order for item in list_human_gated_proposal_review_status_items()] == list(
+        range(1, 10)
+    )
+    assert human_gated_proposal_review_status_ids() == REVIEW_IDS
+    assert human_gated_proposal_review_status_ids() == human_gated_proposal_review_status_ids()
 
 
-def test_checklist_has_exactly_8_gates():
-    assert len(list_human_gated_memory_loop_checklist_items()) == 8
+def test_review_status_has_exactly_9_items():
+    assert len(list_human_gated_proposal_review_status_items()) == 9
 
 
-def test_gate_ids_match_required_gate_ids():
-    assert human_gated_memory_loop_checklist_gate_ids() == GATE_IDS
+def test_review_ids_match_required_review_ids():
+    assert human_gated_proposal_review_status_ids() == REVIEW_IDS
 
 
 def test_every_item_has_required_non_empty_fields():
-    for item in list_human_gated_memory_loop_checklist_items():
-        assert item.gate_name.strip()
-        assert item.required_human_action.strip()
+    for item in list_human_gated_proposal_review_status_items():
+        assert item.review_name.strip()
+        assert item.human_review_question.strip()
         assert item.allowed_system_output.strip()
         assert item.prohibited_automation.strip()
-        assert item.validation_signal.strip()
-        assert item.p4_m0_dependency.strip()
+        assert item.ready_signal.strip()
+        assert item.blocking_signal.strip()
+        assert item.p4_m0_or_p4_m1_dependency.strip()
 
 
-def test_markdown_render_contains_all_8_gate_ids():
-    markdown = render_human_gated_memory_loop_checklist_markdown()
+def test_markdown_render_contains_all_9_review_ids():
+    markdown = render_human_gated_proposal_review_status_markdown()
 
-    for gate_id in GATE_IDS:
-        assert gate_id in markdown
+    for review_id in REVIEW_IDS:
+        assert review_id in markdown
 
 
-def test_markdown_render_contains_read_only_boundary_and_disabled_actions():
-    markdown = render_human_gated_memory_loop_checklist_markdown()
+def test_markdown_render_contains_required_boundary_statements():
+    markdown = render_human_gated_proposal_review_status_markdown()
 
-    assert "read-only checklist/status only" in markdown
+    assert "read-only proposal review status only" in markdown
+    assert "advisory only" in markdown
     assert "does not write memory" in markdown
     assert "does not approve memory" in markdown
     assert "does not reject memory" in markdown
+    assert "does not mutate proposal records" in markdown
     assert "does not bulk import memory" in markdown
     assert "does not call agents" in markdown
+    assert "No approval or rejection is performed by this status." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = human_gated_memory_loop_checklist_as_dicts()
-    second = human_gated_memory_loop_checklist_as_dicts()
+    first = human_gated_proposal_review_status_as_dicts()
+    second = human_gated_proposal_review_status_as_dicts()
 
     assert first == second
-    assert [item["gate_id"] for item in first] == list(GATE_IDS)
+    assert [item["review_id"] for item in first] == list(REVIEW_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = human_gated_memory_loop_status_report()
-    second = human_gated_memory_loop_status_report()
+    first = human_gated_proposal_review_status_report()
+    second = human_gated_proposal_review_status_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.0"
-    assert first["feature"] == "Human-Gated Memory Loop Checklist"
+    assert first["phase"] == "P4-M1.1"
+    assert first["feature"] == "Human-Gated Proposal Review Status"
     assert first["mode"] == "read-only"
-    assert first["checklist_count"] == 8
-    assert first["boundary"] == HUMAN_GATED_MEMORY_LOOP_BOUNDARY
+    assert first["review_item_count"] == 9
+    assert first["boundary"] == HUMAN_GATED_PROPOSAL_REVIEW_STATUS_BOUNDARY
+
+
+def test_status_report_has_advisory_flag_true():
+    assert human_gated_proposal_review_status_report()["review_status_advisory_only"] is True
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = human_gated_memory_loop_status_report()
+    status = human_gated_proposal_review_status_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert human_gated_memory_loop_status_report()["package_version"] == "6.16.0"
+    assert human_gated_proposal_review_status_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_checklist_returns_markdown(tmp_path):
+def test_operator_memory_loop_review_status_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "checklist", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "review-status", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.0 Human-Gated Memory Loop Checklist\n")
+    assert stdout.startswith("# P4-M1.1 Human-Gated Proposal Review Status\n")
     assert "## Status Report" in stdout
-    assert HUMAN_GATED_MEMORY_LOOP_BOUNDARY in stdout
+    assert HUMAN_GATED_PROPOSAL_REVIEW_STATUS_BOUNDARY in stdout
+    assert "No approval or rejection is performed by this status." in stdout
 
 
-def test_operator_memory_loop_checklist_format_markdown_returns_markdown(tmp_path):
+def test_operator_memory_loop_review_status_format_markdown_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "checklist",
+            "review-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -176,13 +192,13 @@ def test_operator_memory_loop_checklist_format_markdown_returns_markdown(tmp_pat
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.0 Human-Gated Memory Loop Checklist\n")
+    assert stdout.startswith("# P4-M1.1 Human-Gated Proposal Review Status\n")
 
 
-def test_operator_memory_loop_checklist_format_json_returns_deterministic_json(tmp_path):
+def test_operator_memory_loop_review_status_format_json_returns_deterministic_json(tmp_path):
     args = [
         "memory-loop",
-        "checklist",
+        "review-status",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -197,21 +213,21 @@ def test_operator_memory_loop_checklist_format_json_returns_deterministic_json(t
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == HUMAN_GATED_MEMORY_LOOP_BOUNDARY
-    assert payload["count"] == 8
-    assert payload["status"] == human_gated_memory_loop_status_report()
-    assert [item["gate_id"] for item in payload["items"]] == list(GATE_IDS)
+    assert payload["boundary"] == HUMAN_GATED_PROPOSAL_REVIEW_STATUS_BOUNDARY
+    assert payload["count"] == 9
+    assert payload["status"] == human_gated_proposal_review_status_report()
+    assert [item["review_id"] for item in payload["items"]] == list(REVIEW_IDS)
     assert set(payload["items"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_checklist_command_is_read_only_and_creates_no_local_storage(tmp_path):
+def test_operator_review_status_command_is_read_only_and_creates_no_local_storage(tmp_path):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "checklist", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "review-status", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "checklist",
+            "review-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -226,17 +242,17 @@ def test_operator_checklist_command_is_read_only_and_creates_no_local_storage(tm
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_checklist_command_creates_no_proposals(tmp_path):
-    _run_operator(["memory-loop", "checklist", "--workspace-root", str(tmp_path)])
+def test_operator_review_status_command_creates_no_proposals(tmp_path):
+    _run_operator(["memory-loop", "review-status", "--workspace-root", str(tmp_path)])
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_checklist_command_creates_no_approved_memories(tmp_path):
+def test_operator_review_status_command_creates_no_approved_memories(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "checklist",
+            "review-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -254,6 +270,18 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
+def test_existing_p4_m1_0_memory_loop_checklist_still_works(tmp_path):
+    exit_code, payload, stderr, stdout = _run_operator(
+        ["memory-loop", "checklist", "--workspace-root", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.0 Human-Gated Memory Loop Checklist\n")
+    assert not (tmp_path / ".local").exists()
+
+
 def test_existing_p4_m0_project_seed_approval_runbook_still_works(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
         ["project-seed", "approval-runbook", "--workspace-root", str(tmp_path)]
@@ -267,7 +295,7 @@ def test_existing_p4_m0_project_seed_approval_runbook_still_works(tmp_path):
 
 
 def test_existing_recall_trace_still_passes_through_focused_suite(tmp_path):
-    proposal_id = _propose(tmp_path, "P4-M1.0 keeps existing recall trace behavior intact.")
+    proposal_id = _propose(tmp_path, "P4-M1.1 keeps existing recall trace behavior intact.")
     approve_code, approve_payload, approve_stderr, _ = _run_operator(
         [
             "approve",
@@ -316,7 +344,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_human_gated_memory_loop_checklist():
+def test_no_pyproject_entry_point_is_added_for_human_gated_proposal_review_status():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -324,25 +352,26 @@ def test_no_pyproject_entry_point_is_added_for_human_gated_memory_loop_checklist
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_human_gated_memory_loop_checklist" not in entry_points
+    assert "p4_m1_human_gated_proposal_review_status" not in entry_points
 
 
 def test_custom_markdown_render_accepts_read_only_items():
-    item = HumanGatedMemoryLoopChecklistItem(
-        gate_order=1,
-        gate_id="custom-gate",
-        gate_name="Custom gate",
-        required_human_action="Human reviews custom gate.",
-        allowed_system_output="Checklist text only.",
+    item = HumanGatedProposalReviewStatusItem(
+        review_order=1,
+        review_id="custom-review",
+        review_name="Custom review",
+        human_review_question="Can the human review the custom item?",
+        allowed_system_output="Review status text only.",
         prohibited_automation="No write.",
-        validation_signal="Visible custom gate.",
-        p4_m0_dependency="P4-M0 manual boundary.",
+        ready_signal="Visible custom review.",
+        blocking_signal="Hidden custom review.",
+        p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_human_gated_memory_loop_checklist_markdown([item])
+    markdown = render_human_gated_proposal_review_status_markdown([item])
 
-    assert "custom-gate" in markdown
-    assert "Human reviews custom gate." in markdown
+    assert "custom-review" in markdown
+    assert "Can the human review the custom item?" in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
