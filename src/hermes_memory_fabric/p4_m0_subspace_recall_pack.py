@@ -142,6 +142,9 @@ def _validate_positive_limit(limit: int) -> None:
 def _format_result(index: int, result: RecallResult) -> list[str]:
     record = asdict(result)
     matched_terms = ", ".join(record["matched_terms"]) if record["matched_terms"] else "none"
+    trace = record["trace"]
+    query_terms = ", ".join(trace["query_terms"]) if trace["query_terms"] else "none"
+    trace_matched_terms = ", ".join(trace["matched_terms"]) if trace["matched_terms"] else "none"
     return [
         f"### {index}. {record['memory_id']}",
         "",
@@ -153,6 +156,22 @@ def _format_result(index: int, result: RecallResult) -> list[str]:
         f"- Matched Terms: {matched_terms}",
         "",
         record["content"],
+        "",
+        "#### Explainable Trace",
+        "",
+        f"- Rank: {trace['rank']}",
+        f"- Query: {trace['query']}",
+        f"- Query Terms: {query_terms}",
+        f"- Matched Terms: {trace_matched_terms}",
+        f"- Score: {trace['score']}",
+        f"- Memory ID: {trace['memory_id']}",
+        f"- Project: {trace['project']}",
+        f"- Namespace: {trace['namespace']}",
+        f"- Source: {trace['source']}",
+        f"- Lifecycle: {trace['lifecycle']}",
+        f"- Include Stale: {str(trace['include_stale']).lower()}",
+        f"- Include Archived: {str(trace['include_archived']).lower()}",
+        f"- Explanation: {trace['explanation']}",
         "",
     ]
 

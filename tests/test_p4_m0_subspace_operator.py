@@ -150,16 +150,32 @@ def test_recall_command_returns_approved_memory_with_deterministic_json_output(t
     assert payload["query"] == "deterministic approved"
     assert payload["count"] == 1
     assert payload["storage_root"] == str(tmp_path / ".local" / "subspace_memory")
+    memory_id = payload["results"][0]["memory_id"]
     assert payload["results"] == [
         {
             "content": "Deterministic recall returns approved operator memory.",
             "matched_terms": ["deterministic", "approved"],
-            "memory_id": payload["results"][0]["memory_id"],
+            "memory_id": memory_id,
             "namespace": "operator",
             "project": "hermes-memory-fabric",
             "score": 2,
             "source": "operator-test",
             "lifecycle": "active",
+            "trace": {
+                "explanation": "Matched 2 query terms: deterministic, approved.",
+                "include_archived": False,
+                "include_stale": False,
+                "lifecycle": "active",
+                "matched_terms": ["deterministic", "approved"],
+                "memory_id": memory_id,
+                "namespace": "operator",
+                "project": "hermes-memory-fabric",
+                "query": "deterministic approved",
+                "query_terms": ["deterministic", "approved"],
+                "rank": 1,
+                "score": 2,
+                "source": "operator-test",
+            },
         }
     ]
 
