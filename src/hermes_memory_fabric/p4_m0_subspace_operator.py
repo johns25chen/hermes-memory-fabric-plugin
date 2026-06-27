@@ -9,6 +9,12 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from .p4_m0_subspace_memory import VALID_LIFECYCLE_STATES
+from .p4_m1_human_gated_memory_loop_checklist import (
+    HUMAN_GATED_MEMORY_LOOP_BOUNDARY,
+    human_gated_memory_loop_checklist_as_dicts,
+    human_gated_memory_loop_status_report,
+    render_human_gated_memory_loop_checklist_markdown,
+)
 from .p4_m0_subspace_project_seed import (
     get_project_memory_seed,
     list_project_memory_seeds,
@@ -107,6 +113,17 @@ def build_parser() -> argparse.ArgumentParser:
     _add_workspace_root(project_seed_propose)
     project_seed_propose.add_argument("--seed-id", required=True)
     project_seed_propose.add_argument("--actor", required=True)
+
+    memory_loop = subparsers.add_parser("memory-loop")
+    memory_loop_subparsers = memory_loop.add_subparsers(dest="memory_loop_command", required=True)
+
+    memory_loop_checklist = memory_loop_subparsers.add_parser("checklist")
+    _add_workspace_root(memory_loop_checklist)
+    memory_loop_checklist.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
 
     audit = subparsers.add_parser("audit")
     _add_workspace_root(audit)
@@ -321,6 +338,22 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             }
 
         raise ValueError(f"unsupported_project_seed_command:{args.project_seed_command}")
+
+    if args.command == "memory-loop":
+        if args.memory_loop_command == "checklist":
+            if args.format == "markdown":
+                return render_human_gated_memory_loop_checklist_markdown()
+            if args.format == "json":
+                items = human_gated_memory_loop_checklist_as_dicts()
+                return {
+                    "boundary": HUMAN_GATED_MEMORY_LOOP_BOUNDARY,
+                    "count": len(items),
+                    "items": list(items),
+                    "status": human_gated_memory_loop_status_report(),
+                }
+            raise ValueError(f"unsupported_memory_loop_checklist_format:{args.format}")
+
+        raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
 
     if args.command == "audit":
         store = create_workspace_subspace_memory_store(Path(args.workspace_root))
