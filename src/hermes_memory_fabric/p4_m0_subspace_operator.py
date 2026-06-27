@@ -14,6 +14,11 @@ from .p4_m0_subspace_project_seed import (
     list_project_memory_seeds,
     render_project_memory_seed_pack,
 )
+from .p4_m0_subspace_seed_approval_runbook import (
+    SEED_APPROVAL_RUNBOOK_BOUNDARY,
+    render_seed_approval_runbook_markdown,
+    seed_approval_runbook_as_dicts,
+)
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 
 
@@ -89,6 +94,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     project_seed_pack = project_seed_subparsers.add_parser("pack")
     _add_workspace_root(project_seed_pack)
+
+    project_seed_approval_runbook = project_seed_subparsers.add_parser("approval-runbook")
+    _add_workspace_root(project_seed_approval_runbook)
+    project_seed_approval_runbook.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
 
     project_seed_propose = project_seed_subparsers.add_parser("propose")
     _add_workspace_root(project_seed_propose)
@@ -272,6 +285,18 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
 
         if args.project_seed_command == "pack":
             return render_project_memory_seed_pack()
+
+        if args.project_seed_command == "approval-runbook":
+            if args.format == "markdown":
+                return render_seed_approval_runbook_markdown()
+            if args.format == "json":
+                entries = seed_approval_runbook_as_dicts()
+                return {
+                    "boundary": SEED_APPROVAL_RUNBOOK_BOUNDARY,
+                    "count": len(entries),
+                    "entries": list(entries),
+                }
+            raise ValueError(f"unsupported_project_seed_approval_runbook_format:{args.format}")
 
         if args.project_seed_command == "propose":
             seed = get_project_memory_seed(args.seed_id)
