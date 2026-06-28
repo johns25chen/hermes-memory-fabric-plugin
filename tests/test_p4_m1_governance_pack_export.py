@@ -7,42 +7,47 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_decision_readiness_status import (
-    DECISION_READINESS_STATUS_BOUNDARY,
-    DecisionReadinessStatusItem,
-    decision_readiness_status_as_dicts,
-    decision_readiness_status_ids,
-    decision_readiness_status_report,
-    list_decision_readiness_status_items,
-    render_decision_readiness_status_markdown,
+from hermes_memory_fabric.p4_m1_governance_pack_export import (
+    GOVERNANCE_PACK_EXPORT_BOUNDARY,
+    GovernancePackSection,
+    governance_pack_as_dicts,
+    governance_pack_export_report,
+    governance_pack_section_ids,
+    list_governance_pack_sections,
+    render_governance_pack_markdown,
 )
 
 
-VERIFICATION_IDS = (
-    "checklist-readiness-visible",
-    "proposal-review-readiness-visible",
-    "recall-readiness-visible",
-    "lifecycle-readiness-visible",
-    "do-not-retry-readiness-visible",
-    "source-provenance-readiness-visible",
-    "decision-inputs-visible",
-    "decision-not-taken",
+SECTION_IDS = (
+    "checklist-pack-section",
+    "proposal-review-pack-section",
+    "recall-verification-pack-section",
+    "lifecycle-verification-pack-section",
+    "do-not-retry-pack-section",
+    "source-provenance-pack-section",
+    "decision-readiness-pack-section",
+    "manual-decision-preview-pack-section",
+    "unified-governance-pack",
+    "export-not-decision",
     "automation-boundary-intact",
 )
 
 DATACLASS_FIELDS = {
-    "verification_order",
-    "verification_id",
-    "verification_name",
-    "human_verification_question",
-    "allowed_system_output",
+    "section_order",
+    "section_id",
+    "section_name",
+    "source_status_surface",
+    "export_purpose",
+    "allowed_export_output",
     "prohibited_automation",
-    "ready_signal",
+    "human_audit_signal",
     "blocking_signal",
     "p4_m0_or_p4_m1_dependency",
 }
 
 DISABLED_STATUS_FLAGS = (
+    "automatic_decision_recommendation_enabled",
+    "decision_ranking_enabled",
     "automatic_readiness_verdict_enabled",
     "decision_execution_enabled",
     "approval_enabled",
@@ -89,10 +94,6 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "automatic-readiness",
     "mark-ready",
     "mark-not-ready",
-    "decide",
-    "decision",
-    "execute-decision",
-    "decision-execute",
     "approve",
     "reject",
     "approve-all",
@@ -101,10 +102,6 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "reject-proposal",
     "approve-memory",
     "reject-memory",
-    "readiness-verdict",
-    "automatic-readiness",
-    "mark-ready",
-    "mark-not-ready",
     "write-memory",
     "create-memory",
     "update-memory",
@@ -151,53 +148,55 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "call-agent",
     "execute",
     "deploy",
-    "api",
-    "mcp",
-    "connector",
     "API",
     "MCP",
+    "connector",
 }
 
 
-def test_decision_readiness_status_order_is_deterministic():
+def test_governance_pack_section_order_is_deterministic():
     assert [
-        item.verification_order for item in list_decision_readiness_status_items()
-    ] == list(range(1, 10))
-    assert decision_readiness_status_ids() == VERIFICATION_IDS
-    assert decision_readiness_status_ids() == decision_readiness_status_ids()
+        section.section_order for section in list_governance_pack_sections()
+    ] == list(range(1, 12))
+    assert governance_pack_section_ids() == SECTION_IDS
+    assert governance_pack_section_ids() == governance_pack_section_ids()
 
 
-def test_decision_readiness_status_has_exactly_9_items():
-    assert len(list_decision_readiness_status_items()) == 9
+def test_governance_pack_has_exactly_11_sections():
+    assert len(list_governance_pack_sections()) == 11
 
 
-def test_verification_ids_match_required_verification_ids():
-    assert decision_readiness_status_ids() == VERIFICATION_IDS
+def test_section_ids_match_required_section_ids():
+    assert governance_pack_section_ids() == SECTION_IDS
 
 
-def test_every_item_has_required_non_empty_fields():
-    for item in list_decision_readiness_status_items():
-        assert item.verification_name.strip()
-        assert item.human_verification_question.strip()
-        assert item.allowed_system_output.strip()
-        assert item.prohibited_automation.strip()
-        assert item.ready_signal.strip()
-        assert item.blocking_signal.strip()
-        assert item.p4_m0_or_p4_m1_dependency.strip()
+def test_every_section_has_required_non_empty_fields():
+    for section in list_governance_pack_sections():
+        assert section.section_name.strip()
+        assert section.source_status_surface.strip()
+        assert section.export_purpose.strip()
+        assert section.allowed_export_output.strip()
+        assert section.prohibited_automation.strip()
+        assert section.human_audit_signal.strip()
+        assert section.blocking_signal.strip()
+        assert section.p4_m0_or_p4_m1_dependency.strip()
 
 
-def test_markdown_render_contains_all_9_verification_ids():
-    markdown = render_decision_readiness_status_markdown()
+def test_markdown_render_contains_all_11_section_ids():
+    markdown = render_governance_pack_markdown()
 
-    for verification_id in VERIFICATION_IDS:
-        assert verification_id in markdown
+    for section_id in SECTION_IDS:
+        assert section_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_decision_readiness_status_markdown()
+    markdown = render_governance_pack_markdown()
 
-    assert "read-only decision readiness status only" in markdown
+    assert "read-only governance pack export only" in markdown
     assert "advisory only" in markdown
+    assert "for human audit, archive, handoff, and review only" in markdown
+    assert "does not recommend a decision" in markdown
+    assert "does not rank decisions" in markdown
     assert "does not automatically determine readiness" in markdown
     assert "does not emit an automatic readiness verdict" in markdown
     assert "does not make decisions" in markdown
@@ -232,92 +231,93 @@ def test_markdown_render_contains_required_boundary_statements():
     assert "does not productize" in markdown
     assert "does not grant authorization semantics" in markdown
     assert "does not grant execution semantics" in markdown
-    assert "No automatic readiness verdict is performed by this status." in markdown
-    assert "No decision execution is performed by this status." in markdown
-    assert "No approval or rejection is performed by this status." in markdown
-    assert "No memory writing is performed by this status." in markdown
-    assert "No proposal mutation is performed by this status." in markdown
-    assert "No lifecycle mutation is performed by this status." in markdown
-    assert "No do-not-retry mutation is performed by this status." in markdown
-    assert "No source/provenance mutation is performed by this status." in markdown
-    assert "No API/MCP/connector behavior is performed by this status." in markdown
+    assert "No decision recommendation is performed by this export." in markdown
+    assert "No decision ranking is performed by this export." in markdown
+    assert "No automatic readiness verdict is performed by this export." in markdown
+    assert "No decision execution is performed by this export." in markdown
+    assert "No approval or rejection is performed by this export." in markdown
+    assert "No memory writing is performed by this export." in markdown
+    assert "No proposal mutation is performed by this export." in markdown
+    assert "No lifecycle mutation is performed by this export." in markdown
+    assert "No do-not-retry mutation is performed by this export." in markdown
+    assert "No source/provenance mutation is performed by this export." in markdown
+    assert "No API/MCP/connector behavior is performed by this export." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = decision_readiness_status_as_dicts()
-    second = decision_readiness_status_as_dicts()
+    first = governance_pack_as_dicts()
+    second = governance_pack_as_dicts()
 
     assert first == second
-    assert [item["verification_id"] for item in first] == list(VERIFICATION_IDS)
+    assert [section["section_id"] for section in first] == list(SECTION_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = decision_readiness_status_report()
-    second = decision_readiness_status_report()
+    first = governance_pack_export_report()
+    second = governance_pack_export_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.6"
-    assert first["feature"] == "Decision Readiness Status"
+    assert first["phase"] == "P4-M1.8"
+    assert first["feature"] == "Governance Pack Export"
     assert first["mode"] == "read-only"
-    assert first["verification_item_count"] == 9
-    assert first["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
+    assert first["pack_section_count"] == 11
+    assert first["boundary"] == GOVERNANCE_PACK_EXPORT_BOUNDARY
 
 
-def test_status_report_has_advisory_flag_true():
-    assert (
-        decision_readiness_status_report()[
-            "decision_readiness_status_advisory_only"
-        ]
-        is True
-    )
+def test_status_report_has_required_true_flags():
+    status = governance_pack_export_report()
+
+    assert status["governance_pack_export_read_only"] is True
+    assert status["governance_pack_export_advisory_only"] is True
+    assert status["human_audit_archive_handoff_review_only"] is True
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = decision_readiness_status_report()
+    status = governance_pack_export_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert decision_readiness_status_report()["package_version"] == "6.16.0"
+    assert governance_pack_export_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_decision_readiness_status_returns_markdown(tmp_path):
+def test_operator_memory_loop_governance_pack_export_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        [
-            "memory-loop",
-            "decision-readiness-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert stdout.startswith("# P4-M1.8 Governance Pack Export\n")
     assert "## Status Report" in stdout
-    assert DECISION_READINESS_STATUS_BOUNDARY in stdout
-    assert "No automatic readiness verdict is performed by this status." in stdout
-    assert "No decision execution is performed by this status." in stdout
-    assert "No approval or rejection is performed by this status." in stdout
-    assert "No memory writing is performed by this status." in stdout
-    assert "No proposal mutation is performed by this status." in stdout
-    assert "No lifecycle mutation is performed by this status." in stdout
-    assert "No do-not-retry mutation is performed by this status." in stdout
-    assert "No source/provenance mutation is performed by this status." in stdout
-    assert "No API/MCP/connector behavior is performed by this status." in stdout
+    assert GOVERNANCE_PACK_EXPORT_BOUNDARY in stdout
+    for section_id in SECTION_IDS:
+        assert section_id in stdout
+    assert "No decision recommendation is performed by this export." in stdout
+    assert "No decision ranking is performed by this export." in stdout
+    assert "No automatic readiness verdict is performed by this export." in stdout
+    assert "No decision execution is performed by this export." in stdout
+    assert "No approval or rejection is performed by this export." in stdout
+    assert "No memory writing is performed by this export." in stdout
+    assert "No proposal mutation is performed by this export." in stdout
+    assert "No lifecycle mutation is performed by this export." in stdout
+    assert "No do-not-retry mutation is performed by this export." in stdout
+    assert "No source/provenance mutation is performed by this export." in stdout
+    assert "No API/MCP/connector behavior is performed by this export." in stdout
+    assert not (tmp_path / ".local").exists()
 
 
-def test_operator_memory_loop_decision_readiness_status_format_markdown_returns_markdown(
+def test_operator_memory_loop_governance_pack_export_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "governance-pack-export",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -328,15 +328,15 @@ def test_operator_memory_loop_decision_readiness_status_format_markdown_returns_
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert stdout.startswith("# P4-M1.8 Governance Pack Export\n")
 
 
-def test_operator_memory_loop_decision_readiness_status_format_json_returns_deterministic_json(
+def test_operator_memory_loop_governance_pack_export_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "decision-readiness-status",
+        "governance-pack-export",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -351,28 +351,23 @@ def test_operator_memory_loop_decision_readiness_status_format_json_returns_dete
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
-    assert payload["count"] == 9
-    assert payload["status"] == decision_readiness_status_report()
-    assert [item["verification_id"] for item in payload["items"]] == list(VERIFICATION_IDS)
-    assert set(payload["items"][0]) == DATACLASS_FIELDS
+    assert payload["boundary"] == GOVERNANCE_PACK_EXPORT_BOUNDARY
+    assert payload["count"] == 11
+    assert payload["status"] == governance_pack_export_report()
+    assert [section["section_id"] for section in payload["sections"]] == list(SECTION_IDS)
+    assert set(payload["sections"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_local_storage(
+def test_operator_governance_pack_export_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        [
-            "memory-loop",
-            "decision-readiness-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "governance-pack-export",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -387,26 +382,21 @@ def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_proposals(tmp_path):
+def test_operator_governance_pack_export_command_creates_no_proposals(tmp_path):
     _run_operator(
-        [
-            "memory-loop",
-            "decision-readiness-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
     )
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_approved_memories(
+def test_operator_governance_pack_export_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "governance-pack-export",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -417,21 +407,18 @@ def test_operator_decision_readiness_status_command_creates_no_approved_memories
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_decision_readiness_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
+def test_operator_governance_pack_export_command_creates_no_decision_readiness_preview_governance_pack_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        [
-            "memory-loop",
-            "decision-readiness-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     assert not (storage_root / "decisions.jsonl").exists()
     assert not (storage_root / "readiness.jsonl").exists()
+    assert not (storage_root / "previews.jsonl").exists()
+    assert not (storage_root / "governance_pack.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
     assert not (storage_root / "lifecycle.jsonl").exists()
@@ -444,7 +431,7 @@ def test_operator_decision_readiness_status_command_creates_no_decision_readines
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_readiness_mutation_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
@@ -541,6 +528,39 @@ def test_existing_p4_m1_5_memory_loop_source_provenance_verification_status_stil
     assert not (tmp_path / ".local").exists()
 
 
+def test_existing_p4_m1_6_memory_loop_decision_readiness_status_still_works(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "decision-readiness-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert not (tmp_path / ".local").exists()
+
+
+def test_existing_p4_m1_7_memory_loop_manual_decision_preview_still_works(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        ["memory-loop", "manual-decision-preview", "--workspace-root", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.7 Manual Decision Preview\n")
+    assert not (tmp_path / ".local").exists()
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -552,7 +572,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_decision_readiness_status():
+def test_no_pyproject_entry_point_is_added_for_governance_pack_export():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -560,27 +580,28 @@ def test_no_pyproject_entry_point_is_added_for_decision_readiness_status():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_decision_readiness_status" not in entry_points
-    assert "decision-readiness-status" not in entry_points
+    assert "p4_m1_governance_pack_export" not in entry_points
+    assert "governance-pack-export" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_items():
-    item = DecisionReadinessStatusItem(
-        verification_order=1,
-        verification_id="custom-verification",
-        verification_name="Custom verification",
-        human_verification_question="Can the human review the custom decision readiness item?",
-        allowed_system_output="Decision readiness status text only.",
-        prohibited_automation="No automatic readiness verdict or decision execution.",
-        ready_signal="Visible custom verification.",
-        blocking_signal="Hidden custom verification.",
+def test_custom_markdown_render_accepts_read_only_sections():
+    section = GovernancePackSection(
+        section_order=1,
+        section_id="custom-pack-section",
+        section_name="Custom pack section",
+        source_status_surface="Custom read-only status surface.",
+        export_purpose="Package a custom read-only section.",
+        allowed_export_output="Manual export text only.",
+        prohibited_automation="No decision recommendation, ranking, readiness verdict, or execution.",
+        human_audit_signal="Visible custom section.",
+        blocking_signal="Hidden custom section.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_decision_readiness_status_markdown([item])
+    markdown = render_governance_pack_markdown([section])
 
-    assert "custom-verification" in markdown
-    assert "Can the human review the custom decision readiness item?" in markdown
+    assert "custom-pack-section" in markdown
+    assert "Package a custom read-only section." in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:

@@ -425,6 +425,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
         "source-provenance-verification-status",
         "decision-readiness-status",
         "manual-decision-preview",
+        "governance-pack-export",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
