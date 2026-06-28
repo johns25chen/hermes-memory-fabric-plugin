@@ -53,6 +53,17 @@ DISABLED_STATUS_FLAGS = (
 )
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "decide",
+    "decision",
+    "execute-decision",
+    "decision-execute",
+    "recommend-decision",
+    "decision-recommendation",
+    "rank-decision",
+    "readiness-verdict",
+    "automatic-readiness",
+    "mark-ready",
+    "mark-not-ready",
     "approve",
     "reject",
     "approve-all",
@@ -282,6 +293,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
         "do-not-retry-verification-status",
         "source-provenance-verification-status",
         "decision-readiness-status",
+        "manual-decision-preview",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
