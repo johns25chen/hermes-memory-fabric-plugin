@@ -39,6 +39,12 @@ from .p4_m1_human_gated_recall_verification_status import (
     human_gated_recall_verification_status_report,
     render_human_gated_recall_verification_status_markdown,
 )
+from .p4_m1_source_provenance_verification_status import (
+    SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
+    render_source_provenance_verification_status_markdown,
+    source_provenance_verification_status_as_dicts,
+    source_provenance_verification_status_report,
+)
 from .p4_m0_subspace_project_seed import (
     get_project_memory_seed,
     list_project_memory_seeds,
@@ -182,6 +188,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_do_not_retry_verification_status)
     memory_loop_do_not_retry_verification_status.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_source_provenance_verification_status = memory_loop_subparsers.add_parser(
+        "source-provenance-verification-status"
+    )
+    _add_workspace_root(memory_loop_source_provenance_verification_status)
+    memory_loop_source_provenance_verification_status.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -469,6 +485,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_do_not_retry_verification_status_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "source-provenance-verification-status":
+            if args.format == "markdown":
+                return render_source_provenance_verification_status_markdown()
+            if args.format == "json":
+                items = source_provenance_verification_status_as_dicts()
+                return {
+                    "boundary": SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
+                    "count": len(items),
+                    "items": list(items),
+                    "status": source_provenance_verification_status_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_source_provenance_verification_status_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
