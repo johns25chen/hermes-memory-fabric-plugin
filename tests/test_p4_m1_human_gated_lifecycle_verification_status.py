@@ -324,6 +324,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands
         "review-status",
         "recall-verification-status",
         "lifecycle-verification-status",
+        "do-not-retry-verification-status",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
