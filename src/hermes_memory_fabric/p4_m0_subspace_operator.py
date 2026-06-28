@@ -51,6 +51,12 @@ from .p4_m1_manual_decision_preview import (
     manual_decision_preview_report,
     render_manual_decision_preview_markdown,
 )
+from .p4_m1_governance_pack_export import (
+    GOVERNANCE_PACK_EXPORT_BOUNDARY,
+    governance_pack_as_dicts,
+    governance_pack_export_report,
+    render_governance_pack_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -230,6 +236,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_manual_decision_preview)
     memory_loop_manual_decision_preview.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_governance_pack_export = memory_loop_subparsers.add_parser(
+        "governance-pack-export"
+    )
+    _add_workspace_root(memory_loop_governance_pack_export)
+    memory_loop_governance_pack_export.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -562,6 +578,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_manual_decision_preview_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "governance-pack-export":
+            if args.format == "markdown":
+                return render_governance_pack_markdown()
+            if args.format == "json":
+                sections = governance_pack_as_dicts()
+                return {
+                    "boundary": GOVERNANCE_PACK_EXPORT_BOUNDARY,
+                    "count": len(sections),
+                    "sections": list(sections),
+                    "status": governance_pack_export_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_governance_pack_export_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

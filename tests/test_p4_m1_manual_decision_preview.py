@@ -77,6 +77,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "source-provenance-verification-status",
     "decision-readiness-status",
     "manual-decision-preview",
+    "governance-pack-export",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
