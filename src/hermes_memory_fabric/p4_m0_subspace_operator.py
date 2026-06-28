@@ -45,6 +45,12 @@ from .p4_m1_decision_readiness_status import (
     decision_readiness_status_report,
     render_decision_readiness_status_markdown,
 )
+from .p4_m1_manual_decision_preview import (
+    MANUAL_DECISION_PREVIEW_BOUNDARY,
+    manual_decision_preview_as_dicts,
+    manual_decision_preview_report,
+    render_manual_decision_preview_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -214,6 +220,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_decision_readiness_status)
     memory_loop_decision_readiness_status.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_manual_decision_preview = memory_loop_subparsers.add_parser(
+        "manual-decision-preview"
+    )
+    _add_workspace_root(memory_loop_manual_decision_preview)
+    memory_loop_manual_decision_preview.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -531,6 +547,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_decision_readiness_status_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "manual-decision-preview":
+            if args.format == "markdown":
+                return render_manual_decision_preview_markdown()
+            if args.format == "json":
+                frames = manual_decision_preview_as_dicts()
+                return {
+                    "boundary": MANUAL_DECISION_PREVIEW_BOUNDARY,
+                    "count": len(frames),
+                    "frames": list(frames),
+                    "status": manual_decision_preview_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_manual_decision_preview_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

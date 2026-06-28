@@ -7,42 +7,45 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_decision_readiness_status import (
-    DECISION_READINESS_STATUS_BOUNDARY,
-    DecisionReadinessStatusItem,
-    decision_readiness_status_as_dicts,
-    decision_readiness_status_ids,
-    decision_readiness_status_report,
-    list_decision_readiness_status_items,
-    render_decision_readiness_status_markdown,
+from hermes_memory_fabric.p4_m1_manual_decision_preview import (
+    MANUAL_DECISION_PREVIEW_BOUNDARY,
+    ManualDecisionPreviewFrame,
+    list_manual_decision_preview_frames,
+    manual_decision_preview_as_dicts,
+    manual_decision_preview_ids,
+    manual_decision_preview_report,
+    render_manual_decision_preview_markdown,
 )
 
 
-VERIFICATION_IDS = (
-    "checklist-readiness-visible",
-    "proposal-review-readiness-visible",
-    "recall-readiness-visible",
-    "lifecycle-readiness-visible",
-    "do-not-retry-readiness-visible",
-    "source-provenance-readiness-visible",
-    "decision-inputs-visible",
-    "decision-not-taken",
+PREVIEW_IDS = (
+    "checklist-preview",
+    "proposal-review-preview",
+    "recall-verification-preview",
+    "lifecycle-verification-preview",
+    "do-not-retry-preview",
+    "source-provenance-preview",
+    "decision-readiness-preview",
+    "unified-human-review-frame",
+    "decision-not-recommended",
     "automation-boundary-intact",
 )
 
 DATACLASS_FIELDS = {
-    "verification_order",
-    "verification_id",
-    "verification_name",
-    "human_verification_question",
-    "allowed_system_output",
+    "preview_order",
+    "preview_id",
+    "preview_name",
+    "human_preview_question",
+    "source_status_surface",
+    "allowed_preview_output",
     "prohibited_automation",
-    "ready_signal",
+    "human_review_signal",
     "blocking_signal",
     "p4_m0_or_p4_m1_dependency",
 }
 
 DISABLED_STATUS_FLAGS = (
+    "automatic_decision_recommendation_enabled",
     "automatic_readiness_verdict_enabled",
     "decision_execution_enabled",
     "approval_enabled",
@@ -88,10 +91,6 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "automatic-readiness",
     "mark-ready",
     "mark-not-ready",
-    "decide",
-    "decision",
-    "execute-decision",
-    "decision-execute",
     "approve",
     "reject",
     "approve-all",
@@ -100,10 +99,6 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "reject-proposal",
     "approve-memory",
     "reject-memory",
-    "readiness-verdict",
-    "automatic-readiness",
-    "mark-ready",
-    "mark-not-ready",
     "write-memory",
     "create-memory",
     "update-memory",
@@ -158,45 +153,49 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_decision_readiness_status_order_is_deterministic():
+def test_manual_decision_preview_frame_order_is_deterministic():
     assert [
-        item.verification_order for item in list_decision_readiness_status_items()
-    ] == list(range(1, 10))
-    assert decision_readiness_status_ids() == VERIFICATION_IDS
-    assert decision_readiness_status_ids() == decision_readiness_status_ids()
+        frame.preview_order for frame in list_manual_decision_preview_frames()
+    ] == list(range(1, 11))
+    assert manual_decision_preview_ids() == PREVIEW_IDS
+    assert manual_decision_preview_ids() == manual_decision_preview_ids()
 
 
-def test_decision_readiness_status_has_exactly_9_items():
-    assert len(list_decision_readiness_status_items()) == 9
+def test_manual_decision_preview_has_exactly_10_frames():
+    assert len(list_manual_decision_preview_frames()) == 10
 
 
-def test_verification_ids_match_required_verification_ids():
-    assert decision_readiness_status_ids() == VERIFICATION_IDS
+def test_preview_ids_match_required_preview_ids():
+    assert manual_decision_preview_ids() == PREVIEW_IDS
 
 
-def test_every_item_has_required_non_empty_fields():
-    for item in list_decision_readiness_status_items():
-        assert item.verification_name.strip()
-        assert item.human_verification_question.strip()
-        assert item.allowed_system_output.strip()
-        assert item.prohibited_automation.strip()
-        assert item.ready_signal.strip()
-        assert item.blocking_signal.strip()
-        assert item.p4_m0_or_p4_m1_dependency.strip()
+def test_every_frame_has_required_non_empty_fields():
+    for frame in list_manual_decision_preview_frames():
+        assert frame.preview_name.strip()
+        assert frame.human_preview_question.strip()
+        assert frame.source_status_surface.strip()
+        assert frame.allowed_preview_output.strip()
+        assert frame.prohibited_automation.strip()
+        assert frame.human_review_signal.strip()
+        assert frame.blocking_signal.strip()
+        assert frame.p4_m0_or_p4_m1_dependency.strip()
 
 
-def test_markdown_render_contains_all_9_verification_ids():
-    markdown = render_decision_readiness_status_markdown()
+def test_markdown_render_contains_all_10_preview_ids():
+    markdown = render_manual_decision_preview_markdown()
 
-    for verification_id in VERIFICATION_IDS:
-        assert verification_id in markdown
+    for preview_id in PREVIEW_IDS:
+        assert preview_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_decision_readiness_status_markdown()
+    markdown = render_manual_decision_preview_markdown()
 
-    assert "read-only decision readiness status only" in markdown
+    assert "read-only manual decision preview only" in markdown
     assert "advisory only" in markdown
+    assert "for human inspection only" in markdown
+    assert "does not recommend a decision" in markdown
+    assert "does not rank decisions" in markdown
     assert "does not automatically determine readiness" in markdown
     assert "does not emit an automatic readiness verdict" in markdown
     assert "does not make decisions" in markdown
@@ -231,63 +230,63 @@ def test_markdown_render_contains_required_boundary_statements():
     assert "does not productize" in markdown
     assert "does not grant authorization semantics" in markdown
     assert "does not grant execution semantics" in markdown
-    assert "No automatic readiness verdict is performed by this status." in markdown
-    assert "No decision execution is performed by this status." in markdown
-    assert "No approval or rejection is performed by this status." in markdown
-    assert "No memory writing is performed by this status." in markdown
-    assert "No proposal mutation is performed by this status." in markdown
-    assert "No lifecycle mutation is performed by this status." in markdown
-    assert "No do-not-retry mutation is performed by this status." in markdown
-    assert "No source/provenance mutation is performed by this status." in markdown
-    assert "No API/MCP/connector behavior is performed by this status." in markdown
+    assert "No decision recommendation is performed by this preview." in markdown
+    assert "No decision ranking is performed by this preview." in markdown
+    assert "No automatic readiness verdict is performed by this preview." in markdown
+    assert "No decision execution is performed by this preview." in markdown
+    assert "No approval or rejection is performed by this preview." in markdown
+    assert "No memory writing is performed by this preview." in markdown
+    assert "No proposal mutation is performed by this preview." in markdown
+    assert "No lifecycle mutation is performed by this preview." in markdown
+    assert "No do-not-retry mutation is performed by this preview." in markdown
+    assert "No source/provenance mutation is performed by this preview." in markdown
+    assert "No API/MCP/connector behavior is performed by this preview." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = decision_readiness_status_as_dicts()
-    second = decision_readiness_status_as_dicts()
+    first = manual_decision_preview_as_dicts()
+    second = manual_decision_preview_as_dicts()
 
     assert first == second
-    assert [item["verification_id"] for item in first] == list(VERIFICATION_IDS)
+    assert [frame["preview_id"] for frame in first] == list(PREVIEW_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = decision_readiness_status_report()
-    second = decision_readiness_status_report()
+    first = manual_decision_preview_report()
+    second = manual_decision_preview_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.6"
-    assert first["feature"] == "Decision Readiness Status"
+    assert first["phase"] == "P4-M1.7"
+    assert first["feature"] == "Manual Decision Preview"
     assert first["mode"] == "read-only"
-    assert first["verification_item_count"] == 9
-    assert first["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
+    assert first["preview_frame_count"] == 10
+    assert first["boundary"] == MANUAL_DECISION_PREVIEW_BOUNDARY
 
 
-def test_status_report_has_advisory_flag_true():
-    assert (
-        decision_readiness_status_report()[
-            "decision_readiness_status_advisory_only"
-        ]
-        is True
-    )
+def test_status_report_has_advisory_and_human_inspection_flags_true():
+    status = manual_decision_preview_report()
+
+    assert status["manual_decision_preview_advisory_only"] is True
+    assert status["human_inspection_only"] is True
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = decision_readiness_status_report()
+    status = manual_decision_preview_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert decision_readiness_status_report()["package_version"] == "6.16.0"
+    assert manual_decision_preview_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_decision_readiness_status_returns_markdown(tmp_path):
+def test_operator_memory_loop_manual_decision_preview_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -296,27 +295,30 @@ def test_operator_memory_loop_decision_readiness_status_returns_markdown(tmp_pat
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert stdout.startswith("# P4-M1.7 Manual Decision Preview\n")
     assert "## Status Report" in stdout
-    assert DECISION_READINESS_STATUS_BOUNDARY in stdout
-    assert "No automatic readiness verdict is performed by this status." in stdout
-    assert "No decision execution is performed by this status." in stdout
-    assert "No approval or rejection is performed by this status." in stdout
-    assert "No memory writing is performed by this status." in stdout
-    assert "No proposal mutation is performed by this status." in stdout
-    assert "No lifecycle mutation is performed by this status." in stdout
-    assert "No do-not-retry mutation is performed by this status." in stdout
-    assert "No source/provenance mutation is performed by this status." in stdout
-    assert "No API/MCP/connector behavior is performed by this status." in stdout
+    assert MANUAL_DECISION_PREVIEW_BOUNDARY in stdout
+    for preview_id in PREVIEW_IDS:
+        assert preview_id in stdout
+    assert "No decision recommendation is performed by this preview." in stdout
+    assert "No automatic readiness verdict is performed by this preview." in stdout
+    assert "No decision execution is performed by this preview." in stdout
+    assert "No approval or rejection is performed by this preview." in stdout
+    assert "No memory writing is performed by this preview." in stdout
+    assert "No proposal mutation is performed by this preview." in stdout
+    assert "No lifecycle mutation is performed by this preview." in stdout
+    assert "No do-not-retry mutation is performed by this preview." in stdout
+    assert "No source/provenance mutation is performed by this preview." in stdout
+    assert "No API/MCP/connector behavior is performed by this preview." in stdout
 
 
-def test_operator_memory_loop_decision_readiness_status_format_markdown_returns_markdown(
+def test_operator_memory_loop_manual_decision_preview_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -327,15 +329,15 @@ def test_operator_memory_loop_decision_readiness_status_format_markdown_returns_
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert stdout.startswith("# P4-M1.7 Manual Decision Preview\n")
 
 
-def test_operator_memory_loop_decision_readiness_status_format_json_returns_deterministic_json(
+def test_operator_memory_loop_manual_decision_preview_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "decision-readiness-status",
+        "manual-decision-preview",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -350,20 +352,20 @@ def test_operator_memory_loop_decision_readiness_status_format_json_returns_dete
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
-    assert payload["count"] == 9
-    assert payload["status"] == decision_readiness_status_report()
-    assert [item["verification_id"] for item in payload["items"]] == list(VERIFICATION_IDS)
-    assert set(payload["items"][0]) == DATACLASS_FIELDS
+    assert payload["boundary"] == MANUAL_DECISION_PREVIEW_BOUNDARY
+    assert payload["count"] == 10
+    assert payload["status"] == manual_decision_preview_report()
+    assert [frame["preview_id"] for frame in payload["frames"]] == list(PREVIEW_IDS)
+    assert set(payload["frames"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_local_storage(
+def test_operator_manual_decision_preview_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -371,7 +373,7 @@ def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -386,11 +388,11 @@ def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_proposals(tmp_path):
+def test_operator_manual_decision_preview_command_creates_no_proposals(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -399,13 +401,13 @@ def test_operator_decision_readiness_status_command_creates_no_proposals(tmp_pat
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_approved_memories(
+def test_operator_manual_decision_preview_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -416,13 +418,13 @@ def test_operator_decision_readiness_status_command_creates_no_approved_memories
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_decision_readiness_status_command_creates_no_decision_readiness_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
+def test_operator_manual_decision_preview_command_creates_no_decision_readiness_preview_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "decision-readiness-status",
+            "manual-decision-preview",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -431,6 +433,7 @@ def test_operator_decision_readiness_status_command_creates_no_decision_readines
     storage_root = tmp_path / ".local" / "subspace_memory"
     assert not (storage_root / "decisions.jsonl").exists()
     assert not (storage_root / "readiness.jsonl").exists()
+    assert not (storage_root / "previews.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
     assert not (storage_root / "lifecycle.jsonl").exists()
@@ -443,7 +446,7 @@ def test_operator_decision_readiness_status_command_creates_no_decision_readines
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_readiness_mutation_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
@@ -540,6 +543,25 @@ def test_existing_p4_m1_5_memory_loop_source_provenance_verification_status_stil
     assert not (tmp_path / ".local").exists()
 
 
+def test_existing_p4_m1_6_memory_loop_decision_readiness_status_still_works(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "decision-readiness-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
+    assert not (tmp_path / ".local").exists()
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -551,7 +573,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_decision_readiness_status():
+def test_no_pyproject_entry_point_is_added_for_manual_decision_preview():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -559,27 +581,28 @@ def test_no_pyproject_entry_point_is_added_for_decision_readiness_status():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_decision_readiness_status" not in entry_points
-    assert "decision-readiness-status" not in entry_points
+    assert "p4_m1_manual_decision_preview" not in entry_points
+    assert "manual-decision-preview" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_items():
-    item = DecisionReadinessStatusItem(
-        verification_order=1,
-        verification_id="custom-verification",
-        verification_name="Custom verification",
-        human_verification_question="Can the human review the custom decision readiness item?",
-        allowed_system_output="Decision readiness status text only.",
-        prohibited_automation="No automatic readiness verdict or decision execution.",
-        ready_signal="Visible custom verification.",
-        blocking_signal="Hidden custom verification.",
+def test_custom_markdown_render_accepts_read_only_frames():
+    frame = ManualDecisionPreviewFrame(
+        preview_order=1,
+        preview_id="custom-preview",
+        preview_name="Custom preview",
+        human_preview_question="Can the human review the custom preview frame?",
+        source_status_surface="Custom read-only status surface.",
+        allowed_preview_output="Manual preview text only.",
+        prohibited_automation="No decision recommendation, ranking, readiness verdict, or execution.",
+        human_review_signal="Visible custom preview.",
+        blocking_signal="Hidden custom preview.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_decision_readiness_status_markdown([item])
+    markdown = render_manual_decision_preview_markdown([frame])
 
-    assert "custom-verification" in markdown
-    assert "Can the human review the custom decision readiness item?" in markdown
+    assert "custom-preview" in markdown
+    assert "Can the human review the custom preview frame?" in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
