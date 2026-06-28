@@ -318,6 +318,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
         "lifecycle-verification-status",
         "do-not-retry-verification-status",
         "source-provenance-verification-status",
+        "decision-readiness-status",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
