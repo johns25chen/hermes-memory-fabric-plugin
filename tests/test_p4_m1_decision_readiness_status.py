@@ -7,26 +7,26 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_source_provenance_verification_status import (
-    SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
-    SourceProvenanceVerificationStatusItem,
-    list_source_provenance_verification_status_items,
-    render_source_provenance_verification_status_markdown,
-    source_provenance_verification_status_as_dicts,
-    source_provenance_verification_status_ids,
-    source_provenance_verification_status_report,
+from hermes_memory_fabric.p4_m1_decision_readiness_status import (
+    DECISION_READINESS_STATUS_BOUNDARY,
+    DecisionReadinessStatusItem,
+    decision_readiness_status_as_dicts,
+    decision_readiness_status_ids,
+    decision_readiness_status_report,
+    list_decision_readiness_status_items,
+    render_decision_readiness_status_markdown,
 )
 
 
 VERIFICATION_IDS = (
-    "source-presence-visible",
-    "source-type-visible",
-    "provenance-chain-visible",
-    "evidence-context-visible",
-    "citation-boundary-visible",
-    "unverified-source-not-trusted",
-    "provenance-write-not-taken",
-    "manual-review-required",
+    "checklist-readiness-visible",
+    "proposal-review-readiness-visible",
+    "recall-readiness-visible",
+    "lifecycle-readiness-visible",
+    "do-not-retry-readiness-visible",
+    "source-provenance-readiness-visible",
+    "decision-inputs-visible",
+    "decision-not-taken",
     "automation-boundary-intact",
 )
 
@@ -43,22 +43,19 @@ DATACLASS_FIELDS = {
 }
 
 DISABLED_STATUS_FLAGS = (
-    "source_fetching_enabled",
-    "external_source_lookup_enabled",
-    "source_trust_judgment_enabled",
-    "source_verification_verdict_enabled",
-    "evidence_acceptance_enabled",
-    "evidence_rejection_enabled",
-    "provenance_write_enabled",
-    "source_record_mutation_enabled",
-    "evidence_record_mutation_enabled",
-    "citation_record_mutation_enabled",
-    "lifecycle_mutation_enabled",
-    "do_not_retry_guard_mutation_enabled",
-    "memory_write_enabled",
+    "automatic_readiness_verdict_enabled",
+    "decision_execution_enabled",
     "approval_enabled",
     "rejection_enabled",
+    "memory_write_enabled",
+    "memory_record_mutation_enabled",
     "proposal_mutation_enabled",
+    "lifecycle_mutation_enabled",
+    "do_not_retry_guard_mutation_enabled",
+    "retry_policy_mutation_enabled",
+    "source_fetching_enabled",
+    "source_provenance_mutation_enabled",
+    "provenance_write_enabled",
     "memory_injection_enabled",
     "bulk_import_enabled",
     "auto_ingest_enabled",
@@ -68,7 +65,48 @@ DISABLED_STATUS_FLAGS = (
     "productization_started",
 )
 
+EXPECTED_MEMORY_LOOP_COMMANDS = {
+    "checklist",
+    "review-status",
+    "recall-verification-status",
+    "lifecycle-verification-status",
+    "do-not-retry-verification-status",
+    "source-provenance-verification-status",
+    "decision-readiness-status",
+}
+
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "decide",
+    "decision",
+    "execute-decision",
+    "decision-execute",
+    "approve",
+    "reject",
+    "approve-all",
+    "reject-all",
+    "approve-proposal",
+    "reject-proposal",
+    "approve-memory",
+    "reject-memory",
+    "readiness-verdict",
+    "automatic-readiness",
+    "mark-ready",
+    "mark-not-ready",
+    "write-memory",
+    "create-memory",
+    "update-memory",
+    "delete-memory",
+    "mutate-proposal",
+    "update-proposal",
+    "lifecycle-set",
+    "lifecycle-update",
+    "lifecycle-mutate",
+    "do-not-retry",
+    "mark-do-not-retry",
+    "guard-set",
+    "guard-update",
+    "retry-policy-set",
+    "retry-policy-update",
     "fetch-source",
     "source-fetch",
     "lookup-source",
@@ -77,46 +115,24 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "web-fetch",
     "web-search",
     "verify-source",
-    "source-verdict",
     "trust-source",
     "score-source",
-    "accept-evidence",
-    "reject-evidence",
     "write-provenance",
     "provenance-write",
-    "create-provenance",
-    "update-provenance",
-    "delete-provenance",
     "mutate-source",
-    "update-source",
+    "mutate-provenance",
     "mutate-evidence",
-    "update-evidence",
     "mutate-citation",
-    "update-citation",
-    "approve",
-    "reject",
-    "approve-all",
-    "reject-all",
     "archive",
     "stale",
     "cleanup",
     "delete",
-    "lifecycle-set",
-    "lifecycle-update",
-    "lifecycle-mutate",
-    "do-not-retry",
-    "mark-do-not-retry",
-    "guard-set",
-    "guard-update",
     "import",
     "bulk-import",
     "ingest",
     "auto-ingest",
     "auto-approve",
     "auto-reject",
-    "write-memory",
-    "mutate-proposal",
-    "update-proposal",
     "inject",
     "inject-memory",
     "call-agent",
@@ -125,31 +141,29 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "api",
     "mcp",
     "connector",
+    "API",
+    "MCP",
 }
 
 
-def test_source_provenance_verification_status_order_is_deterministic():
+def test_decision_readiness_status_order_is_deterministic():
     assert [
-        item.verification_order
-        for item in list_source_provenance_verification_status_items()
+        item.verification_order for item in list_decision_readiness_status_items()
     ] == list(range(1, 10))
-    assert source_provenance_verification_status_ids() == VERIFICATION_IDS
-    assert (
-        source_provenance_verification_status_ids()
-        == source_provenance_verification_status_ids()
-    )
+    assert decision_readiness_status_ids() == VERIFICATION_IDS
+    assert decision_readiness_status_ids() == decision_readiness_status_ids()
 
 
-def test_source_provenance_verification_status_has_exactly_9_items():
-    assert len(list_source_provenance_verification_status_items()) == 9
+def test_decision_readiness_status_has_exactly_9_items():
+    assert len(list_decision_readiness_status_items()) == 9
 
 
 def test_verification_ids_match_required_verification_ids():
-    assert source_provenance_verification_status_ids() == VERIFICATION_IDS
+    assert decision_readiness_status_ids() == VERIFICATION_IDS
 
 
 def test_every_item_has_required_non_empty_fields():
-    for item in list_source_provenance_verification_status_items():
+    for item in list_decision_readiness_status_items():
         assert item.verification_name.strip()
         assert item.human_verification_question.strip()
         assert item.allowed_system_output.strip()
@@ -160,53 +174,65 @@ def test_every_item_has_required_non_empty_fields():
 
 
 def test_markdown_render_contains_all_9_verification_ids():
-    markdown = render_source_provenance_verification_status_markdown()
+    markdown = render_decision_readiness_status_markdown()
 
     for verification_id in VERIFICATION_IDS:
         assert verification_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_source_provenance_verification_status_markdown()
+    markdown = render_decision_readiness_status_markdown()
 
-    assert "read-only source/provenance verification status only" in markdown
+    assert "read-only decision readiness status only" in markdown
     assert "advisory only" in markdown
+    assert "does not automatically determine readiness" in markdown
+    assert "does not emit an automatic readiness verdict" in markdown
+    assert "does not make decisions" in markdown
+    assert "does not execute decisions" in markdown
+    assert "does not approve memory" in markdown
+    assert "does not reject memory" in markdown
+    assert "does not approve proposals" in markdown
+    assert "does not reject proposals" in markdown
+    assert "does not write memory" in markdown
+    assert "does not create memory records" in markdown
+    assert "does not update memory records" in markdown
+    assert "does not delete memory records" in markdown
+    assert "does not mutate proposal records" in markdown
+    assert "does not mutate lifecycle records" in markdown
+    assert "does not mutate do-not-retry guard state" in markdown
+    assert "does not mutate retry policy" in markdown
     assert "does not fetch sources" in markdown
     assert "does not browse the web" in markdown
     assert "does not call external APIs" in markdown
     assert "does not call connectors" in markdown
     assert "does not create API/MCP/connector behavior" in markdown
     assert "does not automatically trust a source" in markdown
-    assert "does not automatically verify a source" in markdown
-    assert "does not automatically score a source" in markdown
-    assert "does not automatically accept evidence" in markdown
-    assert "does not automatically reject evidence" in markdown
     assert "does not write provenance" in markdown
-    assert "does not create provenance records" in markdown
-    assert "does not update provenance records" in markdown
-    assert "does not delete provenance records" in markdown
-    assert "does not mutate source records" in markdown
-    assert "does not mutate evidence records" in markdown
-    assert "does not mutate citation records" in markdown
-    assert "does not mutate lifecycle records" in markdown
-    assert "does not mutate do-not-retry guard state" in markdown
-    assert "does not write memory" in markdown
-    assert "does not approve memory" in markdown
-    assert "does not reject memory" in markdown
-    assert "does not mutate proposal records" in markdown
-    assert "No source fetching is performed by this status." in markdown
-    assert "No external source lookup is performed by this status." in markdown
-    assert "No source trust judgment is performed by this status." in markdown
-    assert "No source verification verdict is performed by this status." in markdown
-    assert "No evidence acceptance or rejection is performed by this status." in markdown
-    assert "No provenance writing is performed by this status." in markdown
-    assert "No source/evidence/citation mutation is performed by this status." in markdown
-    assert "No memory or proposal mutation is performed by this status." in markdown
+    assert "does not mutate source/provenance/evidence/citation records" in markdown
+    assert "does not inject memory into agents" in markdown
+    assert "does not bulk import memory" in markdown
+    assert "does not auto-ingest chat history" in markdown
+    assert "does not auto-ingest files" in markdown
+    assert "does not auto-ingest external systems" in markdown
+    assert "does not call agents" in markdown
+    assert "does not start v7" in markdown
+    assert "does not productize" in markdown
+    assert "does not grant authorization semantics" in markdown
+    assert "does not grant execution semantics" in markdown
+    assert "No automatic readiness verdict is performed by this status." in markdown
+    assert "No decision execution is performed by this status." in markdown
+    assert "No approval or rejection is performed by this status." in markdown
+    assert "No memory writing is performed by this status." in markdown
+    assert "No proposal mutation is performed by this status." in markdown
+    assert "No lifecycle mutation is performed by this status." in markdown
+    assert "No do-not-retry mutation is performed by this status." in markdown
+    assert "No source/provenance mutation is performed by this status." in markdown
+    assert "No API/MCP/connector behavior is performed by this status." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = source_provenance_verification_status_as_dicts()
-    second = source_provenance_verification_status_as_dicts()
+    first = decision_readiness_status_as_dicts()
+    second = decision_readiness_status_as_dicts()
 
     assert first == second
     assert [item["verification_id"] for item in first] == list(VERIFICATION_IDS)
@@ -214,44 +240,42 @@ def test_dict_conversion_is_deterministic():
 
 
 def test_status_report_is_deterministic():
-    first = source_provenance_verification_status_report()
-    second = source_provenance_verification_status_report()
+    first = decision_readiness_status_report()
+    second = decision_readiness_status_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.5"
-    assert first["feature"] == "Source / Provenance Verification Status"
+    assert first["phase"] == "P4-M1.6"
+    assert first["feature"] == "Decision Readiness Status"
     assert first["mode"] == "read-only"
     assert first["verification_item_count"] == 9
-    assert first["boundary"] == SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY
+    assert first["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
 
 
 def test_status_report_has_advisory_flag_true():
     assert (
-        source_provenance_verification_status_report()[
-            "source_provenance_verification_status_advisory_only"
+        decision_readiness_status_report()[
+            "decision_readiness_status_advisory_only"
         ]
         is True
     )
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = source_provenance_verification_status_report()
+    status = decision_readiness_status_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert source_provenance_verification_status_report()["package_version"] == "6.16.0"
+    assert decision_readiness_status_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_source_provenance_verification_status_returns_markdown(
-    tmp_path,
-):
+def test_operator_memory_loop_decision_readiness_status_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -260,26 +284,27 @@ def test_operator_memory_loop_source_provenance_verification_status_returns_mark
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
+    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
     assert "## Status Report" in stdout
-    assert SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY in stdout
-    assert "No source fetching is performed by this status." in stdout
-    assert "No external source lookup is performed by this status." in stdout
-    assert "No source trust judgment is performed by this status." in stdout
-    assert "No source verification verdict is performed by this status." in stdout
-    assert "No evidence acceptance or rejection is performed by this status." in stdout
-    assert "No provenance writing is performed by this status." in stdout
-    assert "No source/evidence/citation mutation is performed by this status." in stdout
-    assert "No memory or proposal mutation is performed by this status." in stdout
+    assert DECISION_READINESS_STATUS_BOUNDARY in stdout
+    assert "No automatic readiness verdict is performed by this status." in stdout
+    assert "No decision execution is performed by this status." in stdout
+    assert "No approval or rejection is performed by this status." in stdout
+    assert "No memory writing is performed by this status." in stdout
+    assert "No proposal mutation is performed by this status." in stdout
+    assert "No lifecycle mutation is performed by this status." in stdout
+    assert "No do-not-retry mutation is performed by this status." in stdout
+    assert "No source/provenance mutation is performed by this status." in stdout
+    assert "No API/MCP/connector behavior is performed by this status." in stdout
 
 
-def test_operator_memory_loop_source_provenance_verification_status_format_markdown_returns_markdown(
+def test_operator_memory_loop_decision_readiness_status_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -290,15 +315,15 @@ def test_operator_memory_loop_source_provenance_verification_status_format_markd
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
+    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
 
 
-def test_operator_memory_loop_source_provenance_verification_status_format_json_returns_deterministic_json(
+def test_operator_memory_loop_decision_readiness_status_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "source-provenance-verification-status",
+        "decision-readiness-status",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -313,20 +338,20 @@ def test_operator_memory_loop_source_provenance_verification_status_format_json_
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY
+    assert payload["boundary"] == DECISION_READINESS_STATUS_BOUNDARY
     assert payload["count"] == 9
-    assert payload["status"] == source_provenance_verification_status_report()
+    assert payload["status"] == decision_readiness_status_report()
     assert [item["verification_id"] for item in payload["items"]] == list(VERIFICATION_IDS)
     assert set(payload["items"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_source_provenance_verification_status_command_is_read_only_and_creates_no_local_storage(
+def test_operator_decision_readiness_status_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -334,7 +359,7 @@ def test_operator_source_provenance_verification_status_command_is_read_only_and
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -349,13 +374,11 @@ def test_operator_source_provenance_verification_status_command_is_read_only_and
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_source_provenance_verification_status_command_creates_no_proposals(
-    tmp_path,
-):
+def test_operator_decision_readiness_status_command_creates_no_proposals(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -364,13 +387,13 @@ def test_operator_source_provenance_verification_status_command_creates_no_propo
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_source_provenance_verification_status_command_creates_no_approved_memories(
+def test_operator_decision_readiness_status_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -381,39 +404,37 @@ def test_operator_source_provenance_verification_status_command_creates_no_appro
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_source_provenance_verification_status_command_creates_no_provenance_source_evidence_citation_files_or_state_changes(
+def test_operator_decision_readiness_status_command_creates_no_decision_readiness_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "source-provenance-verification-status",
+            "decision-readiness-status",
             "--workspace-root",
             str(tmp_path),
         ]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
-    assert not (storage_root / "provenance.jsonl").exists()
+    assert not (storage_root / "decisions.jsonl").exists()
+    assert not (storage_root / "readiness.jsonl").exists()
+    assert not (storage_root / "memories.jsonl").exists()
+    assert not (storage_root / "proposals.jsonl").exists()
+    assert not (storage_root / "lifecycle.jsonl").exists()
+    assert not (storage_root / "do_not_retry.jsonl").exists()
     assert not (storage_root / "sources.jsonl").exists()
+    assert not (storage_root / "provenance.jsonl").exists()
     assert not (storage_root / "evidence.jsonl").exists()
     assert not (storage_root / "citations.jsonl").exists()
     assert not (storage_root / "audit.jsonl").exists()
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_provenance_mutation_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_readiness_mutation_commands_are_exposed():
     commands = _memory_loop_commands()
 
-    assert commands == {
-        "checklist",
-        "review-status",
-        "recall-verification-status",
-        "lifecycle-verification-status",
-        "do-not-retry-verification-status",
-        "source-provenance-verification-status",
-        "decision-readiness-status",
-    }
+    assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
@@ -488,6 +509,25 @@ def test_existing_p4_m1_4_memory_loop_do_not_retry_verification_status_still_wor
     assert not (tmp_path / ".local").exists()
 
 
+def test_existing_p4_m1_5_memory_loop_source_provenance_verification_status_still_works(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "source-provenance-verification-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
+    assert not (tmp_path / ".local").exists()
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -499,7 +539,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_source_provenance_verification_status():
+def test_no_pyproject_entry_point_is_added_for_decision_readiness_status():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -507,26 +547,27 @@ def test_no_pyproject_entry_point_is_added_for_source_provenance_verification_st
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_source_provenance_verification_status" not in entry_points
+    assert "p4_m1_decision_readiness_status" not in entry_points
+    assert "decision-readiness-status" not in entry_points
 
 
 def test_custom_markdown_render_accepts_read_only_items():
-    item = SourceProvenanceVerificationStatusItem(
+    item = DecisionReadinessStatusItem(
         verification_order=1,
         verification_id="custom-verification",
         verification_name="Custom verification",
-        human_verification_question="Can the human review the custom source/provenance verification item?",
-        allowed_system_output="Source/provenance verification status text only.",
-        prohibited_automation="No source fetching or provenance writing.",
+        human_verification_question="Can the human review the custom decision readiness item?",
+        allowed_system_output="Decision readiness status text only.",
+        prohibited_automation="No automatic readiness verdict or decision execution.",
         ready_signal="Visible custom verification.",
         blocking_signal="Hidden custom verification.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_source_provenance_verification_status_markdown([item])
+    markdown = render_decision_readiness_status_markdown([item])
 
     assert "custom-verification" in markdown
-    assert "Can the human review the custom source/provenance verification item?" in markdown
+    assert "Can the human review the custom decision readiness item?" in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:

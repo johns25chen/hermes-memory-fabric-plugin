@@ -39,6 +39,12 @@ from .p4_m1_human_gated_recall_verification_status import (
     human_gated_recall_verification_status_report,
     render_human_gated_recall_verification_status_markdown,
 )
+from .p4_m1_decision_readiness_status import (
+    DECISION_READINESS_STATUS_BOUNDARY,
+    decision_readiness_status_as_dicts,
+    decision_readiness_status_report,
+    render_decision_readiness_status_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -198,6 +204,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_source_provenance_verification_status)
     memory_loop_source_provenance_verification_status.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_decision_readiness_status = memory_loop_subparsers.add_parser(
+        "decision-readiness-status"
+    )
+    _add_workspace_root(memory_loop_decision_readiness_status)
+    memory_loop_decision_readiness_status.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -500,6 +516,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_source_provenance_verification_status_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "decision-readiness-status":
+            if args.format == "markdown":
+                return render_decision_readiness_status_markdown()
+            if args.format == "json":
+                items = decision_readiness_status_as_dicts()
+                return {
+                    "boundary": DECISION_READINESS_STATUS_BOUNDARY,
+                    "count": len(items),
+                    "items": list(items),
+                    "status": decision_readiness_status_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_decision_readiness_status_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
