@@ -7,26 +7,26 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_human_gated_do_not_retry_verification_status import (
-    HUMAN_GATED_DO_NOT_RETRY_VERIFICATION_STATUS_BOUNDARY,
-    HumanGatedDoNotRetryVerificationStatusItem,
-    human_gated_do_not_retry_verification_status_as_dicts,
-    human_gated_do_not_retry_verification_status_ids,
-    human_gated_do_not_retry_verification_status_report,
-    list_human_gated_do_not_retry_verification_status_items,
-    render_human_gated_do_not_retry_verification_status_markdown,
+from hermes_memory_fabric.p4_m1_source_provenance_verification_status import (
+    SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
+    SourceProvenanceVerificationStatusItem,
+    list_source_provenance_verification_status_items,
+    render_source_provenance_verification_status_markdown,
+    source_provenance_verification_status_as_dicts,
+    source_provenance_verification_status_ids,
+    source_provenance_verification_status_report,
 )
 
 
 VERIFICATION_IDS = (
-    "failure-context-visible",
-    "retry-scope-visible",
-    "blocked-action-visible",
-    "retry-risk-visible",
-    "do-not-retry-plan-visible",
-    "do-not-retry-not-marked",
+    "source-presence-visible",
+    "source-type-visible",
+    "provenance-chain-visible",
+    "evidence-context-visible",
+    "citation-boundary-visible",
+    "unverified-source-not-trusted",
+    "provenance-write-not-taken",
     "manual-review-required",
-    "guard-state-unchanged",
     "automation-boundary-intact",
 )
 
@@ -43,12 +43,18 @@ DATACLASS_FIELDS = {
 }
 
 DISABLED_STATUS_FLAGS = (
-    "failure_judgment_enabled",
-    "retry_blocking_enabled",
-    "do_not_retry_marking_enabled",
-    "guard_state_mutation_enabled",
-    "retry_policy_mutation_enabled",
+    "source_fetching_enabled",
+    "external_source_lookup_enabled",
+    "source_trust_judgment_enabled",
+    "source_verification_verdict_enabled",
+    "evidence_acceptance_enabled",
+    "evidence_rejection_enabled",
+    "provenance_write_enabled",
+    "source_record_mutation_enabled",
+    "evidence_record_mutation_enabled",
+    "citation_record_mutation_enabled",
     "lifecycle_mutation_enabled",
+    "do_not_retry_guard_mutation_enabled",
     "memory_write_enabled",
     "approval_enabled",
     "rejection_enabled",
@@ -63,36 +69,6 @@ DISABLED_STATUS_FLAGS = (
 )
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "fail",
-    "judge-failure",
-    "failure-verdict",
-    "retry-block",
-    "block-retry",
-    "do-not-retry",
-    "mark-do-not-retry",
-    "do-not-retry-set",
-    "do-not-retry-update",
-    "guard-set",
-    "guard-update",
-    "retry-policy-set",
-    "retry-policy-update",
-    "archive",
-    "stale",
-    "cleanup",
-    "delete",
-    "lifecycle-set",
-    "lifecycle-update",
-    "lifecycle-mutate",
-    "approve",
-    "reject",
-    "approve-all",
-    "reject-all",
-    "import",
-    "bulk-import",
-    "ingest",
-    "auto-ingest",
-    "auto-approve",
-    "auto-reject",
     "fetch-source",
     "source-fetch",
     "lookup-source",
@@ -117,6 +93,27 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "update-evidence",
     "mutate-citation",
     "update-citation",
+    "approve",
+    "reject",
+    "approve-all",
+    "reject-all",
+    "archive",
+    "stale",
+    "cleanup",
+    "delete",
+    "lifecycle-set",
+    "lifecycle-update",
+    "lifecycle-mutate",
+    "do-not-retry",
+    "mark-do-not-retry",
+    "guard-set",
+    "guard-update",
+    "import",
+    "bulk-import",
+    "ingest",
+    "auto-ingest",
+    "auto-approve",
+    "auto-reject",
     "write-memory",
     "mutate-proposal",
     "update-proposal",
@@ -131,28 +128,28 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_do_not_retry_verification_status_order_is_deterministic():
+def test_source_provenance_verification_status_order_is_deterministic():
     assert [
         item.verification_order
-        for item in list_human_gated_do_not_retry_verification_status_items()
+        for item in list_source_provenance_verification_status_items()
     ] == list(range(1, 10))
-    assert human_gated_do_not_retry_verification_status_ids() == VERIFICATION_IDS
+    assert source_provenance_verification_status_ids() == VERIFICATION_IDS
     assert (
-        human_gated_do_not_retry_verification_status_ids()
-        == human_gated_do_not_retry_verification_status_ids()
+        source_provenance_verification_status_ids()
+        == source_provenance_verification_status_ids()
     )
 
 
-def test_do_not_retry_verification_status_has_exactly_9_items():
-    assert len(list_human_gated_do_not_retry_verification_status_items()) == 9
+def test_source_provenance_verification_status_has_exactly_9_items():
+    assert len(list_source_provenance_verification_status_items()) == 9
 
 
 def test_verification_ids_match_required_verification_ids():
-    assert human_gated_do_not_retry_verification_status_ids() == VERIFICATION_IDS
+    assert source_provenance_verification_status_ids() == VERIFICATION_IDS
 
 
 def test_every_item_has_required_non_empty_fields():
-    for item in list_human_gated_do_not_retry_verification_status_items():
+    for item in list_source_provenance_verification_status_items():
         assert item.verification_name.strip()
         assert item.human_verification_question.strip()
         assert item.allowed_system_output.strip()
@@ -163,43 +160,53 @@ def test_every_item_has_required_non_empty_fields():
 
 
 def test_markdown_render_contains_all_9_verification_ids():
-    markdown = render_human_gated_do_not_retry_verification_status_markdown()
+    markdown = render_source_provenance_verification_status_markdown()
 
     for verification_id in VERIFICATION_IDS:
         assert verification_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_human_gated_do_not_retry_verification_status_markdown()
+    markdown = render_source_provenance_verification_status_markdown()
 
-    assert "read-only do-not-retry verification status only" in markdown
+    assert "read-only source/provenance verification status only" in markdown
     assert "advisory only" in markdown
-    assert "does not judge failure automatically" in markdown
-    assert "does not block retry automatically" in markdown
-    assert "does not mark do-not-retry" in markdown
-    assert "does not create do-not-retry records" in markdown
-    assert "does not update do-not-retry records" in markdown
-    assert "does not delete do-not-retry records" in markdown
-    assert "does not mutate guard state" in markdown
-    assert "does not mutate retry policy" in markdown
+    assert "does not fetch sources" in markdown
+    assert "does not browse the web" in markdown
+    assert "does not call external APIs" in markdown
+    assert "does not call connectors" in markdown
+    assert "does not create API/MCP/connector behavior" in markdown
+    assert "does not automatically trust a source" in markdown
+    assert "does not automatically verify a source" in markdown
+    assert "does not automatically score a source" in markdown
+    assert "does not automatically accept evidence" in markdown
+    assert "does not automatically reject evidence" in markdown
+    assert "does not write provenance" in markdown
+    assert "does not create provenance records" in markdown
+    assert "does not update provenance records" in markdown
+    assert "does not delete provenance records" in markdown
+    assert "does not mutate source records" in markdown
+    assert "does not mutate evidence records" in markdown
+    assert "does not mutate citation records" in markdown
     assert "does not mutate lifecycle records" in markdown
+    assert "does not mutate do-not-retry guard state" in markdown
     assert "does not write memory" in markdown
     assert "does not approve memory" in markdown
     assert "does not reject memory" in markdown
     assert "does not mutate proposal records" in markdown
-    assert "does not inject memory into agents" in markdown
-    assert "does not bulk import memory" in markdown
-    assert "No failure judgment is performed by this status." in markdown
-    assert "No retry blocking is performed by this status." in markdown
-    assert "No do-not-retry marking is performed by this status." in markdown
-    assert "No guard state mutation is performed by this status." in markdown
-    assert "No retry policy mutation is performed by this status." in markdown
+    assert "No source fetching is performed by this status." in markdown
+    assert "No external source lookup is performed by this status." in markdown
+    assert "No source trust judgment is performed by this status." in markdown
+    assert "No source verification verdict is performed by this status." in markdown
+    assert "No evidence acceptance or rejection is performed by this status." in markdown
+    assert "No provenance writing is performed by this status." in markdown
+    assert "No source/evidence/citation mutation is performed by this status." in markdown
     assert "No memory or proposal mutation is performed by this status." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = human_gated_do_not_retry_verification_status_as_dicts()
-    second = human_gated_do_not_retry_verification_status_as_dicts()
+    first = source_provenance_verification_status_as_dicts()
+    second = source_provenance_verification_status_as_dicts()
 
     assert first == second
     assert [item["verification_id"] for item in first] == list(VERIFICATION_IDS)
@@ -207,63 +214,72 @@ def test_dict_conversion_is_deterministic():
 
 
 def test_status_report_is_deterministic():
-    first = human_gated_do_not_retry_verification_status_report()
-    second = human_gated_do_not_retry_verification_status_report()
+    first = source_provenance_verification_status_report()
+    second = source_provenance_verification_status_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.4"
-    assert first["feature"] == "Human-Gated Do-Not-Retry Verification Status"
+    assert first["phase"] == "P4-M1.5"
+    assert first["feature"] == "Source / Provenance Verification Status"
     assert first["mode"] == "read-only"
     assert first["verification_item_count"] == 9
-    assert first["boundary"] == HUMAN_GATED_DO_NOT_RETRY_VERIFICATION_STATUS_BOUNDARY
+    assert first["boundary"] == SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY
 
 
 def test_status_report_has_advisory_flag_true():
     assert (
-        human_gated_do_not_retry_verification_status_report()[
-            "do_not_retry_verification_status_advisory_only"
+        source_provenance_verification_status_report()[
+            "source_provenance_verification_status_advisory_only"
         ]
         is True
     )
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = human_gated_do_not_retry_verification_status_report()
+    status = source_provenance_verification_status_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert human_gated_do_not_retry_verification_status_report()["package_version"] == "6.16.0"
+    assert source_provenance_verification_status_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_do_not_retry_verification_status_returns_markdown(tmp_path):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "do-not-retry-verification-status", "--workspace-root", str(tmp_path)]
-    )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.4 Human-Gated Do-Not-Retry Verification Status\n")
-    assert "## Status Report" in stdout
-    assert HUMAN_GATED_DO_NOT_RETRY_VERIFICATION_STATUS_BOUNDARY in stdout
-    assert "No failure judgment is performed by this status." in stdout
-    assert "No retry blocking is performed by this status." in stdout
-    assert "No do-not-retry marking is performed by this status." in stdout
-    assert "No guard state mutation is performed by this status." in stdout
-    assert "No retry policy mutation is performed by this status." in stdout
-    assert "No memory or proposal mutation is performed by this status." in stdout
-
-
-def test_operator_memory_loop_do_not_retry_verification_status_format_markdown_returns_markdown(
+def test_operator_memory_loop_source_provenance_verification_status_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "do-not-retry-verification-status",
+            "source-provenance-verification-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
+    assert "## Status Report" in stdout
+    assert SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY in stdout
+    assert "No source fetching is performed by this status." in stdout
+    assert "No external source lookup is performed by this status." in stdout
+    assert "No source trust judgment is performed by this status." in stdout
+    assert "No source verification verdict is performed by this status." in stdout
+    assert "No evidence acceptance or rejection is performed by this status." in stdout
+    assert "No provenance writing is performed by this status." in stdout
+    assert "No source/evidence/citation mutation is performed by this status." in stdout
+    assert "No memory or proposal mutation is performed by this status." in stdout
+
+
+def test_operator_memory_loop_source_provenance_verification_status_format_markdown_returns_markdown(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "source-provenance-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -274,15 +290,15 @@ def test_operator_memory_loop_do_not_retry_verification_status_format_markdown_r
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.4 Human-Gated Do-Not-Retry Verification Status\n")
+    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
 
 
-def test_operator_memory_loop_do_not_retry_verification_status_format_json_returns_deterministic_json(
+def test_operator_memory_loop_source_provenance_verification_status_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "do-not-retry-verification-status",
+        "source-provenance-verification-status",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -297,23 +313,28 @@ def test_operator_memory_loop_do_not_retry_verification_status_format_json_retur
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == HUMAN_GATED_DO_NOT_RETRY_VERIFICATION_STATUS_BOUNDARY
+    assert payload["boundary"] == SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY
     assert payload["count"] == 9
-    assert payload["status"] == human_gated_do_not_retry_verification_status_report()
+    assert payload["status"] == source_provenance_verification_status_report()
     assert [item["verification_id"] for item in payload["items"]] == list(VERIFICATION_IDS)
     assert set(payload["items"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_do_not_retry_verification_status_command_is_read_only_and_creates_no_local_storage(
+def test_operator_source_provenance_verification_status_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "do-not-retry-verification-status", "--workspace-root", str(tmp_path)]
+        [
+            "memory-loop",
+            "source-provenance-verification-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "do-not-retry-verification-status",
+            "source-provenance-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -328,21 +349,28 @@ def test_operator_do_not_retry_verification_status_command_is_read_only_and_crea
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_do_not_retry_verification_status_command_creates_no_proposals(tmp_path):
-    _run_operator(
-        ["memory-loop", "do-not-retry-verification-status", "--workspace-root", str(tmp_path)]
-    )
-
-    assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
-
-
-def test_operator_do_not_retry_verification_status_command_creates_no_approved_memories(
+def test_operator_source_provenance_verification_status_command_creates_no_proposals(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "do-not-retry-verification-status",
+            "source-provenance-verification-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
+
+
+def test_operator_source_provenance_verification_status_command_creates_no_approved_memories(
+    tmp_path,
+):
+    _run_operator(
+        [
+            "memory-loop",
+            "source-provenance-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -353,19 +381,28 @@ def test_operator_do_not_retry_verification_status_command_creates_no_approved_m
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_do_not_retry_verification_status_command_creates_no_guard_files_or_state_changes(
+def test_operator_source_provenance_verification_status_command_creates_no_provenance_source_evidence_citation_files_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        ["memory-loop", "do-not-retry-verification-status", "--workspace-root", str(tmp_path)]
+        [
+            "memory-loop",
+            "source-provenance-verification-status",
+            "--workspace-root",
+            str(tmp_path),
+        ]
     )
 
-    assert not (tmp_path / ".local" / "subspace_memory" / "do_not_retry.jsonl").exists()
-    assert not (tmp_path / ".local" / "subspace_memory" / "audit.jsonl").exists()
+    storage_root = tmp_path / ".local" / "subspace_memory"
+    assert not (storage_root / "provenance.jsonl").exists()
+    assert not (storage_root / "sources.jsonl").exists()
+    assert not (storage_root / "evidence.jsonl").exists()
+    assert not (storage_root / "citations.jsonl").exists()
+    assert not (storage_root / "audit.jsonl").exists()
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutation_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_provenance_mutation_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == {
@@ -403,7 +440,9 @@ def test_existing_p4_m1_1_memory_loop_review_status_still_works(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_existing_p4_m1_2_memory_loop_recall_verification_status_still_works(tmp_path):
+def test_existing_p4_m1_2_memory_loop_recall_verification_status_still_works(
+    tmp_path,
+):
     exit_code, payload, stderr, stdout = _run_operator(
         ["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)]
     )
@@ -415,7 +454,9 @@ def test_existing_p4_m1_2_memory_loop_recall_verification_status_still_works(tmp
     assert not (tmp_path / ".local").exists()
 
 
-def test_existing_p4_m1_3_memory_loop_lifecycle_verification_status_still_works(tmp_path):
+def test_existing_p4_m1_3_memory_loop_lifecycle_verification_status_still_works(
+    tmp_path,
+):
     exit_code, payload, stderr, stdout = _run_operator(
         ["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)]
     )
@@ -427,42 +468,23 @@ def test_existing_p4_m1_3_memory_loop_lifecycle_verification_status_still_works(
     assert not (tmp_path / ".local").exists()
 
 
-def test_existing_p4_m0_do_not_retry_guard_still_passes_through_focused_suite(tmp_path):
-    proposal_id = _propose(tmp_path, "P4-M1.4 keeps existing do-not-retry guard behavior intact.")
-    approve_code, approve_payload, approve_stderr, _ = _run_operator(
+def test_existing_p4_m1_4_memory_loop_do_not_retry_verification_status_still_works(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
         [
-            "approve",
+            "memory-loop",
+            "do-not-retry-verification-status",
             "--workspace-root",
             str(tmp_path),
-            "--proposal-id",
-            proposal_id,
-            "--approver",
-            "human",
-        ]
-    )
-    set_code, set_payload, set_stderr, _ = _run_operator(
-        [
-            "do-not-retry",
-            "set",
-            "--workspace-root",
-            str(tmp_path),
-            "--memory-id",
-            str(approve_payload["memory_id"]),
-            "--reason",
-            "focused suite compatibility check",
-            "--actor",
-            "human",
         ]
     )
 
-    assert approve_code == 0
-    assert approve_stderr == ""
-    assert approve_payload["status"] == "approved"
-    assert set_code == 0
-    assert set_stderr == ""
-    assert set_payload["status"] == "approved"
-    assert set_payload["do_not_retry"]["enabled"] is True
-    assert set_payload["do_not_retry"]["reason"] == "focused suite compatibility check"
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M1.4 Human-Gated Do-Not-Retry Verification Status\n")
+    assert not (tmp_path / ".local").exists()
 
 
 def test_package_version_remains_6_16_0():
@@ -476,7 +498,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_human_gated_do_not_retry_verification_status():
+def test_no_pyproject_entry_point_is_added_for_source_provenance_verification_status():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -484,26 +506,26 @@ def test_no_pyproject_entry_point_is_added_for_human_gated_do_not_retry_verifica
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_human_gated_do_not_retry_verification_status" not in entry_points
+    assert "p4_m1_source_provenance_verification_status" not in entry_points
 
 
 def test_custom_markdown_render_accepts_read_only_items():
-    item = HumanGatedDoNotRetryVerificationStatusItem(
+    item = SourceProvenanceVerificationStatusItem(
         verification_order=1,
         verification_id="custom-verification",
         verification_name="Custom verification",
-        human_verification_question="Can the human review the custom do-not-retry verification item?",
-        allowed_system_output="Do-not-retry verification status text only.",
-        prohibited_automation="No do-not-retry marking.",
+        human_verification_question="Can the human review the custom source/provenance verification item?",
+        allowed_system_output="Source/provenance verification status text only.",
+        prohibited_automation="No source fetching or provenance writing.",
         ready_signal="Visible custom verification.",
         blocking_signal="Hidden custom verification.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_human_gated_do_not_retry_verification_status_markdown([item])
+    markdown = render_source_provenance_verification_status_markdown([item])
 
     assert "custom-verification" in markdown
-    assert "Can the human review the custom do-not-retry verification item?" in markdown
+    assert "Can the human review the custom source/provenance verification item?" in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
@@ -530,24 +552,3 @@ def _memory_loop_commands() -> set[str]:
         if isinstance(action, argparse._SubParsersAction):
             return set(action.choices)
     raise AssertionError("memory-loop subcommands not found")
-
-
-def _propose(tmp_path: Path, content: str) -> str:
-    exit_code, payload, stderr, _ = _run_operator(
-        [
-            "propose",
-            "--workspace-root",
-            str(tmp_path),
-            "--project",
-            "hermes-memory-fabric",
-            "--namespace",
-            "operator",
-            "--content",
-            content,
-            "--source",
-            "operator-test",
-        ]
-    )
-    assert exit_code == 0
-    assert stderr == ""
-    return str(payload["proposal_id"])
