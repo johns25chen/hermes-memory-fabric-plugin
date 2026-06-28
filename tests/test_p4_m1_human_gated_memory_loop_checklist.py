@@ -250,7 +250,12 @@ def test_operator_checklist_command_creates_no_approved_memories(tmp_path):
 def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_exposed():
     commands = _memory_loop_commands()
 
-    assert commands == {"checklist", "review-status", "recall-verification-status"}
+    assert commands == {
+        "checklist",
+        "review-status",
+        "recall-verification-status",
+        "lifecycle-verification-status",
+    }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 

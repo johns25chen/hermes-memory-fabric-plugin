@@ -7,26 +7,26 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_human_gated_recall_verification_status import (
-    HUMAN_GATED_RECALL_VERIFICATION_STATUS_BOUNDARY,
-    HumanGatedRecallVerificationStatusItem,
-    human_gated_recall_verification_status_as_dicts,
-    human_gated_recall_verification_status_ids,
-    human_gated_recall_verification_status_report,
-    list_human_gated_recall_verification_status_items,
-    render_human_gated_recall_verification_status_markdown,
+from hermes_memory_fabric.p4_m1_human_gated_lifecycle_verification_status import (
+    HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY,
+    HumanGatedLifecycleVerificationStatusItem,
+    human_gated_lifecycle_verification_status_as_dicts,
+    human_gated_lifecycle_verification_status_ids,
+    human_gated_lifecycle_verification_status_report,
+    list_human_gated_lifecycle_verification_status_items,
+    render_human_gated_lifecycle_verification_status_markdown,
 )
 
 
 VERIFICATION_IDS = (
-    "query-visible",
-    "scope-visible",
-    "candidate-memory-visible",
-    "trace-plan-visible",
+    "lifecycle-state-visible",
+    "archive-plan-visible",
+    "stale-plan-visible",
+    "cleanup-plan-visible",
+    "delete-not-taken",
+    "state-mutation-not-taken",
     "manual-review-required",
-    "pass-fail-not-taken",
-    "no-agent-injection",
-    "no-memory-write",
+    "proposal-memory-unchanged",
     "automation-boundary-intact",
 )
 
@@ -43,9 +43,11 @@ DATACLASS_FIELDS = {
 }
 
 DISABLED_STATUS_FLAGS = (
-    "recall_execution_enabled",
-    "automatic_recall_pass_enabled",
-    "automatic_recall_fail_enabled",
+    "lifecycle_mutation_enabled",
+    "archive_enabled",
+    "stale_marking_enabled",
+    "cleanup_enabled",
+    "delete_enabled",
     "memory_write_enabled",
     "approval_enabled",
     "rejection_enabled",
@@ -60,9 +62,14 @@ DISABLED_STATUS_FLAGS = (
 )
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "recall-run",
-    "recall-pass",
-    "recall-fail",
+    "archive",
+    "stale",
+    "stale-mark",
+    "cleanup",
+    "delete",
+    "lifecycle-set",
+    "lifecycle-update",
+    "lifecycle-mutate",
     "approve",
     "reject",
     "approve-all",
@@ -87,24 +94,26 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_recall_verification_status_order_is_deterministic():
-    assert [item.verification_order for item in list_human_gated_recall_verification_status_items()] == list(
-        range(1, 10)
+def test_lifecycle_verification_status_order_is_deterministic():
+    assert [
+        item.verification_order for item in list_human_gated_lifecycle_verification_status_items()
+    ] == list(range(1, 10))
+    assert human_gated_lifecycle_verification_status_ids() == VERIFICATION_IDS
+    assert human_gated_lifecycle_verification_status_ids() == (
+        human_gated_lifecycle_verification_status_ids()
     )
-    assert human_gated_recall_verification_status_ids() == VERIFICATION_IDS
-    assert human_gated_recall_verification_status_ids() == human_gated_recall_verification_status_ids()
 
 
-def test_recall_verification_status_has_exactly_9_items():
-    assert len(list_human_gated_recall_verification_status_items()) == 9
+def test_lifecycle_verification_status_has_exactly_9_items():
+    assert len(list_human_gated_lifecycle_verification_status_items()) == 9
 
 
 def test_verification_ids_match_required_verification_ids():
-    assert human_gated_recall_verification_status_ids() == VERIFICATION_IDS
+    assert human_gated_lifecycle_verification_status_ids() == VERIFICATION_IDS
 
 
 def test_every_item_has_required_non_empty_fields():
-    for item in list_human_gated_recall_verification_status_items():
+    for item in list_human_gated_lifecycle_verification_status_items():
         assert item.verification_name.strip()
         assert item.human_verification_question.strip()
         assert item.allowed_system_output.strip()
@@ -115,33 +124,39 @@ def test_every_item_has_required_non_empty_fields():
 
 
 def test_markdown_render_contains_all_9_verification_ids():
-    markdown = render_human_gated_recall_verification_status_markdown()
+    markdown = render_human_gated_lifecycle_verification_status_markdown()
 
     for verification_id in VERIFICATION_IDS:
         assert verification_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_human_gated_recall_verification_status_markdown()
+    markdown = render_human_gated_lifecycle_verification_status_markdown()
 
-    assert "read-only recall verification status only" in markdown
+    assert "read-only lifecycle verification status only" in markdown
     assert "advisory only" in markdown
-    assert "does not run recall automatically" in markdown
-    assert "No recall pass/fail is claimed by this status." in markdown
+    assert "does not archive memory" in markdown
+    assert "does not mark memory stale" in markdown
+    assert "does not clean up memory" in markdown
+    assert "does not delete memory" in markdown
+    assert "does not change lifecycle state" in markdown
+    assert "does not mutate lifecycle records" in markdown
     assert "does not write memory" in markdown
     assert "does not approve memory" in markdown
     assert "does not reject memory" in markdown
     assert "does not mutate proposal records" in markdown
     assert "does not inject memory into agents" in markdown
-    assert "does not bulk import memory" in markdown
-    assert "does not call agents" in markdown
-    assert "No recall execution is performed by this status." in markdown
-    assert "No memory or agent injection is performed by this status." in markdown
+    assert "No archive is performed by this status." in markdown
+    assert "No stale marking is performed by this status." in markdown
+    assert "No cleanup is performed by this status." in markdown
+    assert "No deletion is performed by this status." in markdown
+    assert "No lifecycle mutation is performed by this status." in markdown
+    assert "No memory or proposal mutation is performed by this status." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = human_gated_recall_verification_status_as_dicts()
-    second = human_gated_recall_verification_status_as_dicts()
+    first = human_gated_lifecycle_verification_status_as_dicts()
+    second = human_gated_lifecycle_verification_status_as_dicts()
 
     assert first == second
     assert [item["verification_id"] for item in first] == list(VERIFICATION_IDS)
@@ -149,56 +164,63 @@ def test_dict_conversion_is_deterministic():
 
 
 def test_status_report_is_deterministic():
-    first = human_gated_recall_verification_status_report()
-    second = human_gated_recall_verification_status_report()
+    first = human_gated_lifecycle_verification_status_report()
+    second = human_gated_lifecycle_verification_status_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.2"
-    assert first["feature"] == "Human-Gated Recall Verification Status"
+    assert first["phase"] == "P4-M1.3"
+    assert first["feature"] == "Human-Gated Lifecycle Verification Status"
     assert first["mode"] == "read-only"
     assert first["verification_item_count"] == 9
-    assert first["boundary"] == HUMAN_GATED_RECALL_VERIFICATION_STATUS_BOUNDARY
+    assert first["boundary"] == HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY
 
 
 def test_status_report_has_advisory_flag_true():
     assert (
-        human_gated_recall_verification_status_report()["recall_verification_status_advisory_only"]
+        human_gated_lifecycle_verification_status_report()[
+            "lifecycle_verification_status_advisory_only"
+        ]
         is True
     )
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = human_gated_recall_verification_status_report()
+    status = human_gated_lifecycle_verification_status_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert human_gated_recall_verification_status_report()["package_version"] == "6.16.0"
+    assert human_gated_lifecycle_verification_status_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_recall_verification_status_returns_markdown(tmp_path):
+def test_operator_memory_loop_lifecycle_verification_status_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.2 Human-Gated Recall Verification Status\n")
+    assert stdout.startswith("# P4-M1.3 Human-Gated Lifecycle Verification Status\n")
     assert "## Status Report" in stdout
-    assert HUMAN_GATED_RECALL_VERIFICATION_STATUS_BOUNDARY in stdout
-    assert "No recall execution is performed by this status." in stdout
-    assert "No recall pass/fail is claimed by this status." in stdout
-    assert "No memory or agent injection is performed by this status." in stdout
+    assert HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY in stdout
+    assert "No archive is performed by this status." in stdout
+    assert "No stale marking is performed by this status." in stdout
+    assert "No cleanup is performed by this status." in stdout
+    assert "No deletion is performed by this status." in stdout
+    assert "No lifecycle mutation is performed by this status." in stdout
+    assert "No memory or proposal mutation is performed by this status." in stdout
 
 
-def test_operator_memory_loop_recall_verification_status_format_markdown_returns_markdown(tmp_path):
+def test_operator_memory_loop_lifecycle_verification_status_format_markdown_returns_markdown(
+    tmp_path,
+):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "recall-verification-status",
+            "lifecycle-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -209,15 +231,15 @@ def test_operator_memory_loop_recall_verification_status_format_markdown_returns
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.2 Human-Gated Recall Verification Status\n")
+    assert stdout.startswith("# P4-M1.3 Human-Gated Lifecycle Verification Status\n")
 
 
-def test_operator_memory_loop_recall_verification_status_format_json_returns_deterministic_json(
+def test_operator_memory_loop_lifecycle_verification_status_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "recall-verification-status",
+        "lifecycle-verification-status",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -232,23 +254,23 @@ def test_operator_memory_loop_recall_verification_status_format_json_returns_det
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == HUMAN_GATED_RECALL_VERIFICATION_STATUS_BOUNDARY
+    assert payload["boundary"] == HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY
     assert payload["count"] == 9
-    assert payload["status"] == human_gated_recall_verification_status_report()
+    assert payload["status"] == human_gated_lifecycle_verification_status_report()
     assert [item["verification_id"] for item in payload["items"]] == list(VERIFICATION_IDS)
     assert set(payload["items"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_recall_verification_status_command_is_read_only_and_creates_no_local_storage(
+def test_operator_lifecycle_verification_status_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "recall-verification-status",
+            "lifecycle-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -263,17 +285,17 @@ def test_operator_recall_verification_status_command_is_read_only_and_creates_no
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_recall_verification_status_command_creates_no_proposals(tmp_path):
-    _run_operator(["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)])
+def test_operator_lifecycle_verification_status_command_creates_no_proposals(tmp_path):
+    _run_operator(["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)])
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_recall_verification_status_command_creates_no_approved_memories(tmp_path):
+def test_operator_lifecycle_verification_status_command_creates_no_approved_memories(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "recall-verification-status",
+            "lifecycle-verification-status",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -284,7 +306,17 @@ def test_operator_recall_verification_status_command_creates_no_approved_memorie
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_exposed():
+def test_operator_lifecycle_verification_status_command_creates_no_lifecycle_files_or_state_changes(
+    tmp_path,
+):
+    _run_operator(["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)])
+
+    assert not (tmp_path / ".local" / "subspace_memory" / "lifecycle.jsonl").exists()
+    assert not (tmp_path / ".local" / "subspace_memory" / "audit.jsonl").exists()
+    assert not (tmp_path / ".local").exists()
+
+
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == {
@@ -320,20 +352,20 @@ def test_existing_p4_m1_1_memory_loop_review_status_still_works(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_existing_p4_m0_project_seed_approval_runbook_still_works(tmp_path):
+def test_existing_p4_m1_2_memory_loop_recall_verification_status_still_works(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["project-seed", "approval-runbook", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M0.8 Seed Approval Runbook\n")
+    assert stdout.startswith("# P4-M1.2 Human-Gated Recall Verification Status\n")
     assert not (tmp_path / ".local").exists()
 
 
-def test_existing_recall_trace_still_passes_through_focused_suite(tmp_path):
-    proposal_id = _propose(tmp_path, "P4-M1.2 keeps existing recall trace behavior intact.")
+def test_existing_p4_m0_lifecycle_state_still_passes_through_focused_suite(tmp_path):
+    proposal_id = _propose(tmp_path, "P4-M1.3 keeps existing lifecycle state behavior intact.")
     approve_code, approve_payload, approve_stderr, _ = _run_operator(
         [
             "approve",
@@ -345,30 +377,29 @@ def test_existing_recall_trace_still_passes_through_focused_suite(tmp_path):
             "human",
         ]
     )
-    recall_code, recall_payload, recall_stderr, _ = _run_operator(
+    lifecycle_code, lifecycle_payload, lifecycle_stderr, _ = _run_operator(
         [
-            "recall",
+            "lifecycle",
             "--workspace-root",
             str(tmp_path),
-            "--query",
-            "recall trace behavior",
-            "--project",
-            "hermes-memory-fabric",
-            "--namespace",
-            "operator",
+            "--memory-id",
+            str(approve_payload["memory_id"]),
+            "--state",
+            "stale",
+            "--actor",
+            "human",
+            "--reason",
+            "focused suite compatibility check",
         ]
     )
 
     assert approve_code == 0
     assert approve_stderr == ""
     assert approve_payload["status"] == "approved"
-    assert recall_code == 0
-    assert recall_stderr == ""
-    assert recall_payload["count"] == 1
-    trace = recall_payload["results"][0]["trace"]
-    assert trace["query"] == "recall trace behavior"
-    assert trace["matched_terms"] == ["recall", "trace", "behavior"]
-    assert trace["rank"] == 1
+    assert lifecycle_code == 0
+    assert lifecycle_stderr == ""
+    assert lifecycle_payload["lifecycle"] == "stale"
+    assert lifecycle_payload["previous_lifecycle"] == "active"
 
 
 def test_package_version_remains_6_16_0():
@@ -382,7 +413,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_human_gated_recall_verification_status():
+def test_no_pyproject_entry_point_is_added_for_human_gated_lifecycle_verification_status():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -390,26 +421,26 @@ def test_no_pyproject_entry_point_is_added_for_human_gated_recall_verification_s
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_human_gated_recall_verification_status" not in entry_points
+    assert "p4_m1_human_gated_lifecycle_verification_status" not in entry_points
 
 
 def test_custom_markdown_render_accepts_read_only_items():
-    item = HumanGatedRecallVerificationStatusItem(
+    item = HumanGatedLifecycleVerificationStatusItem(
         verification_order=1,
         verification_id="custom-verification",
         verification_name="Custom verification",
-        human_verification_question="Can the human review the custom recall verification item?",
-        allowed_system_output="Recall verification status text only.",
-        prohibited_automation="No recall run.",
+        human_verification_question="Can the human review the custom lifecycle verification item?",
+        allowed_system_output="Lifecycle verification status text only.",
+        prohibited_automation="No lifecycle mutation.",
         ready_signal="Visible custom verification.",
         blocking_signal="Hidden custom verification.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_human_gated_recall_verification_status_markdown([item])
+    markdown = render_human_gated_lifecycle_verification_status_markdown([item])
 
     assert "custom-verification" in markdown
-    assert "Can the human review the custom recall verification item?" in markdown
+    assert "Can the human review the custom lifecycle verification item?" in markdown
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:

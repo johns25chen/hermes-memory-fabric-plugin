@@ -15,6 +15,12 @@ from .p4_m1_human_gated_memory_loop_checklist import (
     human_gated_memory_loop_status_report,
     render_human_gated_memory_loop_checklist_markdown,
 )
+from .p4_m1_human_gated_lifecycle_verification_status import (
+    HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY,
+    human_gated_lifecycle_verification_status_as_dicts,
+    human_gated_lifecycle_verification_status_report,
+    render_human_gated_lifecycle_verification_status_markdown,
+)
 from .p4_m1_human_gated_proposal_review_status import (
     HUMAN_GATED_PROPOSAL_REVIEW_STATUS_BOUNDARY,
     human_gated_proposal_review_status_as_dicts,
@@ -150,6 +156,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_recall_verification_status)
     memory_loop_recall_verification_status.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_lifecycle_verification_status = memory_loop_subparsers.add_parser(
+        "lifecycle-verification-status"
+    )
+    _add_workspace_root(memory_loop_lifecycle_verification_status)
+    memory_loop_lifecycle_verification_status.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -408,6 +424,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                     "status": human_gated_recall_verification_status_report(),
                 }
             raise ValueError(f"unsupported_memory_loop_recall_verification_status_format:{args.format}")
+
+        if args.memory_loop_command == "lifecycle-verification-status":
+            if args.format == "markdown":
+                return render_human_gated_lifecycle_verification_status_markdown()
+            if args.format == "json":
+                items = human_gated_lifecycle_verification_status_as_dicts()
+                return {
+                    "boundary": HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY,
+                    "count": len(items),
+                    "items": list(items),
+                    "status": human_gated_lifecycle_verification_status_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_lifecycle_verification_status_format:{args.format}"
+            )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
 
