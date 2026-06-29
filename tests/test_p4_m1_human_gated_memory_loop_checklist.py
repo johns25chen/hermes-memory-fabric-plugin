@@ -295,6 +295,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
         "decision-readiness-status",
         "manual-decision-preview",
         "governance-pack-export",
+        "final-boundary-audit",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
