@@ -96,6 +96,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-surface-contract",
     "execution-contract-validation-matrix",
     "manual-authorization-evidence-envelope",
+    "human-confirmation-snapshot-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
