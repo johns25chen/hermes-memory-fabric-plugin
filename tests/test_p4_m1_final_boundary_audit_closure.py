@@ -91,6 +91,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-preconditions-snapshot-map",
     "execution-risk-acknowledgement-map",
     "execution-risk-acceptance-prohibition-map",
+    "execution-risk-waiver-prohibition-map",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
