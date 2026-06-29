@@ -68,10 +68,12 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "human-confirmation-snapshot-contract",
     "execution-preconditions-snapshot-map",
     "execution-risk-acknowledgement-map",
+    "execution-risk-acceptance-prohibition-map",
 }
 
 PREVIOUS_P4_M2_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "execution-risk-acknowledgement-map"
+    "execution-risk-acknowledgement-map",
+    "execution-risk-acceptance-prohibition-map",
 }
 
 BOUNDARY_PHRASES = (
