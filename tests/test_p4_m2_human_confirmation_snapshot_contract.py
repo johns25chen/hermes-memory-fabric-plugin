@@ -7,32 +7,33 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_manual_authorization_evidence_envelope import (
-    MANUAL_AUTHORIZATION_EVIDENCE_ENVELOPE_BOUNDARY,
-    ManualAuthorizationEvidenceEnvelopeField,
-    list_manual_authorization_evidence_envelope_fields,
-    manual_authorization_evidence_envelope_as_dicts,
-    manual_authorization_evidence_envelope_field_ids,
-    manual_authorization_evidence_envelope_report,
-    render_manual_authorization_evidence_envelope_markdown,
+from hermes_memory_fabric.p4_m2_human_confirmation_snapshot_contract import (
+    HUMAN_CONFIRMATION_SNAPSHOT_CONTRACT_BOUNDARY,
+    HumanConfirmationSnapshotContractField,
+    human_confirmation_snapshot_contract_as_dicts,
+    human_confirmation_snapshot_contract_field_ids,
+    human_confirmation_snapshot_contract_report,
+    list_human_confirmation_snapshot_contract_fields,
+    render_human_confirmation_snapshot_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "authorization-evidence-envelope-id",
+    "human-confirmation-snapshot-id",
     "human-operator-reference",
-    "human-authorization-intent-reference",
+    "human-confirmation-intent-reference",
+    "manual-authorization-evidence-envelope-reference",
     "manual-decision-reference",
     "execution-surface-reference",
     "execution-contract-validation-matrix-reference",
-    "authorization-scope-statement",
-    "authorization-boundary-statement",
-    "precondition-evidence-reference",
-    "risk-acknowledgement-reference",
-    "audit-trace-reference",
+    "authorization-scope-snapshot",
+    "authorization-boundary-snapshot",
+    "precondition-evidence-snapshot",
+    "risk-acknowledgement-snapshot",
+    "audit-trace-snapshot",
     "operator-confirmation-placeholder",
-    "revocation-or-expiry-note",
-    "authorization-semantics-disabled",
+    "revocation-or-expiry-snapshot",
+    "confirmation-semantics-disabled",
     "execution-semantics-disabled",
 )
 
@@ -41,11 +42,11 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "required_evidence_signal",
+    "required_snapshot_signal",
     "trace_requirement",
     "prohibited_semantics",
     "blocking_signal",
-    "future_authorization_note",
+    "future_confirmation_note",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -70,15 +71,19 @@ TRUE_STATUS_FLAGS = (
     "p4_m2_started",
     "execution_surface_contract_definition_available",
     "execution_contract_validation_matrix_available",
-    "manual_authorization_evidence_envelope_started",
-    "manual_authorization_evidence_envelope_definition_only",
-    "evidence_envelope_fields_defined",
+    "manual_authorization_evidence_envelope_available",
+    "human_confirmation_snapshot_contract_started",
+    "human_confirmation_snapshot_contract_definition_only",
+    "snapshot_contract_fields_defined",
     "trace_requirements_defined",
     "blocking_signal_rules_defined",
     "inspection_only",
 )
 
 DISABLED_STATUS_FLAGS = (
+    "confirmation_enabled",
+    "confirmation_command_enabled",
+    "live_confirmation_validation_enabled",
     "authorization_enabled",
     "authorization_command_enabled",
     "live_authorization_validation_enabled",
@@ -96,6 +101,7 @@ DISABLED_STATUS_FLAGS = (
     "automatic_decision_recommendation_enabled",
     "decision_ranking_enabled",
     "automatic_readiness_verdict_enabled",
+    "confirmation_semantics_granted",
     "authorization_semantics_granted",
     "execution_semantics_granted",
     "memory_write_enabled",
@@ -120,6 +126,12 @@ DISABLED_STATUS_FLAGS = (
 )
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "confirm",
+    "confirmation",
+    "confirm-decision",
+    "decision-confirmation",
+    "human-confirm",
+    "operator-confirm",
     "authorize",
     "authorization",
     "authorize-decision",
@@ -147,8 +159,10 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "automatic-readiness",
     "validation-verdict",
     "validate-contract",
+    "validate-confirmation-snapshot",
     "validate-authorization-envelope",
     "validate-execution-contract",
+    "live-confirmation-validation",
     "live-authorization-validation",
     "live-validation",
     "input-validation",
@@ -212,50 +226,58 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_envelope_field_order_and_ids_are_deterministic():
+def test_snapshot_contract_field_order_and_ids_are_deterministic():
     assert [
         field.field_order
-        for field in list_manual_authorization_evidence_envelope_fields()
-    ] == list(range(1, 16))
-    assert manual_authorization_evidence_envelope_field_ids() == FIELD_IDS
+        for field in list_human_confirmation_snapshot_contract_fields()
+    ] == list(range(1, 17))
+    assert human_confirmation_snapshot_contract_field_ids() == FIELD_IDS
     assert (
-        manual_authorization_evidence_envelope_field_ids()
-        == manual_authorization_evidence_envelope_field_ids()
+        human_confirmation_snapshot_contract_field_ids()
+        == human_confirmation_snapshot_contract_field_ids()
     )
 
 
-def test_envelope_has_exactly_15_fields():
-    assert len(list_manual_authorization_evidence_envelope_fields()) == 15
+def test_snapshot_contract_has_exactly_16_fields():
+    assert len(list_human_confirmation_snapshot_contract_fields()) == 16
+
+
+def test_snapshot_contract_field_ids_match_required_ids():
+    assert human_confirmation_snapshot_contract_field_ids() == FIELD_IDS
 
 
 def test_every_field_has_required_non_empty_values():
-    for field in list_manual_authorization_evidence_envelope_fields():
+    for field in list_human_confirmation_snapshot_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.required_evidence_signal.strip()
+        assert field.required_snapshot_signal.strip()
         assert field.trace_requirement.strip()
         assert field.prohibited_semantics.strip()
         assert field.blocking_signal.strip()
-        assert field.future_authorization_note.strip()
+        assert field.future_confirmation_note.strip()
 
 
-def test_markdown_render_contains_all_15_field_ids():
-    markdown = render_manual_authorization_evidence_envelope_markdown()
+def test_markdown_render_contains_all_16_field_ids():
+    markdown = render_human_confirmation_snapshot_contract_markdown()
 
     for field_id in FIELD_IDS:
         assert field_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_manual_authorization_evidence_envelope_markdown()
+    markdown = render_human_confirmation_snapshot_contract_markdown()
 
-    assert "P4-M2.3 manual authorization evidence envelope" in markdown
-    assert "Read-only evidence envelope definition only" in markdown
+    assert "P4-M2.4 human confirmation snapshot contract" in markdown
+    assert "Read-only snapshot contract definition only" in markdown
     assert "Inspection-only" in markdown
     assert "Not P4-M3" in markdown
     assert "P4-M2.1 execution surface contract definition remains the source field contract" in markdown
     assert "P4-M2.2 execution contract validation matrix remains the source validation matrix definition" in markdown
-    assert "Manual authorization evidence envelope does not authorize anything" in markdown
+    assert "P4-M2.3 manual authorization evidence envelope remains the source evidence envelope definition" in markdown
+    assert "Human confirmation snapshot contract does not confirm anything" in markdown
+    assert "Confirmation is disabled" in markdown
+    assert "Confirmation command is disabled" in markdown
+    assert "Live confirmation validation is disabled" in markdown
     assert "Authorization is disabled" in markdown
     assert "Authorization command is disabled" in markdown
     assert "Live authorization validation is disabled" in markdown
@@ -268,17 +290,18 @@ def test_markdown_render_contains_required_boundary_statements():
     assert "Automatic decision execution is disabled" in markdown
     assert "Manual execution command is disabled" in markdown
     assert "Execute command is disabled" in markdown
-    assert "No authorization semantics are granted by this evidence envelope." in markdown
-    assert "No execution semantics are granted by this evidence envelope." in markdown
-    assert "No memory writing is performed by this evidence envelope." in markdown
-    assert "No mutation is performed by this evidence envelope." in markdown
-    assert "No API/MCP/connector behavior is performed by this evidence envelope." in markdown
-    assert "No agent call is performed by this evidence envelope." in markdown
+    assert "No confirmation semantics are granted by this snapshot contract." in markdown
+    assert "No authorization semantics are granted by this snapshot contract." in markdown
+    assert "No execution semantics are granted by this snapshot contract." in markdown
+    assert "No memory writing is performed by this snapshot contract." in markdown
+    assert "No mutation is performed by this snapshot contract." in markdown
+    assert "No API/MCP/connector behavior is performed by this snapshot contract." in markdown
+    assert "No agent call is performed by this snapshot contract." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = manual_authorization_evidence_envelope_as_dicts()
-    second = manual_authorization_evidence_envelope_as_dicts()
+    first = human_confirmation_snapshot_contract_as_dicts()
+    second = human_confirmation_snapshot_contract_as_dicts()
 
     assert first == second
     assert [item["field_id"] for item in first] == list(FIELD_IDS)
@@ -286,42 +309,42 @@ def test_dict_conversion_is_deterministic():
 
 
 def test_status_report_is_deterministic():
-    first = manual_authorization_evidence_envelope_report()
-    second = manual_authorization_evidence_envelope_report()
+    first = human_confirmation_snapshot_contract_report()
+    second = human_confirmation_snapshot_contract_report()
 
     assert first == second
-    assert first["phase"] == "P4-M2.3"
-    assert first["feature"] == "Manual Authorization Evidence Envelope"
+    assert first["phase"] == "P4-M2.4"
+    assert first["feature"] == "Human Confirmation Snapshot Contract"
     assert first["mode"] == "read-only"
-    assert first["envelope_field_count"] == 15
-    assert first["boundary"] == MANUAL_AUTHORIZATION_EVIDENCE_ENVELOPE_BOUNDARY
+    assert first["snapshot_field_count"] == 16
+    assert first["boundary"] == HUMAN_CONFIRMATION_SNAPSHOT_CONTRACT_BOUNDARY
 
 
 def test_status_report_has_required_true_flags():
-    status = manual_authorization_evidence_envelope_report()
+    status = human_confirmation_snapshot_contract_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = manual_authorization_evidence_envelope_report()
+    status = human_confirmation_snapshot_contract_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert manual_authorization_evidence_envelope_report()["package_version"] == "6.16.0"
+    assert human_confirmation_snapshot_contract_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_manual_authorization_evidence_envelope_returns_markdown(
+def test_operator_memory_loop_human_confirmation_snapshot_contract_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -330,18 +353,22 @@ def test_operator_memory_loop_manual_authorization_evidence_envelope_returns_mar
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.3 Manual Authorization Evidence Envelope\n")
+    assert stdout.startswith("# P4-M2.4 Human Confirmation Snapshot Contract\n")
     assert "## Status Report" in stdout
-    assert MANUAL_AUTHORIZATION_EVIDENCE_ENVELOPE_BOUNDARY in stdout
+    assert HUMAN_CONFIRMATION_SNAPSHOT_CONTRACT_BOUNDARY in stdout
     for field_id in FIELD_IDS:
         assert field_id in stdout
-    assert "P4-M2.3 manual authorization evidence envelope only." in stdout
-    assert "Read-only evidence envelope definition only." in stdout
+    assert "P4-M2.4 human confirmation snapshot contract only." in stdout
+    assert "Read-only snapshot contract definition only." in stdout
     assert "Inspection-only." in stdout
     assert "Not P4-M3." in stdout
     assert "P4-M2.1 execution surface contract definition remains the source field contract." in stdout
     assert "P4-M2.2 execution contract validation matrix remains the source validation matrix definition." in stdout
-    assert "Manual authorization evidence envelope does not authorize anything." in stdout
+    assert "P4-M2.3 manual authorization evidence envelope remains the source evidence envelope definition." in stdout
+    assert "Human confirmation snapshot contract does not confirm anything." in stdout
+    assert "Confirmation is disabled." in stdout
+    assert "Confirmation command is disabled." in stdout
+    assert "Live confirmation validation is disabled." in stdout
     assert "Authorization is disabled." in stdout
     assert "Authorization command is disabled." in stdout
     assert "Live authorization validation is disabled." in stdout
@@ -354,22 +381,23 @@ def test_operator_memory_loop_manual_authorization_evidence_envelope_returns_mar
     assert "Automatic decision execution is disabled." in stdout
     assert "Manual execution command is disabled." in stdout
     assert "Execute command is disabled." in stdout
-    assert "No authorization semantics are granted by this evidence envelope." in stdout
-    assert "No execution semantics are granted by this evidence envelope." in stdout
-    assert "No memory writing is performed by this evidence envelope." in stdout
-    assert "No mutation is performed by this evidence envelope." in stdout
-    assert "No API/MCP/connector behavior is performed by this evidence envelope." in stdout
-    assert "No agent call is performed by this evidence envelope." in stdout
+    assert "No confirmation semantics are granted by this snapshot contract." in stdout
+    assert "No authorization semantics are granted by this snapshot contract." in stdout
+    assert "No execution semantics are granted by this snapshot contract." in stdout
+    assert "No memory writing is performed by this snapshot contract." in stdout
+    assert "No mutation is performed by this snapshot contract." in stdout
+    assert "No API/MCP/connector behavior is performed by this snapshot contract." in stdout
+    assert "No agent call is performed by this snapshot contract." in stdout
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_memory_loop_manual_authorization_evidence_envelope_format_markdown_returns_markdown(
+def test_operator_memory_loop_human_confirmation_snapshot_contract_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -380,15 +408,15 @@ def test_operator_memory_loop_manual_authorization_evidence_envelope_format_mark
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.3 Manual Authorization Evidence Envelope\n")
+    assert stdout.startswith("# P4-M2.4 Human Confirmation Snapshot Contract\n")
 
 
-def test_operator_memory_loop_manual_authorization_evidence_envelope_format_json_returns_deterministic_json(
+def test_operator_memory_loop_human_confirmation_snapshot_contract_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "manual-authorization-evidence-envelope",
+        "human-confirmation-snapshot-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -403,21 +431,21 @@ def test_operator_memory_loop_manual_authorization_evidence_envelope_format_json
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == MANUAL_AUTHORIZATION_EVIDENCE_ENVELOPE_BOUNDARY
-    assert payload["count"] == 15
-    assert payload["status"] == manual_authorization_evidence_envelope_report()
+    assert payload["boundary"] == HUMAN_CONFIRMATION_SNAPSHOT_CONTRACT_BOUNDARY
+    assert payload["count"] == 16
+    assert payload["status"] == human_confirmation_snapshot_contract_report()
     assert [item["field_id"] for item in payload["fields"]] == list(FIELD_IDS)
     assert set(payload["fields"][0]) == DATACLASS_FIELDS
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_manual_authorization_evidence_envelope_command_is_read_only_and_creates_no_local_storage(
+def test_operator_human_confirmation_snapshot_contract_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -425,7 +453,7 @@ def test_operator_manual_authorization_evidence_envelope_command_is_read_only_an
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -440,13 +468,13 @@ def test_operator_manual_authorization_evidence_envelope_command_is_read_only_an
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_manual_authorization_evidence_envelope_command_creates_no_proposals(
+def test_operator_human_confirmation_snapshot_contract_command_creates_no_proposals(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -455,13 +483,13 @@ def test_operator_manual_authorization_evidence_envelope_command_creates_no_prop
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_manual_authorization_evidence_envelope_command_creates_no_approved_memories(
+def test_operator_human_confirmation_snapshot_contract_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -472,13 +500,13 @@ def test_operator_manual_authorization_evidence_envelope_command_creates_no_appr
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_manual_authorization_evidence_envelope_command_creates_no_boundary_or_state_changes(
+def test_operator_human_confirmation_snapshot_contract_command_creates_no_boundary_or_state_changes(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "manual-authorization-evidence-envelope",
+            "human-confirmation-snapshot-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -486,6 +514,7 @@ def test_operator_manual_authorization_evidence_envelope_command_creates_no_boun
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
+        "confirmation.jsonl",
         "authorization.jsonl",
         "execution.jsonl",
         "approvals.jsonl",
@@ -499,6 +528,7 @@ def test_operator_manual_authorization_evidence_envelope_command_creates_no_boun
         "execution_surface_contract.jsonl",
         "execution_contract_validation_matrix.jsonl",
         "manual_authorization_evidence_envelope.jsonl",
+        "human_confirmation_snapshot_contract.jsonl",
         "closure.jsonl",
         "memories.jsonl",
         "proposals.jsonl",
@@ -514,14 +544,14 @@ def test_operator_manual_authorization_evidence_envelope_command_creates_no_boun
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_authorization_decision_recommendation_readiness_validation_mutation_p4_m3_p4_m4_p4_m5_v7_productization_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_confirmation_authorization_decision_recommendation_readiness_validation_mutation_p4_m3_p4_m4_p4_m5_v7_productization_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_2_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_3_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -536,6 +566,7 @@ def test_existing_p4_m1_0_through_p4_m2_2_memory_loop_commands_still_work(tmp_pa
         "manual-execution-hardening": "# P4-M2.0 Manual Decision Execution Hardening\n",
         "execution-surface-contract": "# P4-M2.1 Execution Surface Contract Definition\n",
         "execution-contract-validation-matrix": "# P4-M2.2 Execution Contract Validation Matrix\n",
+        "manual-authorization-evidence-envelope": "# P4-M2.3 Manual Authorization Evidence Envelope\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -553,7 +584,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_manual_authorization_evidence_envelope():
+def test_no_pyproject_entry_point_is_added_for_human_confirmation_snapshot_contract():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -561,26 +592,26 @@ def test_no_pyproject_entry_point_is_added_for_manual_authorization_evidence_env
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_manual_authorization_evidence_envelope" not in entry_points
-    assert "manual-authorization-evidence-envelope" not in entry_points
+    assert "p4_m2_human_confirmation_snapshot_contract" not in entry_points
+    assert "human-confirmation-snapshot-contract" not in entry_points
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ManualAuthorizationEvidenceEnvelopeField(
+    field = HumanConfirmationSnapshotContractField(
         field_order=1,
-        field_id="custom-manual-authorization-evidence-envelope",
-        field_name="Custom Envelope Field",
+        field_id="custom-human-confirmation-snapshot-contract",
+        field_name="Custom Snapshot Field",
         field_purpose="Custom inspection-only purpose.",
-        required_evidence_signal="Custom evidence signal is visible.",
+        required_snapshot_signal="Custom snapshot signal is visible.",
         trace_requirement="Custom trace requirement is visible.",
-        prohibited_semantics="No authorization or execution semantics.",
-        blocking_signal="Authorization or execution behavior is introduced.",
-        future_authorization_note="A later path may inspect this custom field.",
+        prohibited_semantics="No confirmation, authorization, or execution semantics.",
+        blocking_signal="Confirmation, authorization, or execution behavior is introduced.",
+        future_confirmation_note="A later path may inspect this custom field.",
     )
 
-    markdown = render_manual_authorization_evidence_envelope_markdown([field])
+    markdown = render_human_confirmation_snapshot_contract_markdown([field])
 
-    assert "custom-manual-authorization-evidence-envelope" in markdown
+    assert "custom-human-confirmation-snapshot-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
