@@ -7,44 +7,44 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_manual_decision_execution_hardening import (
-    MANUAL_EXECUTION_HARDENING_BOUNDARY,
-    ManualExecutionHardeningRequirement,
-    list_manual_execution_hardening_requirements,
-    manual_execution_hardening_as_dicts,
-    manual_execution_hardening_report,
-    manual_execution_hardening_requirement_ids,
-    render_manual_execution_hardening_markdown,
+from hermes_memory_fabric.p4_m2_execution_surface_contract_definition import (
+    EXECUTION_SURFACE_CONTRACT_BOUNDARY,
+    ExecutionSurfaceContractField,
+    execution_surface_contract_as_dicts,
+    execution_surface_contract_field_ids,
+    execution_surface_contract_report,
+    list_execution_surface_contract_fields,
+    render_execution_surface_contract_markdown,
 )
 
 
-REQUIREMENT_IDS = (
-    "explicit-human-authorization-required",
-    "manual-decision-reference-required",
-    "execution-intent-must-be-explicit",
-    "no-automatic-recommendation",
-    "no-automatic-readiness-verdict",
-    "no-implicit-approval",
-    "no-implicit-rejection",
-    "no-memory-write-in-p4-m2-0",
-    "no-proposal-mutation-in-p4-m2-0",
-    "no-lifecycle-mutation-in-p4-m2-0",
-    "no-source-provenance-mutation-in-p4-m2-0",
-    "no-api-mcp-connector-execution",
-    "no-agent-auto-call",
-    "audit-trail-required-for-future-execution",
-    "p4-m2-hardening-not-execution",
+FIELD_IDS = (
+    "execution-surface-id",
+    "human-authorization-reference",
+    "manual-decision-reference",
+    "execution-intent-declaration",
+    "target-record-reference",
+    "allowed-operation-envelope",
+    "precondition-evidence",
+    "risk-and-blocking-signals",
+    "audit-trace-id",
+    "operator-confirmation-placeholder",
+    "execution-preview-output",
+    "rollback-consideration",
+    "side-effect-boundary",
+    "external-system-boundary",
+    "authorization-semantics-disabled",
+    "execution-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
-    "requirement_order",
-    "requirement_id",
-    "requirement_name",
-    "hardening_purpose",
-    "required_human_input",
-    "required_precondition",
-    "prohibited_automation",
-    "audit_signal",
+    "field_order",
+    "field_id",
+    "field_name",
+    "field_purpose",
+    "required_description",
+    "inspection_signal",
+    "prohibited_semantics",
     "blocking_signal",
 }
 
@@ -58,6 +58,8 @@ DISABLED_STATUS_FLAGS = (
     "automatic_decision_recommendation_enabled",
     "decision_ranking_enabled",
     "automatic_readiness_verdict_enabled",
+    "authorization_semantics_granted",
+    "execution_semantics_granted",
     "memory_write_enabled",
     "memory_record_mutation_enabled",
     "proposal_mutation_enabled",
@@ -77,8 +79,6 @@ DISABLED_STATUS_FLAGS = (
     "p4_m5_started",
     "v7_started",
     "productization_started",
-    "authorization_semantics_granted",
-    "execution_semantics_granted",
 )
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -175,140 +175,93 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_manual_execution_hardening_requirement_order_is_deterministic():
+def test_execution_surface_contract_field_order_is_deterministic():
     assert [
-        item.requirement_order
-        for item in list_manual_execution_hardening_requirements()
-    ] == list(range(1, 16))
-    assert manual_execution_hardening_requirement_ids() == REQUIREMENT_IDS
-    assert (
-        manual_execution_hardening_requirement_ids()
-        == manual_execution_hardening_requirement_ids()
-    )
+        field.field_order
+        for field in list_execution_surface_contract_fields()
+    ] == list(range(1, 17))
+    assert execution_surface_contract_field_ids() == FIELD_IDS
+    assert execution_surface_contract_field_ids() == execution_surface_contract_field_ids()
 
 
-def test_manual_execution_hardening_has_exactly_15_requirements():
-    assert len(list_manual_execution_hardening_requirements()) == 15
+def test_execution_surface_contract_has_exactly_16_fields():
+    assert len(list_execution_surface_contract_fields()) == 16
 
 
-def test_requirement_ids_match_required_requirement_ids():
-    assert manual_execution_hardening_requirement_ids() == REQUIREMENT_IDS
+def test_field_ids_match_required_field_ids():
+    assert execution_surface_contract_field_ids() == FIELD_IDS
 
 
-def test_every_requirement_has_required_non_empty_fields():
-    for requirement in list_manual_execution_hardening_requirements():
-        assert requirement.requirement_name.strip()
-        assert requirement.hardening_purpose.strip()
-        assert requirement.required_human_input.strip()
-        assert requirement.required_precondition.strip()
-        assert requirement.prohibited_automation.strip()
-        assert requirement.audit_signal.strip()
-        assert requirement.blocking_signal.strip()
+def test_every_field_has_required_non_empty_values():
+    for field in list_execution_surface_contract_fields():
+        assert field.field_name.strip()
+        assert field.field_purpose.strip()
+        assert field.required_description.strip()
+        assert field.inspection_signal.strip()
+        assert field.prohibited_semantics.strip()
+        assert field.blocking_signal.strip()
 
 
-def test_markdown_render_contains_all_15_requirement_ids():
-    markdown = render_manual_execution_hardening_markdown()
+def test_markdown_render_contains_all_16_field_ids():
+    markdown = render_execution_surface_contract_markdown()
 
-    for requirement_id in REQUIREMENT_IDS:
-        assert requirement_id in markdown
+    for field_id in FIELD_IDS:
+        assert field_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_manual_execution_hardening_markdown()
+    markdown = render_execution_surface_contract_markdown()
 
-    assert "P4-M2.0 manual decision execution hardening" in markdown
-    assert "Hardening contract only" in markdown
-    assert "Read-only status surface only" in markdown
-    assert "P4-M2 hardening has started" in markdown
+    assert "P4-M2.1 execution surface contract definition" in markdown
+    assert "Read-only contract/schema/trace field definition only" in markdown
+    assert "Inspection-only" in markdown
+    assert "Not P4-M3" in markdown
     assert "Actual decision execution is disabled" in markdown
     assert "Automatic decision execution is disabled" in markdown
     assert "Manual execution command is disabled" in markdown
     assert "Execute command is disabled" in markdown
-    assert "does not recommend a decision" in markdown
-    assert "does not rank decisions" in markdown
-    assert "does not automatically determine readiness" in markdown
-    assert "does not emit an automatic readiness verdict" in markdown
-    assert "does not make decisions" in markdown
-    assert "does not execute decisions" in markdown
-    assert "does not approve memory" in markdown
-    assert "does not reject memory" in markdown
-    assert "does not approve proposals" in markdown
-    assert "does not reject proposals" in markdown
-    assert "does not write memory" in markdown
-    assert "does not create memory records" in markdown
-    assert "does not update memory records" in markdown
-    assert "does not delete memory records" in markdown
-    assert "does not mutate proposal records" in markdown
-    assert "does not mutate lifecycle records" in markdown
-    assert "does not mutate do-not-retry guard state" in markdown
-    assert "does not mutate retry policy" in markdown
-    assert "does not fetch sources" in markdown
-    assert "does not browse the web" in markdown
-    assert "does not call external APIs" in markdown
-    assert "does not call connectors" in markdown
-    assert "does not create API/MCP/connector behavior" in markdown
-    assert "does not automatically trust a source" in markdown
-    assert "does not write provenance" in markdown
-    assert "does not mutate source/provenance/evidence/citation records" in markdown
-    assert "does not inject memory into agents" in markdown
-    assert "does not bulk import memory" in markdown
-    assert "does not auto-ingest chat history" in markdown
-    assert "does not auto-ingest files" in markdown
-    assert "does not auto-ingest external systems" in markdown
-    assert "does not call agents" in markdown
-    assert "does not grant authorization semantics" in markdown
-    assert "does not grant execution semantics" in markdown
-    assert "does not start P4-M3" in markdown
-    assert "does not start P4-M4" in markdown
-    assert "does not start P4-M5" in markdown
-    assert "does not start v7" in markdown
-    assert "does not productize" in markdown
-    assert "No decision recommendation is performed by this hardening contract." in markdown
-    assert "No decision ranking is performed by this hardening contract." in markdown
-    assert "No automatic readiness verdict is performed by this hardening contract." in markdown
-    assert "No decision execution is performed by this hardening contract." in markdown
-    assert "No approval or rejection is performed by this hardening contract." in markdown
-    assert "No memory writing is performed by this hardening contract." in markdown
-    assert "No proposal mutation is performed by this hardening contract." in markdown
-    assert "No lifecycle mutation is performed by this hardening contract." in markdown
-    assert "No do-not-retry mutation is performed by this hardening contract." in markdown
-    assert "No source/provenance mutation is performed by this hardening contract." in markdown
-    assert "No API/MCP/connector behavior is performed by this hardening contract." in markdown
-    assert "No authorization semantics are granted by this hardening contract." in markdown
-    assert "No execution semantics are granted by this hardening contract." in markdown
+    assert "No authorization semantics are granted by this contract definition." in markdown
+    assert "No execution semantics are granted by this contract definition." in markdown
+    assert "No memory writing is performed by this contract definition." in markdown
+    assert "No mutation is performed by this contract definition." in markdown
+    assert "No API/MCP/connector behavior is performed by this contract definition." in markdown
+    assert "No agent call is performed by this contract definition." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = manual_execution_hardening_as_dicts()
-    second = manual_execution_hardening_as_dicts()
+    first = execution_surface_contract_as_dicts()
+    second = execution_surface_contract_as_dicts()
 
     assert first == second
-    assert [item["requirement_id"] for item in first] == list(REQUIREMENT_IDS)
+    assert [item["field_id"] for item in first] == list(FIELD_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = manual_execution_hardening_report()
-    second = manual_execution_hardening_report()
+    first = execution_surface_contract_report()
+    second = execution_surface_contract_report()
 
     assert first == second
-    assert first["phase"] == "P4-M2.0"
-    assert first["feature"] == "Manual Decision Execution Hardening"
+    assert first["phase"] == "P4-M2.1"
+    assert first["feature"] == "Execution Surface Contract Definition"
     assert first["mode"] == "read-only"
-    assert first["hardening_requirement_count"] == 15
-    assert first["boundary"] == MANUAL_EXECUTION_HARDENING_BOUNDARY
+    assert first["contract_field_count"] == 16
+    assert first["boundary"] == EXECUTION_SURFACE_CONTRACT_BOUNDARY
 
 
 def test_status_report_has_required_true_flags():
-    status = manual_execution_hardening_report()
+    status = execution_surface_contract_report()
 
     assert status["p4_m2_started"] is True
-    assert status["manual_decision_execution_hardening_started"] is True
-    assert status["manual_execution_contract_only"] is True
+    assert status["execution_surface_contract_definition_started"] is True
+    assert status["execution_surface_contract_only"] is True
+    assert status["schema_definition_only"] is True
+    assert status["trace_field_definition_only"] is True
+    assert status["inspection_only"] is True
 
 
 def test_status_report_has_required_execution_and_semantic_flags_disabled():
-    status = manual_execution_hardening_report()
+    status = execution_surface_contract_report()
 
     assert status["actual_decision_execution_enabled"] is False
     assert status["automatic_decision_execution_enabled"] is False
@@ -319,57 +272,53 @@ def test_status_report_has_required_execution_and_semantic_flags_disabled():
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = manual_execution_hardening_report()
+    status = execution_surface_contract_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert manual_execution_hardening_report()["package_version"] == "6.16.0"
+    assert execution_surface_contract_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_manual_execution_hardening_returns_markdown(tmp_path):
+def test_operator_memory_loop_execution_surface_contract_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.0 Manual Decision Execution Hardening\n")
+    assert stdout.startswith("# P4-M2.1 Execution Surface Contract Definition\n")
     assert "## Status Report" in stdout
-    assert MANUAL_EXECUTION_HARDENING_BOUNDARY in stdout
-    for requirement_id in REQUIREMENT_IDS:
-        assert requirement_id in stdout
-    assert "P4-M2 hardening has started." in stdout
+    assert EXECUTION_SURFACE_CONTRACT_BOUNDARY in stdout
+    for field_id in FIELD_IDS:
+        assert field_id in stdout
+    assert "P4-M2.1 execution surface contract definition only." in stdout
+    assert "Read-only contract/schema/trace field definition only." in stdout
+    assert "Inspection-only." in stdout
+    assert "Not P4-M3." in stdout
     assert "Actual decision execution is disabled." in stdout
     assert "Automatic decision execution is disabled." in stdout
     assert "Manual execution command is disabled." in stdout
     assert "Execute command is disabled." in stdout
-    assert "No decision recommendation is performed by this hardening contract." in stdout
-    assert "No decision ranking is performed by this hardening contract." in stdout
-    assert "No automatic readiness verdict is performed by this hardening contract." in stdout
-    assert "No decision execution is performed by this hardening contract." in stdout
-    assert "No approval or rejection is performed by this hardening contract." in stdout
-    assert "No memory writing is performed by this hardening contract." in stdout
-    assert "No proposal mutation is performed by this hardening contract." in stdout
-    assert "No lifecycle mutation is performed by this hardening contract." in stdout
-    assert "No do-not-retry mutation is performed by this hardening contract." in stdout
-    assert "No source/provenance mutation is performed by this hardening contract." in stdout
-    assert "No API/MCP/connector behavior is performed by this hardening contract." in stdout
-    assert "No authorization semantics are granted by this hardening contract." in stdout
-    assert "No execution semantics are granted by this hardening contract." in stdout
+    assert "No authorization semantics are granted by this contract definition." in stdout
+    assert "No execution semantics are granted by this contract definition." in stdout
+    assert "No memory writing is performed by this contract definition." in stdout
+    assert "No mutation is performed by this contract definition." in stdout
+    assert "No API/MCP/connector behavior is performed by this contract definition." in stdout
+    assert "No agent call is performed by this contract definition." in stdout
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_memory_loop_manual_execution_hardening_format_markdown_returns_markdown(
+def test_operator_memory_loop_execution_surface_contract_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "manual-execution-hardening",
+            "execution-surface-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -380,15 +329,15 @@ def test_operator_memory_loop_manual_execution_hardening_format_markdown_returns
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.0 Manual Decision Execution Hardening\n")
+    assert stdout.startswith("# P4-M2.1 Execution Surface Contract Definition\n")
 
 
-def test_operator_memory_loop_manual_execution_hardening_format_json_returns_deterministic_json(
+def test_operator_memory_loop_execution_surface_contract_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "manual-execution-hardening",
+        "execution-surface-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -403,23 +352,24 @@ def test_operator_memory_loop_manual_execution_hardening_format_json_returns_det
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == MANUAL_EXECUTION_HARDENING_BOUNDARY
-    assert payload["count"] == 15
-    assert payload["status"] == manual_execution_hardening_report()
-    assert [item["requirement_id"] for item in payload["requirements"]] == list(REQUIREMENT_IDS)
-    assert set(payload["requirements"][0]) == DATACLASS_FIELDS
+    assert payload["boundary"] == EXECUTION_SURFACE_CONTRACT_BOUNDARY
+    assert payload["count"] == 16
+    assert payload["status"] == execution_surface_contract_report()
+    assert [item["field_id"] for item in payload["fields"]] == list(FIELD_IDS)
+    assert set(payload["fields"][0]) == DATACLASS_FIELDS
+    assert not (tmp_path / ".local").exists()
 
 
-def test_operator_manual_execution_hardening_command_is_read_only_and_creates_no_local_storage(
+def test_operator_execution_surface_contract_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "manual-execution-hardening",
+            "execution-surface-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -434,21 +384,21 @@ def test_operator_manual_execution_hardening_command_is_read_only_and_creates_no
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_manual_execution_hardening_command_creates_no_proposals(tmp_path):
+def test_operator_execution_surface_contract_command_creates_no_proposals(tmp_path):
     _run_operator(
-        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
     )
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_manual_execution_hardening_command_creates_no_approved_memories(
+def test_operator_execution_surface_contract_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "manual-execution-hardening",
+            "execution-surface-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -459,11 +409,11 @@ def test_operator_manual_execution_hardening_command_creates_no_approved_memorie
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_manual_execution_hardening_command_creates_no_boundary_or_state_changes(
+def test_operator_execution_surface_contract_command_creates_no_boundary_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
@@ -475,8 +425,9 @@ def test_operator_manual_execution_hardening_command_creates_no_boundary_or_stat
     assert not (storage_root / "previews.jsonl").exists()
     assert not (storage_root / "governance_pack.jsonl").exists()
     assert not (storage_root / "final_boundary_audit.jsonl").exists()
-    assert not (storage_root / "closure.jsonl").exists()
     assert not (storage_root / "manual_execution_hardening.jsonl").exists()
+    assert not (storage_root / "execution_surface_contract.jsonl").exists()
+    assert not (storage_root / "closure.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
     assert not (storage_root / "lifecycle.jsonl").exists()
@@ -592,6 +543,16 @@ def test_existing_p4_m1_9_memory_loop_final_boundary_audit_still_works(
     )
 
 
+def test_existing_p4_m2_0_memory_loop_manual_execution_hardening_still_works(
+    tmp_path,
+):
+    _assert_existing_command_still_works(
+        tmp_path,
+        "manual-execution-hardening",
+        "# P4-M2.0 Manual Decision Execution Hardening\n",
+    )
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -603,7 +564,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_manual_execution_hardening():
+def test_no_pyproject_entry_point_is_added_for_execution_surface_contract():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -611,27 +572,26 @@ def test_no_pyproject_entry_point_is_added_for_manual_execution_hardening():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_manual_decision_execution_hardening" not in entry_points
-    assert "manual-execution-hardening" not in entry_points
+    assert "p4_m2_execution_surface_contract_definition" not in entry_points
+    assert "execution-surface-contract" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_requirements():
-    requirement = ManualExecutionHardeningRequirement(
-        requirement_order=1,
-        requirement_id="custom-manual-execution-hardening",
-        requirement_name="Custom manual execution hardening",
-        hardening_purpose="Keep the custom hardening surface read-only.",
-        required_human_input="Human inspection only.",
-        required_precondition="No execution command is present.",
-        prohibited_automation="No decision execution.",
-        audit_signal="Custom hardening text is visible.",
+def test_custom_markdown_render_accepts_read_only_fields():
+    field = ExecutionSurfaceContractField(
+        field_order=1,
+        field_id="custom-execution-surface-contract",
+        field_name="Custom execution surface contract",
+        field_purpose="Keep the custom contract field read-only.",
+        required_description="A custom contract field description.",
+        inspection_signal="Custom field text is visible.",
+        prohibited_semantics="No execution semantics.",
         blocking_signal="Execution behavior is introduced.",
     )
 
-    markdown = render_manual_execution_hardening_markdown([requirement])
+    markdown = render_execution_surface_contract_markdown([field])
 
-    assert "custom-manual-execution-hardening" in markdown
-    assert "Keep the custom hardening surface read-only." in markdown
+    assert "custom-execution-surface-contract" in markdown
+    assert "Keep the custom contract field read-only." in markdown
 
 
 def _assert_existing_command_still_works(

@@ -69,6 +69,12 @@ from .p4_m2_manual_decision_execution_hardening import (
     manual_execution_hardening_report,
     render_manual_execution_hardening_markdown,
 )
+from .p4_m2_execution_surface_contract_definition import (
+    EXECUTION_SURFACE_CONTRACT_BOUNDARY,
+    execution_surface_contract_as_dicts,
+    execution_surface_contract_report,
+    render_execution_surface_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -278,6 +284,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_manual_execution_hardening)
     memory_loop_manual_execution_hardening.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_execution_surface_contract = memory_loop_subparsers.add_parser(
+        "execution-surface-contract"
+    )
+    _add_workspace_root(memory_loop_execution_surface_contract)
+    memory_loop_execution_surface_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -655,6 +671,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_manual_execution_hardening_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "execution-surface-contract":
+            if args.format == "markdown":
+                return render_execution_surface_contract_markdown()
+            if args.format == "json":
+                fields = execution_surface_contract_as_dicts()
+                return {
+                    "boundary": EXECUTION_SURFACE_CONTRACT_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": execution_surface_contract_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_execution_surface_contract_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

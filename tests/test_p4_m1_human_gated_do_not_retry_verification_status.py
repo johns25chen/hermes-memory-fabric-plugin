@@ -391,6 +391,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutat
         "governance-pack-export",
         "final-boundary-audit",
     "manual-execution-hardening",
+    "execution-surface-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
