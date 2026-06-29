@@ -7,53 +7,57 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_final_boundary_audit_closure import (
-    FINAL_BOUNDARY_AUDIT_BOUNDARY,
-    FinalBoundaryAuditItem,
-    final_boundary_audit_as_dicts,
-    final_boundary_audit_item_ids,
-    final_boundary_audit_report,
-    list_final_boundary_audit_items,
-    render_final_boundary_audit_markdown,
+from hermes_memory_fabric.p4_m2_manual_decision_execution_hardening import (
+    MANUAL_EXECUTION_HARDENING_BOUNDARY,
+    ManualExecutionHardeningRequirement,
+    list_manual_execution_hardening_requirements,
+    manual_execution_hardening_as_dicts,
+    manual_execution_hardening_report,
+    manual_execution_hardening_requirement_ids,
+    render_manual_execution_hardening_markdown,
 )
 
 
-AUDIT_ITEM_IDS = (
-    "checklist-boundary-audit",
-    "proposal-review-boundary-audit",
-    "recall-verification-boundary-audit",
-    "lifecycle-verification-boundary-audit",
-    "do-not-retry-boundary-audit",
-    "source-provenance-boundary-audit",
-    "decision-readiness-boundary-audit",
-    "manual-decision-preview-boundary-audit",
-    "governance-pack-export-boundary-audit",
-    "p4-m1-read-only-corridor-closure",
-    "p4-m2-not-started",
-    "v7-productization-not-started",
-    "automation-boundary-intact",
+REQUIREMENT_IDS = (
+    "explicit-human-authorization-required",
+    "manual-decision-reference-required",
+    "execution-intent-must-be-explicit",
+    "no-automatic-recommendation",
+    "no-automatic-readiness-verdict",
+    "no-implicit-approval",
+    "no-implicit-rejection",
+    "no-memory-write-in-p4-m2-0",
+    "no-proposal-mutation-in-p4-m2-0",
+    "no-lifecycle-mutation-in-p4-m2-0",
+    "no-source-provenance-mutation-in-p4-m2-0",
+    "no-api-mcp-connector-execution",
+    "no-agent-auto-call",
+    "audit-trail-required-for-future-execution",
+    "p4-m2-hardening-not-execution",
 )
 
 DATACLASS_FIELDS = {
-    "audit_order",
-    "audit_id",
-    "audit_name",
-    "source_status_surface",
-    "closure_question",
-    "closure_signal",
-    "allowed_closure_output",
+    "requirement_order",
+    "requirement_id",
+    "requirement_name",
+    "hardening_purpose",
+    "required_human_input",
+    "required_precondition",
     "prohibited_automation",
+    "audit_signal",
     "blocking_signal",
-    "p4_m0_or_p4_m1_dependency",
 }
 
 DISABLED_STATUS_FLAGS = (
+    "actual_decision_execution_enabled",
+    "automatic_decision_execution_enabled",
+    "manual_execution_command_enabled",
+    "execute_command_enabled",
+    "approval_enabled",
+    "rejection_enabled",
     "automatic_decision_recommendation_enabled",
     "decision_ranking_enabled",
     "automatic_readiness_verdict_enabled",
-    "decision_execution_enabled",
-    "approval_enabled",
-    "rejection_enabled",
     "memory_write_enabled",
     "memory_record_mutation_enabled",
     "proposal_mutation_enabled",
@@ -68,8 +72,13 @@ DISABLED_STATUS_FLAGS = (
     "auto_ingest_enabled",
     "agent_call_enabled",
     "api_mcp_connector_enabled",
+    "p4_m3_started",
+    "p4_m4_started",
+    "p4_m5_started",
     "v7_started",
     "productization_started",
+    "authorization_semantics_granted",
+    "execution_semantics_granted",
 )
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -91,13 +100,8 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "decision",
     "execute-decision",
     "decision-execute",
-    "recommend-decision",
-    "decision-recommendation",
-    "rank-decision",
-    "readiness-verdict",
-    "automatic-readiness",
-    "mark-ready",
-    "mark-not-ready",
+    "manual-execute",
+    "execute-manual-decision",
     "approve",
     "reject",
     "approve-all",
@@ -106,6 +110,13 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "reject-proposal",
     "approve-memory",
     "reject-memory",
+    "recommend-decision",
+    "decision-recommendation",
+    "rank-decision",
+    "readiness-verdict",
+    "automatic-readiness",
+    "mark-ready",
+    "mark-not-ready",
     "write-memory",
     "create-memory",
     "update-memory",
@@ -155,55 +166,63 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "API",
     "MCP",
     "connector",
-    "start-p4-m2",
-    "p4-m2",
+    "start-p4-m3",
+    "start-p4-m4",
+    "start-p4-m5",
     "start-v7",
     "productize",
 }
 
 
-def test_final_boundary_audit_item_order_is_deterministic():
+def test_manual_execution_hardening_requirement_order_is_deterministic():
     assert [
-        item.audit_order for item in list_final_boundary_audit_items()
-    ] == list(range(1, 14))
-    assert final_boundary_audit_item_ids() == AUDIT_ITEM_IDS
-    assert final_boundary_audit_item_ids() == final_boundary_audit_item_ids()
+        item.requirement_order
+        for item in list_manual_execution_hardening_requirements()
+    ] == list(range(1, 16))
+    assert manual_execution_hardening_requirement_ids() == REQUIREMENT_IDS
+    assert (
+        manual_execution_hardening_requirement_ids()
+        == manual_execution_hardening_requirement_ids()
+    )
 
 
-def test_final_boundary_audit_has_exactly_13_items():
-    assert len(list_final_boundary_audit_items()) == 13
+def test_manual_execution_hardening_has_exactly_15_requirements():
+    assert len(list_manual_execution_hardening_requirements()) == 15
 
 
-def test_audit_item_ids_match_required_audit_item_ids():
-    assert final_boundary_audit_item_ids() == AUDIT_ITEM_IDS
+def test_requirement_ids_match_required_requirement_ids():
+    assert manual_execution_hardening_requirement_ids() == REQUIREMENT_IDS
 
 
-def test_every_item_has_required_non_empty_fields():
-    for item in list_final_boundary_audit_items():
-        assert item.audit_name.strip()
-        assert item.source_status_surface.strip()
-        assert item.closure_question.strip()
-        assert item.closure_signal.strip()
-        assert item.allowed_closure_output.strip()
-        assert item.prohibited_automation.strip()
-        assert item.blocking_signal.strip()
-        assert item.p4_m0_or_p4_m1_dependency.strip()
+def test_every_requirement_has_required_non_empty_fields():
+    for requirement in list_manual_execution_hardening_requirements():
+        assert requirement.requirement_name.strip()
+        assert requirement.hardening_purpose.strip()
+        assert requirement.required_human_input.strip()
+        assert requirement.required_precondition.strip()
+        assert requirement.prohibited_automation.strip()
+        assert requirement.audit_signal.strip()
+        assert requirement.blocking_signal.strip()
 
 
-def test_markdown_render_contains_all_13_audit_item_ids():
-    markdown = render_final_boundary_audit_markdown()
+def test_markdown_render_contains_all_15_requirement_ids():
+    markdown = render_manual_execution_hardening_markdown()
 
-    for audit_id in AUDIT_ITEM_IDS:
-        assert audit_id in markdown
+    for requirement_id in REQUIREMENT_IDS:
+        assert requirement_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_final_boundary_audit_markdown()
+    markdown = render_manual_execution_hardening_markdown()
 
-    assert "read-only final boundary audit / closure only" in markdown
-    assert "advisory only" in markdown
-    assert "for human audit and P4-M1 closure review only" in markdown
-    assert "P4-M1 closure is not P4-M2 execution" in markdown
+    assert "P4-M2.0 manual decision execution hardening" in markdown
+    assert "Hardening contract only" in markdown
+    assert "Read-only status surface only" in markdown
+    assert "P4-M2 hardening has started" in markdown
+    assert "Actual decision execution is disabled" in markdown
+    assert "Automatic decision execution is disabled" in markdown
+    assert "Manual execution command is disabled" in markdown
+    assert "Execute command is disabled" in markdown
     assert "does not recommend a decision" in markdown
     assert "does not rank decisions" in markdown
     assert "does not automatically determine readiness" in markdown
@@ -236,109 +255,120 @@ def test_markdown_render_contains_required_boundary_statements():
     assert "does not auto-ingest files" in markdown
     assert "does not auto-ingest external systems" in markdown
     assert "does not call agents" in markdown
-    assert "does not start P4-M2" in markdown
-    assert "does not start v7" in markdown
-    assert "does not productize" in markdown
     assert "does not grant authorization semantics" in markdown
     assert "does not grant execution semantics" in markdown
-    assert "No decision recommendation is performed by this closure report." in markdown
-    assert "No decision ranking is performed by this closure report." in markdown
-    assert "No automatic readiness verdict is performed by this closure report." in markdown
-    assert "No decision execution is performed by this closure report." in markdown
-    assert "No approval or rejection is performed by this closure report." in markdown
-    assert "No memory writing is performed by this closure report." in markdown
-    assert "No proposal mutation is performed by this closure report." in markdown
-    assert "No lifecycle mutation is performed by this closure report." in markdown
-    assert "No do-not-retry mutation is performed by this closure report." in markdown
-    assert "No source/provenance mutation is performed by this closure report." in markdown
-    assert "No API/MCP/connector behavior is performed by this closure report." in markdown
-    assert "P4-M2 is not started by this closure report." in markdown
-    assert "v7 is not started by this closure report." in markdown
-    assert "Productization is not started by this closure report." in markdown
+    assert "does not start P4-M3" in markdown
+    assert "does not start P4-M4" in markdown
+    assert "does not start P4-M5" in markdown
+    assert "does not start v7" in markdown
+    assert "does not productize" in markdown
+    assert "No decision recommendation is performed by this hardening contract." in markdown
+    assert "No decision ranking is performed by this hardening contract." in markdown
+    assert "No automatic readiness verdict is performed by this hardening contract." in markdown
+    assert "No decision execution is performed by this hardening contract." in markdown
+    assert "No approval or rejection is performed by this hardening contract." in markdown
+    assert "No memory writing is performed by this hardening contract." in markdown
+    assert "No proposal mutation is performed by this hardening contract." in markdown
+    assert "No lifecycle mutation is performed by this hardening contract." in markdown
+    assert "No do-not-retry mutation is performed by this hardening contract." in markdown
+    assert "No source/provenance mutation is performed by this hardening contract." in markdown
+    assert "No API/MCP/connector behavior is performed by this hardening contract." in markdown
+    assert "No authorization semantics are granted by this hardening contract." in markdown
+    assert "No execution semantics are granted by this hardening contract." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = final_boundary_audit_as_dicts()
-    second = final_boundary_audit_as_dicts()
+    first = manual_execution_hardening_as_dicts()
+    second = manual_execution_hardening_as_dicts()
 
     assert first == second
-    assert [item["audit_id"] for item in first] == list(AUDIT_ITEM_IDS)
+    assert [item["requirement_id"] for item in first] == list(REQUIREMENT_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = final_boundary_audit_report()
-    second = final_boundary_audit_report()
+    first = manual_execution_hardening_report()
+    second = manual_execution_hardening_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.9"
-    assert first["feature"] == "Final Boundary Audit / Closure"
+    assert first["phase"] == "P4-M2.0"
+    assert first["feature"] == "Manual Decision Execution Hardening"
     assert first["mode"] == "read-only"
-    assert first["audit_item_count"] == 13
-    assert first["boundary"] == FINAL_BOUNDARY_AUDIT_BOUNDARY
+    assert first["hardening_requirement_count"] == 15
+    assert first["boundary"] == MANUAL_EXECUTION_HARDENING_BOUNDARY
 
 
 def test_status_report_has_required_true_flags():
-    status = final_boundary_audit_report()
+    status = manual_execution_hardening_report()
 
-    assert status["final_boundary_audit_read_only"] is True
-    assert status["closure_report_advisory_only"] is True
-    assert status["human_audit_and_closure_review_only"] is True
-    assert status["p4_m1_closure_only"] is True
+    assert status["p4_m2_started"] is True
+    assert status["manual_decision_execution_hardening_started"] is True
+    assert status["manual_execution_contract_only"] is True
 
 
-def test_status_report_has_p4_m2_started_false():
-    assert final_boundary_audit_report()["p4_m2_started"] is False
+def test_status_report_has_required_execution_and_semantic_flags_disabled():
+    status = manual_execution_hardening_report()
+
+    assert status["actual_decision_execution_enabled"] is False
+    assert status["automatic_decision_execution_enabled"] is False
+    assert status["manual_execution_command_enabled"] is False
+    assert status["execute_command_enabled"] is False
+    assert status["authorization_semantics_granted"] is False
+    assert status["execution_semantics_granted"] is False
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = final_boundary_audit_report()
+    status = manual_execution_hardening_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert final_boundary_audit_report()["package_version"] == "6.16.0"
+    assert manual_execution_hardening_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_final_boundary_audit_returns_markdown(tmp_path):
+def test_operator_memory_loop_manual_execution_hardening_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.9 Final Boundary Audit / Closure\n")
+    assert stdout.startswith("# P4-M2.0 Manual Decision Execution Hardening\n")
     assert "## Status Report" in stdout
-    assert FINAL_BOUNDARY_AUDIT_BOUNDARY in stdout
-    for audit_id in AUDIT_ITEM_IDS:
-        assert audit_id in stdout
-    assert "No decision recommendation is performed by this closure report." in stdout
-    assert "No decision ranking is performed by this closure report." in stdout
-    assert "No automatic readiness verdict is performed by this closure report." in stdout
-    assert "No decision execution is performed by this closure report." in stdout
-    assert "No approval or rejection is performed by this closure report." in stdout
-    assert "No memory writing is performed by this closure report." in stdout
-    assert "No proposal mutation is performed by this closure report." in stdout
-    assert "No lifecycle mutation is performed by this closure report." in stdout
-    assert "No do-not-retry mutation is performed by this closure report." in stdout
-    assert "No source/provenance mutation is performed by this closure report." in stdout
-    assert "No API/MCP/connector behavior is performed by this closure report." in stdout
-    assert "P4-M2 is not started by this closure report." in stdout
-    assert "v7 is not started by this closure report." in stdout
-    assert "Productization is not started by this closure report." in stdout
+    assert MANUAL_EXECUTION_HARDENING_BOUNDARY in stdout
+    for requirement_id in REQUIREMENT_IDS:
+        assert requirement_id in stdout
+    assert "P4-M2 hardening has started." in stdout
+    assert "Actual decision execution is disabled." in stdout
+    assert "Automatic decision execution is disabled." in stdout
+    assert "Manual execution command is disabled." in stdout
+    assert "Execute command is disabled." in stdout
+    assert "No decision recommendation is performed by this hardening contract." in stdout
+    assert "No decision ranking is performed by this hardening contract." in stdout
+    assert "No automatic readiness verdict is performed by this hardening contract." in stdout
+    assert "No decision execution is performed by this hardening contract." in stdout
+    assert "No approval or rejection is performed by this hardening contract." in stdout
+    assert "No memory writing is performed by this hardening contract." in stdout
+    assert "No proposal mutation is performed by this hardening contract." in stdout
+    assert "No lifecycle mutation is performed by this hardening contract." in stdout
+    assert "No do-not-retry mutation is performed by this hardening contract." in stdout
+    assert "No source/provenance mutation is performed by this hardening contract." in stdout
+    assert "No API/MCP/connector behavior is performed by this hardening contract." in stdout
+    assert "No authorization semantics are granted by this hardening contract." in stdout
+    assert "No execution semantics are granted by this hardening contract." in stdout
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_memory_loop_final_boundary_audit_format_markdown_returns_markdown(
+def test_operator_memory_loop_manual_execution_hardening_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "final-boundary-audit",
+            "manual-execution-hardening",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -349,15 +379,15 @@ def test_operator_memory_loop_final_boundary_audit_format_markdown_returns_markd
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.9 Final Boundary Audit / Closure\n")
+    assert stdout.startswith("# P4-M2.0 Manual Decision Execution Hardening\n")
 
 
-def test_operator_memory_loop_final_boundary_audit_format_json_returns_deterministic_json(
+def test_operator_memory_loop_manual_execution_hardening_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "final-boundary-audit",
+        "manual-execution-hardening",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -372,23 +402,23 @@ def test_operator_memory_loop_final_boundary_audit_format_json_returns_determini
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == FINAL_BOUNDARY_AUDIT_BOUNDARY
-    assert payload["count"] == 13
-    assert payload["status"] == final_boundary_audit_report()
-    assert [item["audit_id"] for item in payload["items"]] == list(AUDIT_ITEM_IDS)
-    assert set(payload["items"][0]) == DATACLASS_FIELDS
+    assert payload["boundary"] == MANUAL_EXECUTION_HARDENING_BOUNDARY
+    assert payload["count"] == 15
+    assert payload["status"] == manual_execution_hardening_report()
+    assert [item["requirement_id"] for item in payload["requirements"]] == list(REQUIREMENT_IDS)
+    assert set(payload["requirements"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_final_boundary_audit_command_is_read_only_and_creates_no_local_storage(
+def test_operator_manual_execution_hardening_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "final-boundary-audit",
+            "manual-execution-hardening",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -403,21 +433,21 @@ def test_operator_final_boundary_audit_command_is_read_only_and_creates_no_local
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_final_boundary_audit_command_creates_no_proposals(tmp_path):
+def test_operator_manual_execution_hardening_command_creates_no_proposals(tmp_path):
     _run_operator(
-        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
     )
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_final_boundary_audit_command_creates_no_approved_memories(
+def test_operator_manual_execution_hardening_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "final-boundary-audit",
+            "manual-execution-hardening",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -428,20 +458,24 @@ def test_operator_final_boundary_audit_command_creates_no_approved_memories(
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_final_boundary_audit_command_creates_no_boundary_or_state_changes(
+def test_operator_manual_execution_hardening_command_creates_no_boundary_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "manual-execution-hardening", "--workspace-root", str(tmp_path)]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     assert not (storage_root / "decisions.jsonl").exists()
+    assert not (storage_root / "execution.jsonl").exists()
+    assert not (storage_root / "approvals.jsonl").exists()
+    assert not (storage_root / "rejections.jsonl").exists()
     assert not (storage_root / "readiness.jsonl").exists()
     assert not (storage_root / "previews.jsonl").exists()
     assert not (storage_root / "governance_pack.jsonl").exists()
     assert not (storage_root / "final_boundary_audit.jsonl").exists()
     assert not (storage_root / "closure.jsonl").exists()
+    assert not (storage_root / "manual_execution_hardening.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
     assert not (storage_root / "lifecycle.jsonl").exists()
@@ -454,7 +488,7 @@ def test_operator_final_boundary_audit_command_creates_no_boundary_or_state_chan
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_p4_m2_v7_productization_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_p4_m3_p4_m4_p4_m5_v7_productization_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
@@ -547,6 +581,16 @@ def test_existing_p4_m1_8_memory_loop_governance_pack_export_still_works(
     )
 
 
+def test_existing_p4_m1_9_memory_loop_final_boundary_audit_still_works(
+    tmp_path,
+):
+    _assert_existing_command_still_works(
+        tmp_path,
+        "final-boundary-audit",
+        "# P4-M1.9 Final Boundary Audit / Closure\n",
+    )
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -558,7 +602,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_final_boundary_audit():
+def test_no_pyproject_entry_point_is_added_for_manual_execution_hardening():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -566,28 +610,27 @@ def test_no_pyproject_entry_point_is_added_for_final_boundary_audit():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_final_boundary_audit_closure" not in entry_points
-    assert "final-boundary-audit" not in entry_points
+    assert "p4_m2_manual_decision_execution_hardening" not in entry_points
+    assert "manual-execution-hardening" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_audit_items():
-    item = FinalBoundaryAuditItem(
-        audit_order=1,
-        audit_id="custom-final-boundary-audit",
-        audit_name="Custom final boundary audit",
-        source_status_surface="Custom read-only status surface.",
-        closure_question="Is the custom surface read-only?",
-        closure_signal="Custom surface is visible.",
-        allowed_closure_output="Manual closure text only.",
-        prohibited_automation="No decision recommendation, ranking, readiness verdict, or execution.",
-        blocking_signal="Custom surface is hidden.",
-        p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
+def test_custom_markdown_render_accepts_read_only_requirements():
+    requirement = ManualExecutionHardeningRequirement(
+        requirement_order=1,
+        requirement_id="custom-manual-execution-hardening",
+        requirement_name="Custom manual execution hardening",
+        hardening_purpose="Keep the custom hardening surface read-only.",
+        required_human_input="Human inspection only.",
+        required_precondition="No execution command is present.",
+        prohibited_automation="No decision execution.",
+        audit_signal="Custom hardening text is visible.",
+        blocking_signal="Execution behavior is introduced.",
     )
 
-    markdown = render_final_boundary_audit_markdown([item])
+    markdown = render_manual_execution_hardening_markdown([requirement])
 
-    assert "custom-final-boundary-audit" in markdown
-    assert "Is the custom surface read-only?" in markdown
+    assert "custom-manual-execution-hardening" in markdown
+    assert "Keep the custom hardening surface read-only." in markdown
 
 
 def _assert_existing_command_still_works(
