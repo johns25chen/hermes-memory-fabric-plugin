@@ -7,33 +7,33 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_execution_preconditions_snapshot_map import (
-    EXECUTION_PRECONDITIONS_SNAPSHOT_MAP_BOUNDARY,
-    ExecutionPreconditionsSnapshotMapField,
-    execution_preconditions_snapshot_map_as_dicts,
-    execution_preconditions_snapshot_map_field_ids,
-    execution_preconditions_snapshot_map_report,
-    list_execution_preconditions_snapshot_map_fields,
-    render_execution_preconditions_snapshot_map_markdown,
+from hermes_memory_fabric.p4_m2_execution_risk_acceptance_prohibition_map import (
+    EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP_BOUNDARY,
+    ExecutionRiskAcceptanceProhibitionMapField,
+    execution_risk_acceptance_prohibition_map_as_dicts,
+    execution_risk_acceptance_prohibition_map_field_ids,
+    execution_risk_acceptance_prohibition_map_report,
+    list_execution_risk_acceptance_prohibition_map_fields,
+    render_execution_risk_acceptance_prohibition_map_markdown,
 )
 
 
 FIELD_IDS = (
-    "execution-preconditions-snapshot-map-id",
+    "execution-risk-acceptance-prohibition-map-id",
+    "execution-risk-acknowledgement-map-reference",
+    "execution-preconditions-snapshot-map-reference",
     "execution-surface-reference",
     "execution-contract-validation-matrix-reference",
     "manual-authorization-evidence-envelope-reference",
     "human-confirmation-snapshot-reference",
     "manual-decision-reference",
     "operator-reference",
-    "precondition-category",
-    "precondition-snapshot-signal",
-    "precondition-evidence-reference",
-    "risk-blocking-signal",
-    "dependency-boundary-signal",
-    "revocation-or-expiry-signal",
-    "audit-trace-reference",
-    "precondition-semantics-disabled",
+    "risk-acceptance-category",
+    "risk-acceptance-prohibition-signal",
+    "risk-waiver-prohibition-signal",
+    "risk-acceptance-evidence-reference",
+    "risk-acceptance-blocking-boundary",
+    "acceptance-semantics-disabled",
     "validation-semantics-disabled",
     "execution-semantics-disabled",
 )
@@ -43,11 +43,12 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "snapshot_signal",
+    "risk_acceptance_category",
+    "risk_acceptance_prohibition_signal",
+    "risk_waiver_prohibition_signal",
     "evidence_boundary",
-    "prohibited_semantics",
     "blocking_boundary",
-    "future_precondition_note",
+    "disabled_semantics",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -71,62 +72,70 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-acceptance-prohibition-map",
 }
 
-PREVIOUS_P4_M2_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "execution-preconditions-snapshot-map",
-    "execution-risk-acknowledgement-map",
-    "execution-risk-acceptance-prohibition-map",
+PREVIOUS_P4_M2_6_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "execution-risk-acceptance-prohibition-map"
 }
 
 BOUNDARY_PHRASES = (
-    "P4-M2.5",
-    "Execution Preconditions Snapshot Map",
-    "Definition-only",
-    "Inspection-only",
-    "Read-only",
-    "No execution",
-    "No confirmation",
-    "No authorization",
-    "No approval",
-    "No rejection",
-    "No memory mutation",
-    "No memory record creation",
-    "No memory record update",
-    "No memory record deletion",
-    "No proposal mutation",
-    "No lifecycle mutation",
-    "No retry policy mutation",
-    "No source fetching",
-    "No provenance writing",
-    "No evidence mutation",
-    "No citation mutation",
-    "No live confirmation validation",
-    "No live authorization validation",
-    "No live contract validation",
-    "No input validation",
-    "No record validation",
-    "No validation verdict",
-    "No readiness verdict",
-    "No automatic readiness verdict",
-    "No decision recommendation",
-    "No decision ranking",
-    "No confirmation semantics",
-    "No authorization semantics",
-    "No execution semantics",
-    "No API",
-    "No MCP",
-    "No connector",
-    "No agent call",
-    "No Codex/Hermes/ChatGPT product-code auto-call",
-    "No P4-M3",
-    "No P4-M4",
-    "No P4-M5",
-    "No v7",
-    "No productization",
-    "No UI",
-    "No Operator Console",
-    "No MVP",
-    "No deploy",
-    "No full Memory Graph",
+    "P4-M2.7",
+    "Execution Risk Acceptance Prohibition Map",
+    "read-only",
+    "definition-only",
+    "inspection-only",
+    "no execution",
+    "no confirmation",
+    "no authorization",
+    "no approval",
+    "no rejection",
+    "no risk acceptance",
+    "no risk waiver",
+    "no implied risk acceptance",
+    "no implied risk waiver",
+    "no acknowledgement-as-acceptance",
+    "no acknowledgement-as-waiver",
+    "no live risk acknowledgement",
+    "no memory mutation",
+    "no memory record creation",
+    "no memory record update",
+    "no memory record deletion",
+    "no proposal mutation",
+    "no lifecycle mutation",
+    "no retry policy mutation",
+    "no source fetching",
+    "no provenance writing",
+    "no evidence mutation",
+    "no citation mutation",
+    "no live confirmation validation",
+    "no live authorization validation",
+    "no live contract validation",
+    "no input validation",
+    "no record validation",
+    "no validation verdict",
+    "no readiness verdict",
+    "no automatic readiness verdict",
+    "no decision recommendation",
+    "no decision ranking",
+    "no acceptance semantics",
+    "no waiver semantics",
+    "no acknowledgement semantics",
+    "no confirmation semantics",
+    "no authorization semantics",
+    "no execution semantics",
+    "no API",
+    "no MCP",
+    "no connector",
+    "no agent call",
+    "no Codex/Hermes/ChatGPT product-code auto-call",
+    "no P4-M3",
+    "no P4-M4",
+    "no P4-M5",
+    "no v7",
+    "no productization",
+    "no UI",
+    "no Operator Console",
+    "no MVP",
+    "no deploy",
+    "no full Memory Graph",
 )
 
 TRUE_STATUS_FLAGS = (
@@ -137,10 +146,15 @@ TRUE_STATUS_FLAGS = (
     "execution_contract_validation_matrix_available",
     "manual_authorization_evidence_envelope_available",
     "human_confirmation_snapshot_contract_available",
-    "execution_preconditions_snapshot_map_started",
-    "execution_preconditions_snapshot_map_definition_only",
-    "snapshot_map_fields_defined",
-    "precondition_snapshot_structure_defined",
+    "execution_preconditions_snapshot_map_available",
+    "execution_risk_acknowledgement_map_available",
+    "execution_risk_acceptance_prohibition_map_started",
+    "execution_risk_acceptance_prohibition_map_definition_only",
+    "risk_acceptance_prohibition_map_fields_defined",
+    "risk_acceptance_structure_prohibited",
+    "risk_waiver_structure_prohibited",
+    "acknowledgement_as_acceptance_prohibited",
+    "acknowledgement_as_waiver_prohibited",
 )
 
 DISABLED_STATUS_FLAGS = (
@@ -149,6 +163,13 @@ DISABLED_STATUS_FLAGS = (
     "authorization_enabled",
     "approval_enabled",
     "rejection_enabled",
+    "risk_acceptance_enabled",
+    "risk_waiver_enabled",
+    "implied_risk_acceptance_enabled",
+    "implied_risk_waiver_enabled",
+    "acknowledgement_as_acceptance_enabled",
+    "acknowledgement_as_waiver_enabled",
+    "live_risk_acknowledgement_enabled",
     "memory_mutation_enabled",
     "memory_record_creation_enabled",
     "memory_record_update_enabled",
@@ -170,6 +191,9 @@ DISABLED_STATUS_FLAGS = (
     "automatic_readiness_verdict_enabled",
     "decision_recommendation_enabled",
     "decision_ranking_enabled",
+    "acceptance_semantics_granted",
+    "waiver_semantics_granted",
+    "acknowledgement_semantics_granted",
     "confirmation_semantics_granted",
     "authorization_semantics_granted",
     "execution_semantics_granted",
@@ -197,6 +221,12 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "authorization",
     "approve",
     "reject",
+    "accept-risk",
+    "risk-acceptance",
+    "waive-risk",
+    "risk-waiver",
+    "acknowledge-risk",
+    "live-risk-acknowledgement",
     "execute",
     "execute-decision",
     "manual-execute",
@@ -239,33 +269,33 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_snapshot_map_field_order_count_and_ids_are_stable():
-    fields = list_execution_preconditions_snapshot_map_fields()
+def test_acceptance_prohibition_map_field_order_count_and_ids_are_stable():
+    fields = list_execution_risk_acceptance_prohibition_map_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 18))
     assert len(fields) == 17
-    assert execution_preconditions_snapshot_map_field_ids() == FIELD_IDS
-    assert execution_preconditions_snapshot_map_field_ids() == FIELD_IDS
+    assert execution_risk_acceptance_prohibition_map_field_ids() == FIELD_IDS
 
 
-def test_every_snapshot_map_field_has_required_non_empty_values():
-    for field in list_execution_preconditions_snapshot_map_fields():
+def test_every_acceptance_prohibition_map_field_has_required_non_empty_values():
+    for field in list_execution_risk_acceptance_prohibition_map_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.snapshot_signal.strip()
+        assert field.risk_acceptance_category.strip()
+        assert field.risk_acceptance_prohibition_signal.strip()
+        assert field.risk_waiver_prohibition_signal.strip()
         assert field.evidence_boundary.strip()
-        assert field.prohibited_semantics.strip()
         assert field.blocking_boundary.strip()
-        assert field.future_precondition_note.strip()
+        assert field.disabled_semantics.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_execution_preconditions_snapshot_map_markdown()
-    second = render_execution_preconditions_snapshot_map_markdown()
+    first = render_execution_risk_acceptance_prohibition_map_markdown()
+    second = render_execution_risk_acceptance_prohibition_map_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.5 Execution Preconditions Snapshot Map\n")
-    assert EXECUTION_PRECONDITIONS_SNAPSHOT_MAP_BOUNDARY in first
+    assert first.startswith("# P4-M2.7 Execution Risk Acceptance Prohibition Map\n")
+    assert EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASES:
@@ -275,7 +305,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "execution-preconditions-snapshot-map",
+        "execution-risk-acceptance-prohibition-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -290,9 +320,9 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EXECUTION_PRECONDITIONS_SNAPSHOT_MAP_BOUNDARY
+    assert first_payload["boundary"] == EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP_BOUNDARY
     assert first_payload["count"] == 17
-    assert first_payload["status"] == execution_preconditions_snapshot_map_report()
+    assert first_payload["status"] == execution_risk_acceptance_prohibition_map_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASES:
@@ -301,23 +331,23 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = execution_preconditions_snapshot_map_as_dicts()
-    second_fields = execution_preconditions_snapshot_map_as_dicts()
-    first_status = execution_preconditions_snapshot_map_report()
-    second_status = execution_preconditions_snapshot_map_report()
+    first_fields = execution_risk_acceptance_prohibition_map_as_dicts()
+    second_fields = execution_risk_acceptance_prohibition_map_as_dicts()
+    first_status = execution_risk_acceptance_prohibition_map_report()
+    second_status = execution_risk_acceptance_prohibition_map_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.5"
-    assert first_status["feature"] == "Execution Preconditions Snapshot Map"
+    assert first_status["phase"] == "P4-M2.7"
+    assert first_status["feature"] == "Execution Risk Acceptance Prohibition Map"
     assert first_status["mode"] == "read-only"
-    assert first_status["snapshot_map_field_count"] == 17
-    assert first_status["boundary"] == EXECUTION_PRECONDITIONS_SNAPSHOT_MAP_BOUNDARY
+    assert first_status["risk_acceptance_prohibition_map_field_count"] == 17
+    assert first_status["boundary"] == EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = execution_preconditions_snapshot_map_report()
+    status = execution_risk_acceptance_prohibition_map_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -329,7 +359,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-preconditions-snapshot-map",
+            "execution-risk-acceptance-prohibition-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -338,9 +368,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.5 Execution Preconditions Snapshot Map\n")
+    assert stdout.startswith("# P4-M2.7 Execution Risk Acceptance Prohibition Map\n")
     assert "## Status Report" in stdout
-    assert EXECUTION_PRECONDITIONS_SNAPSHOT_MAP_BOUNDARY in stdout
+    assert EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -349,7 +379,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "execution-preconditions-snapshot-map",
+        "execution-risk-acceptance-prohibition-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -365,7 +395,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.5 Execution Preconditions Snapshot Map\n")
+    assert first_stdout.startswith("# P4-M2.7 Execution Risk Acceptance Prohibition Map\n")
     assert not (tmp_path / ".local").exists()
 
 
@@ -381,7 +411,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "execution-preconditions-snapshot-map",
+            "execution-risk-acceptance-prohibition-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -389,7 +419,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-preconditions-snapshot-map",
+            "execution-risk-acceptance-prohibition-map",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -399,7 +429,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.5")
+    assert markdown_stdout.startswith("# P4-M2.7")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 17
@@ -410,7 +440,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "execution-preconditions-snapshot-map",
+            "execution-risk-acceptance-prohibition-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -418,7 +448,10 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "execution_preconditions_snapshot_map.jsonl",
+        "execution_risk_acceptance_prohibition_map.jsonl",
+        "risk_acceptance.jsonl",
+        "risk_waiver.jsonl",
+        "risk_acknowledgement.jsonl",
         "confirmation.jsonl",
         "authorization.jsonl",
         "execution.jsonl",
@@ -440,16 +473,16 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_4_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_6_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "execution-preconditions-snapshot-map" in commands
-    assert PREVIOUS_P4_M2_4_READ_ONLY_COMMANDS.issubset(commands)
+    assert "execution-risk-acceptance-prohibition-map" in commands
+    assert PREVIOUS_P4_M2_6_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_4_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_6_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -466,6 +499,8 @@ def test_existing_p4_m1_0_through_p4_m2_4_memory_loop_commands_still_work(tmp_pa
         "execution-contract-validation-matrix": "# P4-M2.2 Execution Contract Validation Matrix\n",
         "manual-authorization-evidence-envelope": "# P4-M2.3 Manual Authorization Evidence Envelope\n",
         "human-confirmation-snapshot-contract": "# P4-M2.4 Human Confirmation Snapshot Contract\n",
+        "execution-preconditions-snapshot-map": "# P4-M2.5 Execution Preconditions Snapshot Map\n",
+        "execution-risk-acknowledgement-map": "# P4-M2.6 Execution Risk Acknowledgement Map\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -479,6 +514,17 @@ def test_existing_p4_m1_0_through_p4_m2_4_memory_loop_commands_still_work(tmp_pa
         assert not (tmp_path / ".local").exists()
 
 
+def test_doc_contains_required_boundaries():
+    doc = Path(
+        "docs/CIVILIZATION_CORE_P4_M2_7_EXECUTION_RISK_ACCEPTANCE_PROHIBITION_MAP.md"
+    ).read_text()
+
+    for phrase in BOUNDARY_PHRASES:
+        assert phrase in doc
+    for field_id in FIELD_IDS:
+        assert field_id in doc
+
+
 def test_package_version_lock_and_no_entry_point():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -488,8 +534,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_preconditions_snapshot_map" not in entry_points
-    assert "execution-preconditions-snapshot-map" not in entry_points
+    assert "p4_m2_execution_risk_acceptance_prohibition_map" not in entry_points
+    assert "execution-risk-acceptance-prohibition-map" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -497,21 +543,22 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionPreconditionsSnapshotMapField(
+    field = ExecutionRiskAcceptanceProhibitionMapField(
         field_order=1,
-        field_id="custom-execution-preconditions-snapshot-map",
-        field_name="Custom Snapshot Map Field",
+        field_id="custom-execution-risk-acceptance-prohibition-map",
+        field_name="Custom Risk Acceptance Prohibition Map Field",
         field_purpose="Custom inspection-only purpose.",
-        snapshot_signal="Custom snapshot signal is visible.",
+        risk_acceptance_category="custom-prohibition",
+        risk_acceptance_prohibition_signal="Custom acceptance prohibition signal is visible.",
+        risk_waiver_prohibition_signal="Custom waiver prohibition signal is visible.",
         evidence_boundary="Custom evidence boundary is read-only.",
-        prohibited_semantics="No execution, confirmation, authorization, validation, readiness, or mutation semantics.",
-        blocking_boundary="Execution, confirmation, authorization, validation, readiness, or mutation behavior is introduced.",
-        future_precondition_note="A later path may inspect this custom field.",
+        blocking_boundary="Acceptance, waiver, acknowledgement, validation, readiness, confirmation, authorization, execution, or mutation behavior is introduced.",
+        disabled_semantics="no acceptance semantics, no waiver semantics, no acknowledgement semantics, no validation verdict, no readiness verdict, no execution semantics.",
     )
 
-    markdown = render_execution_preconditions_snapshot_map_markdown([field])
+    markdown = render_execution_risk_acceptance_prohibition_map_markdown([field])
 
-    assert "custom-execution-preconditions-snapshot-map" in markdown
+    assert "custom-execution-risk-acceptance-prohibition-map" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 

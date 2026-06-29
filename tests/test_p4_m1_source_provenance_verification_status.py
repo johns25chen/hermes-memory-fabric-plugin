@@ -448,6 +448,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
         "human-confirmation-snapshot-contract",
         "execution-preconditions-snapshot-map",
         "execution-risk-acknowledgement-map",
+        "execution-risk-acceptance-prohibition-map",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
