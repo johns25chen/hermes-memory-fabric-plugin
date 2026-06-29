@@ -69,6 +69,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "manual-authorization-evidence-envelope",
     "human-confirmation-snapshot-contract",
     "execution-preconditions-snapshot-map",
+    "execution-risk-acknowledgement-map",
 }
 
 TRUE_STATUS_FLAGS = (

@@ -99,6 +99,12 @@ from .p4_m2_execution_preconditions_snapshot_map import (
     execution_preconditions_snapshot_map_report,
     render_execution_preconditions_snapshot_map_markdown,
 )
+from .p4_m2_execution_risk_acknowledgement_map import (
+    EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY,
+    execution_risk_acknowledgement_map_as_dicts,
+    execution_risk_acknowledgement_map_report,
+    render_execution_risk_acknowledgement_map_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -358,6 +364,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_execution_preconditions_snapshot_map)
     memory_loop_execution_preconditions_snapshot_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_execution_risk_acknowledgement_map = memory_loop_subparsers.add_parser(
+        "execution-risk-acknowledgement-map"
+    )
+    _add_workspace_root(memory_loop_execution_risk_acknowledgement_map)
+    memory_loop_execution_risk_acknowledgement_map.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -810,6 +826,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_execution_preconditions_snapshot_map_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "execution-risk-acknowledgement-map":
+            if args.format == "markdown":
+                return render_execution_risk_acknowledgement_map_markdown()
+            if args.format == "json":
+                fields = execution_risk_acknowledgement_map_as_dicts()
+                return {
+                    "boundary": EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": execution_risk_acknowledgement_map_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_execution_risk_acknowledgement_map_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
