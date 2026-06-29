@@ -79,9 +79,18 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "manual-execution-hardening",
     "execution-surface-contract",
     "execution-contract-validation-matrix",
+    "manual-authorization-evidence-envelope",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "authorize",
+    "authorization",
+    "authorize-decision",
+    "decision-authorization",
+    "grant-authorization",
+    "revoke-authorization",
+    "validate-authorization-envelope",
+    "live-authorization-validation",
     "decide",
     "decision",
     "execute-decision",
