@@ -7,40 +7,42 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m1_governance_pack_export import (
-    GOVERNANCE_PACK_EXPORT_BOUNDARY,
-    GovernancePackSection,
-    governance_pack_as_dicts,
-    governance_pack_export_report,
-    governance_pack_section_ids,
-    list_governance_pack_sections,
-    render_governance_pack_markdown,
+from hermes_memory_fabric.p4_m1_final_boundary_audit_closure import (
+    FINAL_BOUNDARY_AUDIT_BOUNDARY,
+    FinalBoundaryAuditItem,
+    final_boundary_audit_as_dicts,
+    final_boundary_audit_item_ids,
+    final_boundary_audit_report,
+    list_final_boundary_audit_items,
+    render_final_boundary_audit_markdown,
 )
 
 
-SECTION_IDS = (
-    "checklist-pack-section",
-    "proposal-review-pack-section",
-    "recall-verification-pack-section",
-    "lifecycle-verification-pack-section",
-    "do-not-retry-pack-section",
-    "source-provenance-pack-section",
-    "decision-readiness-pack-section",
-    "manual-decision-preview-pack-section",
-    "unified-governance-pack",
-    "export-not-decision",
+AUDIT_ITEM_IDS = (
+    "checklist-boundary-audit",
+    "proposal-review-boundary-audit",
+    "recall-verification-boundary-audit",
+    "lifecycle-verification-boundary-audit",
+    "do-not-retry-boundary-audit",
+    "source-provenance-boundary-audit",
+    "decision-readiness-boundary-audit",
+    "manual-decision-preview-boundary-audit",
+    "governance-pack-export-boundary-audit",
+    "p4-m1-read-only-corridor-closure",
+    "p4-m2-not-started",
+    "v7-productization-not-started",
     "automation-boundary-intact",
 )
 
 DATACLASS_FIELDS = {
-    "section_order",
-    "section_id",
-    "section_name",
+    "audit_order",
+    "audit_id",
+    "audit_name",
     "source_status_surface",
-    "export_purpose",
-    "allowed_export_output",
+    "closure_question",
+    "closure_signal",
+    "allowed_closure_output",
     "prohibited_automation",
-    "human_audit_signal",
     "blocking_signal",
     "p4_m0_or_p4_m1_dependency",
 }
@@ -152,50 +154,55 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "API",
     "MCP",
     "connector",
+    "start-p4-m2",
+    "p4-m2",
+    "start-v7",
+    "productize",
 }
 
 
-def test_governance_pack_section_order_is_deterministic():
+def test_final_boundary_audit_item_order_is_deterministic():
     assert [
-        section.section_order for section in list_governance_pack_sections()
-    ] == list(range(1, 12))
-    assert governance_pack_section_ids() == SECTION_IDS
-    assert governance_pack_section_ids() == governance_pack_section_ids()
+        item.audit_order for item in list_final_boundary_audit_items()
+    ] == list(range(1, 14))
+    assert final_boundary_audit_item_ids() == AUDIT_ITEM_IDS
+    assert final_boundary_audit_item_ids() == final_boundary_audit_item_ids()
 
 
-def test_governance_pack_has_exactly_11_sections():
-    assert len(list_governance_pack_sections()) == 11
+def test_final_boundary_audit_has_exactly_13_items():
+    assert len(list_final_boundary_audit_items()) == 13
 
 
-def test_section_ids_match_required_section_ids():
-    assert governance_pack_section_ids() == SECTION_IDS
+def test_audit_item_ids_match_required_audit_item_ids():
+    assert final_boundary_audit_item_ids() == AUDIT_ITEM_IDS
 
 
-def test_every_section_has_required_non_empty_fields():
-    for section in list_governance_pack_sections():
-        assert section.section_name.strip()
-        assert section.source_status_surface.strip()
-        assert section.export_purpose.strip()
-        assert section.allowed_export_output.strip()
-        assert section.prohibited_automation.strip()
-        assert section.human_audit_signal.strip()
-        assert section.blocking_signal.strip()
-        assert section.p4_m0_or_p4_m1_dependency.strip()
+def test_every_item_has_required_non_empty_fields():
+    for item in list_final_boundary_audit_items():
+        assert item.audit_name.strip()
+        assert item.source_status_surface.strip()
+        assert item.closure_question.strip()
+        assert item.closure_signal.strip()
+        assert item.allowed_closure_output.strip()
+        assert item.prohibited_automation.strip()
+        assert item.blocking_signal.strip()
+        assert item.p4_m0_or_p4_m1_dependency.strip()
 
 
-def test_markdown_render_contains_all_11_section_ids():
-    markdown = render_governance_pack_markdown()
+def test_markdown_render_contains_all_13_audit_item_ids():
+    markdown = render_final_boundary_audit_markdown()
 
-    for section_id in SECTION_IDS:
-        assert section_id in markdown
+    for audit_id in AUDIT_ITEM_IDS:
+        assert audit_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_governance_pack_markdown()
+    markdown = render_final_boundary_audit_markdown()
 
-    assert "read-only governance pack export only" in markdown
+    assert "read-only final boundary audit / closure only" in markdown
     assert "advisory only" in markdown
-    assert "for human audit, archive, handoff, and review only" in markdown
+    assert "for human audit and P4-M1 closure review only" in markdown
+    assert "P4-M1 closure is not P4-M2 execution" in markdown
     assert "does not recommend a decision" in markdown
     assert "does not rank decisions" in markdown
     assert "does not automatically determine readiness" in markdown
@@ -228,97 +235,109 @@ def test_markdown_render_contains_required_boundary_statements():
     assert "does not auto-ingest files" in markdown
     assert "does not auto-ingest external systems" in markdown
     assert "does not call agents" in markdown
+    assert "does not start P4-M2" in markdown
     assert "does not start v7" in markdown
     assert "does not productize" in markdown
     assert "does not grant authorization semantics" in markdown
     assert "does not grant execution semantics" in markdown
-    assert "No decision recommendation is performed by this export." in markdown
-    assert "No decision ranking is performed by this export." in markdown
-    assert "No automatic readiness verdict is performed by this export." in markdown
-    assert "No decision execution is performed by this export." in markdown
-    assert "No approval or rejection is performed by this export." in markdown
-    assert "No memory writing is performed by this export." in markdown
-    assert "No proposal mutation is performed by this export." in markdown
-    assert "No lifecycle mutation is performed by this export." in markdown
-    assert "No do-not-retry mutation is performed by this export." in markdown
-    assert "No source/provenance mutation is performed by this export." in markdown
-    assert "No API/MCP/connector behavior is performed by this export." in markdown
+    assert "No decision recommendation is performed by this closure report." in markdown
+    assert "No decision ranking is performed by this closure report." in markdown
+    assert "No automatic readiness verdict is performed by this closure report." in markdown
+    assert "No decision execution is performed by this closure report." in markdown
+    assert "No approval or rejection is performed by this closure report." in markdown
+    assert "No memory writing is performed by this closure report." in markdown
+    assert "No proposal mutation is performed by this closure report." in markdown
+    assert "No lifecycle mutation is performed by this closure report." in markdown
+    assert "No do-not-retry mutation is performed by this closure report." in markdown
+    assert "No source/provenance mutation is performed by this closure report." in markdown
+    assert "No API/MCP/connector behavior is performed by this closure report." in markdown
+    assert "P4-M2 is not started by this closure report." in markdown
+    assert "v7 is not started by this closure report." in markdown
+    assert "Productization is not started by this closure report." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = governance_pack_as_dicts()
-    second = governance_pack_as_dicts()
+    first = final_boundary_audit_as_dicts()
+    second = final_boundary_audit_as_dicts()
 
     assert first == second
-    assert [section["section_id"] for section in first] == list(SECTION_IDS)
+    assert [item["audit_id"] for item in first] == list(AUDIT_ITEM_IDS)
     assert set(first[0]) == DATACLASS_FIELDS
 
 
 def test_status_report_is_deterministic():
-    first = governance_pack_export_report()
-    second = governance_pack_export_report()
+    first = final_boundary_audit_report()
+    second = final_boundary_audit_report()
 
     assert first == second
-    assert first["phase"] == "P4-M1.8"
-    assert first["feature"] == "Governance Pack Export"
+    assert first["phase"] == "P4-M1.9"
+    assert first["feature"] == "Final Boundary Audit / Closure"
     assert first["mode"] == "read-only"
-    assert first["pack_section_count"] == 11
-    assert first["boundary"] == GOVERNANCE_PACK_EXPORT_BOUNDARY
+    assert first["audit_item_count"] == 13
+    assert first["boundary"] == FINAL_BOUNDARY_AUDIT_BOUNDARY
 
 
 def test_status_report_has_required_true_flags():
-    status = governance_pack_export_report()
+    status = final_boundary_audit_report()
 
-    assert status["governance_pack_export_read_only"] is True
-    assert status["governance_pack_export_advisory_only"] is True
-    assert status["human_audit_archive_handoff_review_only"] is True
+    assert status["final_boundary_audit_read_only"] is True
+    assert status["closure_report_advisory_only"] is True
+    assert status["human_audit_and_closure_review_only"] is True
+    assert status["p4_m1_closure_only"] is True
+
+
+def test_status_report_has_p4_m2_started_false():
+    assert final_boundary_audit_report()["p4_m2_started"] is False
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = governance_pack_export_report()
+    status = final_boundary_audit_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert governance_pack_export_report()["package_version"] == "6.16.0"
+    assert final_boundary_audit_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_governance_pack_export_returns_markdown(tmp_path):
+def test_operator_memory_loop_final_boundary_audit_returns_markdown(tmp_path):
     exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
     )
 
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.8 Governance Pack Export\n")
+    assert stdout.startswith("# P4-M1.9 Final Boundary Audit / Closure\n")
     assert "## Status Report" in stdout
-    assert GOVERNANCE_PACK_EXPORT_BOUNDARY in stdout
-    for section_id in SECTION_IDS:
-        assert section_id in stdout
-    assert "No decision recommendation is performed by this export." in stdout
-    assert "No decision ranking is performed by this export." in stdout
-    assert "No automatic readiness verdict is performed by this export." in stdout
-    assert "No decision execution is performed by this export." in stdout
-    assert "No approval or rejection is performed by this export." in stdout
-    assert "No memory writing is performed by this export." in stdout
-    assert "No proposal mutation is performed by this export." in stdout
-    assert "No lifecycle mutation is performed by this export." in stdout
-    assert "No do-not-retry mutation is performed by this export." in stdout
-    assert "No source/provenance mutation is performed by this export." in stdout
-    assert "No API/MCP/connector behavior is performed by this export." in stdout
+    assert FINAL_BOUNDARY_AUDIT_BOUNDARY in stdout
+    for audit_id in AUDIT_ITEM_IDS:
+        assert audit_id in stdout
+    assert "No decision recommendation is performed by this closure report." in stdout
+    assert "No decision ranking is performed by this closure report." in stdout
+    assert "No automatic readiness verdict is performed by this closure report." in stdout
+    assert "No decision execution is performed by this closure report." in stdout
+    assert "No approval or rejection is performed by this closure report." in stdout
+    assert "No memory writing is performed by this closure report." in stdout
+    assert "No proposal mutation is performed by this closure report." in stdout
+    assert "No lifecycle mutation is performed by this closure report." in stdout
+    assert "No do-not-retry mutation is performed by this closure report." in stdout
+    assert "No source/provenance mutation is performed by this closure report." in stdout
+    assert "No API/MCP/connector behavior is performed by this closure report." in stdout
+    assert "P4-M2 is not started by this closure report." in stdout
+    assert "v7 is not started by this closure report." in stdout
+    assert "Productization is not started by this closure report." in stdout
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_memory_loop_governance_pack_export_format_markdown_returns_markdown(
+def test_operator_memory_loop_final_boundary_audit_format_markdown_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "governance-pack-export",
+            "final-boundary-audit",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -329,15 +348,15 @@ def test_operator_memory_loop_governance_pack_export_format_markdown_returns_mar
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M1.8 Governance Pack Export\n")
+    assert stdout.startswith("# P4-M1.9 Final Boundary Audit / Closure\n")
 
 
-def test_operator_memory_loop_governance_pack_export_format_json_returns_deterministic_json(
+def test_operator_memory_loop_final_boundary_audit_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "governance-pack-export",
+        "final-boundary-audit",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -352,23 +371,23 @@ def test_operator_memory_loop_governance_pack_export_format_json_returns_determi
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == GOVERNANCE_PACK_EXPORT_BOUNDARY
-    assert payload["count"] == 11
-    assert payload["status"] == governance_pack_export_report()
-    assert [section["section_id"] for section in payload["sections"]] == list(SECTION_IDS)
-    assert set(payload["sections"][0]) == DATACLASS_FIELDS
+    assert payload["boundary"] == FINAL_BOUNDARY_AUDIT_BOUNDARY
+    assert payload["count"] == 13
+    assert payload["status"] == final_boundary_audit_report()
+    assert [item["audit_id"] for item in payload["items"]] == list(AUDIT_ITEM_IDS)
+    assert set(payload["items"][0]) == DATACLASS_FIELDS
 
 
-def test_operator_governance_pack_export_command_is_read_only_and_creates_no_local_storage(
+def test_operator_final_boundary_audit_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "governance-pack-export",
+            "final-boundary-audit",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -383,21 +402,21 @@ def test_operator_governance_pack_export_command_is_read_only_and_creates_no_loc
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_governance_pack_export_command_creates_no_proposals(tmp_path):
+def test_operator_final_boundary_audit_command_creates_no_proposals(tmp_path):
     _run_operator(
-        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
     )
 
     assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
 
 
-def test_operator_governance_pack_export_command_creates_no_approved_memories(
+def test_operator_final_boundary_audit_command_creates_no_approved_memories(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "governance-pack-export",
+            "final-boundary-audit",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -408,11 +427,11 @@ def test_operator_governance_pack_export_command_creates_no_approved_memories(
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_governance_pack_export_command_creates_no_decision_readiness_preview_governance_pack_memory_proposal_lifecycle_do_not_retry_source_provenance_files_or_state_changes(
+def test_operator_final_boundary_audit_command_creates_no_boundary_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        ["memory-loop", "governance-pack-export", "--workspace-root", str(tmp_path)]
+        ["memory-loop", "final-boundary-audit", "--workspace-root", str(tmp_path)]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
@@ -420,6 +439,8 @@ def test_operator_governance_pack_export_command_creates_no_decision_readiness_p
     assert not (storage_root / "readiness.jsonl").exists()
     assert not (storage_root / "previews.jsonl").exists()
     assert not (storage_root / "governance_pack.jsonl").exists()
+    assert not (storage_root / "final_boundary_audit.jsonl").exists()
+    assert not (storage_root / "closure.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
     assert not (storage_root / "lifecycle.jsonl").exists()
@@ -432,7 +453,7 @@ def test_operator_governance_pack_export_command_creates_no_decision_readiness_p
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_p4_m2_v7_productization_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
@@ -440,126 +461,89 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision
 
 
 def test_existing_p4_m1_0_memory_loop_checklist_still_works(tmp_path):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "checklist", "--workspace-root", str(tmp_path)]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "checklist",
+        "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.0 Human-Gated Memory Loop Checklist\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_1_memory_loop_review_status_still_works(tmp_path):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "review-status", "--workspace-root", str(tmp_path)]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "review-status",
+        "# P4-M1.1 Human-Gated Proposal Review Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.1 Human-Gated Proposal Review Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_2_memory_loop_recall_verification_status_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "recall-verification-status", "--workspace-root", str(tmp_path)]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "recall-verification-status",
+        "# P4-M1.2 Human-Gated Recall Verification Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.2 Human-Gated Recall Verification Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_3_memory_loop_lifecycle_verification_status_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "lifecycle-verification-status", "--workspace-root", str(tmp_path)]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "lifecycle-verification-status",
+        "# P4-M1.3 Human-Gated Lifecycle Verification Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.3 Human-Gated Lifecycle Verification Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_4_memory_loop_do_not_retry_verification_status_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        [
-            "memory-loop",
-            "do-not-retry-verification-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "do-not-retry-verification-status",
+        "# P4-M1.4 Human-Gated Do-Not-Retry Verification Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.4 Human-Gated Do-Not-Retry Verification Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_5_memory_loop_source_provenance_verification_status_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        [
-            "memory-loop",
-            "source-provenance-verification-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "source-provenance-verification-status",
+        "# P4-M1.5 Source / Provenance Verification Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.5 Source / Provenance Verification Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_6_memory_loop_decision_readiness_status_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        [
-            "memory-loop",
-            "decision-readiness-status",
-            "--workspace-root",
-            str(tmp_path),
-        ]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "decision-readiness-status",
+        "# P4-M1.6 Decision Readiness Status\n",
     )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.6 Decision Readiness Status\n")
-    assert not (tmp_path / ".local").exists()
 
 
 def test_existing_p4_m1_7_memory_loop_manual_decision_preview_still_works(
     tmp_path,
 ):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "manual-decision-preview", "--workspace-root", str(tmp_path)]
+    _assert_existing_command_still_works(
+        tmp_path,
+        "manual-decision-preview",
+        "# P4-M1.7 Manual Decision Preview\n",
     )
 
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M1.7 Manual Decision Preview\n")
-    assert not (tmp_path / ".local").exists()
+
+def test_existing_p4_m1_8_memory_loop_governance_pack_export_still_works(
+    tmp_path,
+):
+    _assert_existing_command_still_works(
+        tmp_path,
+        "governance-pack-export",
+        "# P4-M1.8 Governance Pack Export\n",
+    )
 
 
 def test_package_version_remains_6_16_0():
@@ -573,7 +557,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_governance_pack_export():
+def test_no_pyproject_entry_point_is_added_for_final_boundary_audit():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -581,28 +565,44 @@ def test_no_pyproject_entry_point_is_added_for_governance_pack_export():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m1_governance_pack_export" not in entry_points
-    assert "governance-pack-export" not in entry_points
+    assert "p4_m1_final_boundary_audit_closure" not in entry_points
+    assert "final-boundary-audit" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_sections():
-    section = GovernancePackSection(
-        section_order=1,
-        section_id="custom-pack-section",
-        section_name="Custom pack section",
+def test_custom_markdown_render_accepts_read_only_audit_items():
+    item = FinalBoundaryAuditItem(
+        audit_order=1,
+        audit_id="custom-final-boundary-audit",
+        audit_name="Custom final boundary audit",
         source_status_surface="Custom read-only status surface.",
-        export_purpose="Package a custom read-only section.",
-        allowed_export_output="Manual export text only.",
+        closure_question="Is the custom surface read-only?",
+        closure_signal="Custom surface is visible.",
+        allowed_closure_output="Manual closure text only.",
         prohibited_automation="No decision recommendation, ranking, readiness verdict, or execution.",
-        human_audit_signal="Visible custom section.",
-        blocking_signal="Hidden custom section.",
+        blocking_signal="Custom surface is hidden.",
         p4_m0_or_p4_m1_dependency="P4-M1 read-only boundary.",
     )
 
-    markdown = render_governance_pack_markdown([section])
+    markdown = render_final_boundary_audit_markdown([item])
 
-    assert "custom-pack-section" in markdown
-    assert "Package a custom read-only section." in markdown
+    assert "custom-final-boundary-audit" in markdown
+    assert "Is the custom surface read-only?" in markdown
+
+
+def _assert_existing_command_still_works(
+    tmp_path: Path,
+    command: str,
+    expected_prefix: str,
+) -> None:
+    exit_code, payload, stderr, stdout = _run_operator(
+        ["memory-loop", command, "--workspace-root", str(tmp_path)]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith(expected_prefix)
+    assert not (tmp_path / ".local").exists()
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
