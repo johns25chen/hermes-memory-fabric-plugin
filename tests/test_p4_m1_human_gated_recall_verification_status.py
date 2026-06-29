@@ -60,6 +60,14 @@ DISABLED_STATUS_FLAGS = (
 )
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "authorize",
+    "authorization",
+    "authorize-decision",
+    "decision-authorization",
+    "grant-authorization",
+    "revoke-authorization",
+    "validate-authorization-envelope",
+    "live-authorization-validation",
     "decide",
     "decision",
     "execute-decision",
@@ -339,9 +347,10 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
         "manual-decision-preview",
         "governance-pack-export",
         "final-boundary-audit",
-    "manual-execution-hardening",
-    "execution-surface-contract",
-    "execution-contract-validation-matrix",
+        "manual-execution-hardening",
+        "execution-surface-contract",
+        "execution-contract-validation-matrix",
+        "manual-authorization-evidence-envelope",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
