@@ -76,6 +76,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "manual-decision-preview",
     "governance-pack-export",
     "final-boundary-audit",
+    "manual-execution-hardening",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
