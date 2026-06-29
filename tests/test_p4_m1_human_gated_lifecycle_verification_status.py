@@ -71,6 +71,12 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "rank-decision",
     "readiness-verdict",
     "automatic-readiness",
+    "validation-verdict",
+    "validate-contract",
+    "validate-execution-contract",
+    "live-validation",
+    "input-validation",
+    "record-validation",
     "mark-ready",
     "mark-not-ready",
     "archive",
@@ -367,6 +373,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands
         "final-boundary-audit",
     "manual-execution-hardening",
     "execution-surface-contract",
+    "execution-contract-validation-matrix",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

@@ -75,6 +75,12 @@ from .p4_m2_execution_surface_contract_definition import (
     execution_surface_contract_report,
     render_execution_surface_contract_markdown,
 )
+from .p4_m2_execution_contract_validation_matrix import (
+    EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY,
+    execution_contract_validation_matrix_as_dicts,
+    execution_contract_validation_matrix_report,
+    render_execution_contract_validation_matrix_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -294,6 +300,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_execution_surface_contract)
     memory_loop_execution_surface_contract.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_execution_contract_validation_matrix = memory_loop_subparsers.add_parser(
+        "execution-contract-validation-matrix"
+    )
+    _add_workspace_root(memory_loop_execution_contract_validation_matrix)
+    memory_loop_execution_contract_validation_matrix.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -686,6 +702,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_execution_surface_contract_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "execution-contract-validation-matrix":
+            if args.format == "markdown":
+                return render_execution_contract_validation_matrix_markdown()
+            if args.format == "json":
+                rows = execution_contract_validation_matrix_as_dicts()
+                return {
+                    "boundary": EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY,
+                    "count": len(rows),
+                    "rows": list(rows),
+                    "status": execution_contract_validation_matrix_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_execution_contract_validation_matrix_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

@@ -7,14 +7,17 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
+from hermes_memory_fabric.p4_m2_execution_contract_validation_matrix import (
+    EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY,
+    ExecutionContractValidationMatrixRow,
+    execution_contract_validation_matrix_as_dicts,
+    execution_contract_validation_matrix_field_ids,
+    execution_contract_validation_matrix_report,
+    list_execution_contract_validation_matrix_rows,
+    render_execution_contract_validation_matrix_markdown,
+)
 from hermes_memory_fabric.p4_m2_execution_surface_contract_definition import (
-    EXECUTION_SURFACE_CONTRACT_BOUNDARY,
-    ExecutionSurfaceContractField,
-    execution_surface_contract_as_dicts,
     execution_surface_contract_field_ids,
-    execution_surface_contract_report,
-    list_execution_surface_contract_fields,
-    render_execution_surface_contract_markdown,
 )
 
 
@@ -38,17 +41,50 @@ FIELD_IDS = (
 )
 
 DATACLASS_FIELDS = {
-    "field_order",
+    "row_order",
     "field_id",
-    "field_name",
-    "field_purpose",
-    "required_description",
-    "inspection_signal",
+    "validation_dimension",
+    "required_presence_signal",
+    "schema_closure_signal",
+    "trace_completeness_signal",
     "prohibited_semantics",
     "blocking_signal",
+    "future_validation_note",
 }
 
+EXPECTED_MEMORY_LOOP_COMMANDS = {
+    "checklist",
+    "review-status",
+    "recall-verification-status",
+    "lifecycle-verification-status",
+    "do-not-retry-verification-status",
+    "source-provenance-verification-status",
+    "decision-readiness-status",
+    "manual-decision-preview",
+    "governance-pack-export",
+    "final-boundary-audit",
+    "manual-execution-hardening",
+    "execution-surface-contract",
+    "execution-contract-validation-matrix",
+}
+
+TRUE_STATUS_FLAGS = (
+    "p4_m2_started",
+    "execution_surface_contract_definition_available",
+    "execution_contract_validation_matrix_started",
+    "validation_matrix_definition_only",
+    "schema_validation_rules_defined",
+    "trace_completeness_rules_defined",
+    "blocking_signal_rules_defined",
+    "inspection_only",
+)
+
 DISABLED_STATUS_FLAGS = (
+    "live_contract_validation_enabled",
+    "input_validation_enabled",
+    "record_validation_enabled",
+    "validation_verdict_enabled",
+    "readiness_verdict_enabled",
     "actual_decision_execution_enabled",
     "automatic_decision_execution_enabled",
     "manual_execution_command_enabled",
@@ -80,22 +116,6 @@ DISABLED_STATUS_FLAGS = (
     "v7_started",
     "productization_started",
 )
-
-EXPECTED_MEMORY_LOOP_COMMANDS = {
-    "checklist",
-    "review-status",
-    "recall-verification-status",
-    "lifecycle-verification-status",
-    "do-not-retry-verification-status",
-    "source-provenance-verification-status",
-    "decision-readiness-status",
-    "manual-decision-preview",
-    "governance-pack-export",
-    "final-boundary-audit",
-    "manual-execution-hardening",
-    "execution-surface-contract",
-    "execution-contract-validation-matrix",
-}
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "decide",
@@ -182,62 +202,73 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_execution_surface_contract_field_order_is_deterministic():
+def test_validation_matrix_row_order_is_deterministic():
     assert [
-        field.field_order
-        for field in list_execution_surface_contract_fields()
+        row.row_order
+        for row in list_execution_contract_validation_matrix_rows()
     ] == list(range(1, 17))
-    assert execution_surface_contract_field_ids() == FIELD_IDS
-    assert execution_surface_contract_field_ids() == execution_surface_contract_field_ids()
+    assert execution_contract_validation_matrix_field_ids() == FIELD_IDS
+    assert (
+        execution_contract_validation_matrix_field_ids()
+        == execution_contract_validation_matrix_field_ids()
+    )
 
 
-def test_execution_surface_contract_has_exactly_16_fields():
-    assert len(list_execution_surface_contract_fields()) == 16
+def test_validation_matrix_has_exactly_16_rows():
+    assert len(list_execution_contract_validation_matrix_rows()) == 16
 
 
-def test_field_ids_match_required_field_ids():
-    assert execution_surface_contract_field_ids() == FIELD_IDS
+def test_matrix_field_ids_match_p4_m2_1_execution_surface_contract_field_ids():
+    assert execution_contract_validation_matrix_field_ids() == FIELD_IDS
+    assert execution_contract_validation_matrix_field_ids() == execution_surface_contract_field_ids()
 
 
-def test_every_field_has_required_non_empty_values():
-    for field in list_execution_surface_contract_fields():
-        assert field.field_name.strip()
-        assert field.field_purpose.strip()
-        assert field.required_description.strip()
-        assert field.inspection_signal.strip()
-        assert field.prohibited_semantics.strip()
-        assert field.blocking_signal.strip()
+def test_every_row_has_required_non_empty_values():
+    for row in list_execution_contract_validation_matrix_rows():
+        assert row.validation_dimension.strip()
+        assert row.required_presence_signal.strip()
+        assert row.schema_closure_signal.strip()
+        assert row.trace_completeness_signal.strip()
+        assert row.prohibited_semantics.strip()
+        assert row.blocking_signal.strip()
+        assert row.future_validation_note.strip()
 
 
 def test_markdown_render_contains_all_16_field_ids():
-    markdown = render_execution_surface_contract_markdown()
+    markdown = render_execution_contract_validation_matrix_markdown()
 
     for field_id in FIELD_IDS:
         assert field_id in markdown
 
 
 def test_markdown_render_contains_required_boundary_statements():
-    markdown = render_execution_surface_contract_markdown()
+    markdown = render_execution_contract_validation_matrix_markdown()
 
-    assert "P4-M2.1 execution surface contract definition" in markdown
-    assert "Read-only contract/schema/trace field definition only" in markdown
+    assert "P4-M2.2 execution contract validation matrix" in markdown
+    assert "Read-only validation matrix definition only" in markdown
     assert "Inspection-only" in markdown
     assert "Not P4-M3" in markdown
+    assert "P4-M2.1 execution surface contract definition remains the source field contract" in markdown
+    assert "Live contract validation is disabled" in markdown
+    assert "Input validation is disabled" in markdown
+    assert "Record validation is disabled" in markdown
+    assert "Validation verdicts are disabled" in markdown
+    assert "Readiness verdicts are disabled" in markdown
     assert "Actual decision execution is disabled" in markdown
     assert "Automatic decision execution is disabled" in markdown
     assert "Manual execution command is disabled" in markdown
     assert "Execute command is disabled" in markdown
-    assert "No authorization semantics are granted by this contract definition." in markdown
-    assert "No execution semantics are granted by this contract definition." in markdown
-    assert "No memory writing is performed by this contract definition." in markdown
-    assert "No mutation is performed by this contract definition." in markdown
-    assert "No API/MCP/connector behavior is performed by this contract definition." in markdown
-    assert "No agent call is performed by this contract definition." in markdown
+    assert "No authorization semantics are granted by this validation matrix." in markdown
+    assert "No execution semantics are granted by this validation matrix." in markdown
+    assert "No memory writing is performed by this validation matrix." in markdown
+    assert "No mutation is performed by this validation matrix." in markdown
+    assert "No API/MCP/connector behavior is performed by this validation matrix." in markdown
+    assert "No agent call is performed by this validation matrix." in markdown
 
 
 def test_dict_conversion_is_deterministic():
-    first = execution_surface_contract_as_dicts()
-    second = execution_surface_contract_as_dicts()
+    first = execution_contract_validation_matrix_as_dicts()
+    second = execution_contract_validation_matrix_as_dicts()
 
     assert first == second
     assert [item["field_id"] for item in first] == list(FIELD_IDS)
@@ -245,87 +276,85 @@ def test_dict_conversion_is_deterministic():
 
 
 def test_status_report_is_deterministic():
-    first = execution_surface_contract_report()
-    second = execution_surface_contract_report()
+    first = execution_contract_validation_matrix_report()
+    second = execution_contract_validation_matrix_report()
 
     assert first == second
-    assert first["phase"] == "P4-M2.1"
-    assert first["feature"] == "Execution Surface Contract Definition"
+    assert first["phase"] == "P4-M2.2"
+    assert first["feature"] == "Execution Contract Validation Matrix"
     assert first["mode"] == "read-only"
-    assert first["contract_field_count"] == 16
-    assert first["boundary"] == EXECUTION_SURFACE_CONTRACT_BOUNDARY
+    assert first["matrix_row_count"] == 16
+    assert first["boundary"] == EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY
 
 
 def test_status_report_has_required_true_flags():
-    status = execution_surface_contract_report()
+    status = execution_contract_validation_matrix_report()
 
-    assert status["p4_m2_started"] is True
-    assert status["execution_surface_contract_definition_started"] is True
-    assert status["execution_surface_contract_only"] is True
-    assert status["schema_definition_only"] is True
-    assert status["trace_field_definition_only"] is True
-    assert status["inspection_only"] is True
-
-
-def test_status_report_has_required_execution_and_semantic_flags_disabled():
-    status = execution_surface_contract_report()
-
-    assert status["actual_decision_execution_enabled"] is False
-    assert status["automatic_decision_execution_enabled"] is False
-    assert status["manual_execution_command_enabled"] is False
-    assert status["execute_command_enabled"] is False
-    assert status["authorization_semantics_granted"] is False
-    assert status["execution_semantics_granted"] is False
+    for flag in TRUE_STATUS_FLAGS:
+        assert status[flag] is True
 
 
 def test_status_report_has_all_disabled_flags_set_to_false():
-    status = execution_surface_contract_report()
+    status = execution_contract_validation_matrix_report()
 
     for flag in DISABLED_STATUS_FLAGS:
         assert status[flag] is False
 
 
 def test_status_report_package_version_is_6_16_0():
-    assert execution_surface_contract_report()["package_version"] == "6.16.0"
+    assert execution_contract_validation_matrix_report()["package_version"] == "6.16.0"
 
 
-def test_operator_memory_loop_execution_surface_contract_returns_markdown(tmp_path):
-    exit_code, payload, stderr, stdout = _run_operator(
-        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
-    )
-
-    assert exit_code == 0
-    assert payload == {}
-    assert stderr == ""
-    assert stdout.startswith("# P4-M2.1 Execution Surface Contract Definition\n")
-    assert "## Status Report" in stdout
-    assert EXECUTION_SURFACE_CONTRACT_BOUNDARY in stdout
-    for field_id in FIELD_IDS:
-        assert field_id in stdout
-    assert "P4-M2.1 execution surface contract definition only." in stdout
-    assert "Read-only contract/schema/trace field definition only." in stdout
-    assert "Inspection-only." in stdout
-    assert "Not P4-M3." in stdout
-    assert "Actual decision execution is disabled." in stdout
-    assert "Automatic decision execution is disabled." in stdout
-    assert "Manual execution command is disabled." in stdout
-    assert "Execute command is disabled." in stdout
-    assert "No authorization semantics are granted by this contract definition." in stdout
-    assert "No execution semantics are granted by this contract definition." in stdout
-    assert "No memory writing is performed by this contract definition." in stdout
-    assert "No mutation is performed by this contract definition." in stdout
-    assert "No API/MCP/connector behavior is performed by this contract definition." in stdout
-    assert "No agent call is performed by this contract definition." in stdout
-    assert not (tmp_path / ".local").exists()
-
-
-def test_operator_memory_loop_execution_surface_contract_format_markdown_returns_markdown(
+def test_operator_memory_loop_execution_contract_validation_matrix_returns_markdown(
     tmp_path,
 ):
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-surface-contract",
+            "execution-contract-validation-matrix",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M2.2 Execution Contract Validation Matrix\n")
+    assert "## Status Report" in stdout
+    assert EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY in stdout
+    for field_id in FIELD_IDS:
+        assert field_id in stdout
+    assert "P4-M2.2 execution contract validation matrix only." in stdout
+    assert "Read-only validation matrix definition only." in stdout
+    assert "Inspection-only." in stdout
+    assert "Not P4-M3." in stdout
+    assert "P4-M2.1 execution surface contract definition remains the source field contract." in stdout
+    assert "Live contract validation is disabled." in stdout
+    assert "Input validation is disabled." in stdout
+    assert "Record validation is disabled." in stdout
+    assert "Validation verdicts are disabled." in stdout
+    assert "Readiness verdicts are disabled." in stdout
+    assert "Actual decision execution is disabled." in stdout
+    assert "Automatic decision execution is disabled." in stdout
+    assert "Manual execution command is disabled." in stdout
+    assert "Execute command is disabled." in stdout
+    assert "No authorization semantics are granted by this validation matrix." in stdout
+    assert "No execution semantics are granted by this validation matrix." in stdout
+    assert "No memory writing is performed by this validation matrix." in stdout
+    assert "No mutation is performed by this validation matrix." in stdout
+    assert "No API/MCP/connector behavior is performed by this validation matrix." in stdout
+    assert "No agent call is performed by this validation matrix." in stdout
+    assert not (tmp_path / ".local").exists()
+
+
+def test_operator_memory_loop_execution_contract_validation_matrix_format_markdown_returns_markdown(
+    tmp_path,
+):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "execution-contract-validation-matrix",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -336,15 +365,15 @@ def test_operator_memory_loop_execution_surface_contract_format_markdown_returns
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.1 Execution Surface Contract Definition\n")
+    assert stdout.startswith("# P4-M2.2 Execution Contract Validation Matrix\n")
 
 
-def test_operator_memory_loop_execution_surface_contract_format_json_returns_deterministic_json(
+def test_operator_memory_loop_execution_contract_validation_matrix_format_json_returns_deterministic_json(
     tmp_path,
 ):
     args = [
         "memory-loop",
-        "execution-surface-contract",
+        "execution-contract-validation-matrix",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -359,24 +388,29 @@ def test_operator_memory_loop_execution_surface_contract_format_json_returns_det
     assert second_stderr == ""
     assert stdout == second_stdout
     assert payload == second_payload
-    assert payload["boundary"] == EXECUTION_SURFACE_CONTRACT_BOUNDARY
+    assert payload["boundary"] == EXECUTION_CONTRACT_VALIDATION_MATRIX_BOUNDARY
     assert payload["count"] == 16
-    assert payload["status"] == execution_surface_contract_report()
-    assert [item["field_id"] for item in payload["fields"]] == list(FIELD_IDS)
-    assert set(payload["fields"][0]) == DATACLASS_FIELDS
+    assert payload["status"] == execution_contract_validation_matrix_report()
+    assert [item["field_id"] for item in payload["rows"]] == list(FIELD_IDS)
+    assert set(payload["rows"][0]) == DATACLASS_FIELDS
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_execution_surface_contract_command_is_read_only_and_creates_no_local_storage(
+def test_operator_execution_contract_validation_matrix_command_is_read_only_and_creates_no_local_storage(
     tmp_path,
 ):
     markdown_code, _, markdown_stderr, _ = _run_operator(
-        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
+        [
+            "memory-loop",
+            "execution-contract-validation-matrix",
+            "--workspace-root",
+            str(tmp_path),
+        ]
     )
     json_code, _, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-surface-contract",
+            "execution-contract-validation-matrix",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -391,21 +425,28 @@ def test_operator_execution_surface_contract_command_is_read_only_and_creates_no
     assert not (tmp_path / ".local").exists()
 
 
-def test_operator_execution_surface_contract_command_creates_no_proposals(tmp_path):
-    _run_operator(
-        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
-    )
-
-    assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
-
-
-def test_operator_execution_surface_contract_command_creates_no_approved_memories(
+def test_operator_execution_contract_validation_matrix_command_creates_no_proposals(
     tmp_path,
 ):
     _run_operator(
         [
             "memory-loop",
-            "execution-surface-contract",
+            "execution-contract-validation-matrix",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert not (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
+
+
+def test_operator_execution_contract_validation_matrix_command_creates_no_approved_memories(
+    tmp_path,
+):
+    _run_operator(
+        [
+            "memory-loop",
+            "execution-contract-validation-matrix",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -416,11 +457,16 @@ def test_operator_execution_surface_contract_command_creates_no_approved_memorie
     assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
 
 
-def test_operator_execution_surface_contract_command_creates_no_boundary_or_state_changes(
+def test_operator_execution_contract_validation_matrix_command_creates_no_boundary_or_state_changes(
     tmp_path,
 ):
     _run_operator(
-        ["memory-loop", "execution-surface-contract", "--workspace-root", str(tmp_path)]
+        [
+            "memory-loop",
+            "execution-contract-validation-matrix",
+            "--workspace-root",
+            str(tmp_path),
+        ]
     )
 
     storage_root = tmp_path / ".local" / "subspace_memory"
@@ -429,11 +475,13 @@ def test_operator_execution_surface_contract_command_creates_no_boundary_or_stat
     assert not (storage_root / "approvals.jsonl").exists()
     assert not (storage_root / "rejections.jsonl").exists()
     assert not (storage_root / "readiness.jsonl").exists()
+    assert not (storage_root / "validation.jsonl").exists()
     assert not (storage_root / "previews.jsonl").exists()
     assert not (storage_root / "governance_pack.jsonl").exists()
     assert not (storage_root / "final_boundary_audit.jsonl").exists()
     assert not (storage_root / "manual_execution_hardening.jsonl").exists()
     assert not (storage_root / "execution_surface_contract.jsonl").exists()
+    assert not (storage_root / "execution_contract_validation_matrix.jsonl").exists()
     assert not (storage_root / "closure.jsonl").exists()
     assert not (storage_root / "memories.jsonl").exists()
     assert not (storage_root / "proposals.jsonl").exists()
@@ -447,7 +495,7 @@ def test_operator_execution_surface_contract_command_creates_no_boundary_or_stat
     assert not (tmp_path / ".local").exists()
 
 
-def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_mutation_p4_m3_p4_m4_p4_m5_v7_productization_commands_are_exposed():
+def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_decision_recommendation_readiness_validation_mutation_p4_m3_p4_m4_p4_m5_v7_productization_commands_are_exposed():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
@@ -560,6 +608,16 @@ def test_existing_p4_m2_0_memory_loop_manual_execution_hardening_still_works(
     )
 
 
+def test_existing_p4_m2_1_memory_loop_execution_surface_contract_still_works(
+    tmp_path,
+):
+    _assert_existing_command_still_works(
+        tmp_path,
+        "execution-surface-contract",
+        "# P4-M2.1 Execution Surface Contract Definition\n",
+    )
+
+
 def test_package_version_remains_6_16_0():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
@@ -571,7 +629,7 @@ def test_no_uv_lock_is_created():
     assert not Path("uv.lock").exists()
 
 
-def test_no_pyproject_entry_point_is_added_for_execution_surface_contract():
+def test_no_pyproject_entry_point_is_added_for_execution_contract_validation_matrix():
     with open("pyproject.toml", "rb") as handle:
         pyproject = tomllib.load(handle)
 
@@ -579,26 +637,27 @@ def test_no_pyproject_entry_point_is_added_for_execution_surface_contract():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_surface_contract_definition" not in entry_points
-    assert "execution-surface-contract" not in entry_points
+    assert "p4_m2_execution_contract_validation_matrix" not in entry_points
+    assert "execution-contract-validation-matrix" not in entry_points
 
 
-def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionSurfaceContractField(
-        field_order=1,
-        field_id="custom-execution-surface-contract",
-        field_name="Custom execution surface contract",
-        field_purpose="Keep the custom contract field read-only.",
-        required_description="A custom contract field description.",
-        inspection_signal="Custom field text is visible.",
-        prohibited_semantics="No execution semantics.",
-        blocking_signal="Execution behavior is introduced.",
+def test_custom_markdown_render_accepts_read_only_rows():
+    row = ExecutionContractValidationMatrixRow(
+        row_order=1,
+        field_id="custom-execution-contract-validation-matrix",
+        validation_dimension="Custom inspection-only dimension.",
+        required_presence_signal="Custom presence signal is visible.",
+        schema_closure_signal="Custom schema closure signal is visible.",
+        trace_completeness_signal="Custom trace completeness signal is visible.",
+        prohibited_semantics="No live validation semantics.",
+        blocking_signal="Live validation behavior is introduced.",
+        future_validation_note="A later path may inspect this custom row.",
     )
 
-    markdown = render_execution_surface_contract_markdown([field])
+    markdown = render_execution_contract_validation_matrix_markdown([row])
 
-    assert "custom-execution-surface-contract" in markdown
-    assert "Keep the custom contract field read-only." in markdown
+    assert "custom-execution-contract-validation-matrix" in markdown
+    assert "Custom inspection-only dimension." in markdown
 
 
 def _assert_existing_command_still_works(

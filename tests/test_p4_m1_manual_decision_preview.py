@@ -81,6 +81,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "final-boundary-audit",
     "manual-execution-hardening",
     "execution-surface-contract",
+    "execution-contract-validation-matrix",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
@@ -93,6 +94,12 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "rank-decision",
     "readiness-verdict",
     "automatic-readiness",
+    "validation-verdict",
+    "validate-contract",
+    "validate-execution-contract",
+    "live-validation",
+    "input-validation",
+    "record-validation",
     "mark-ready",
     "mark-not-ready",
     "approve",
