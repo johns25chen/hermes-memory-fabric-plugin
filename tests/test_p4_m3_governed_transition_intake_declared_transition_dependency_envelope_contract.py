@@ -7,22 +7,23 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m3_governed_transition_intake_declared_transition_constraint_envelope_contract import (
+from hermes_memory_fabric.p4_m3_governed_transition_intake_declared_transition_dependency_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY,
+    GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    GovernedTransitionIntakeDeclaredTransitionConstraintEnvelopeContractField,
-    governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts,
-    governed_transition_intake_declared_transition_constraint_envelope_contract_field_ids,
-    governed_transition_intake_declared_transition_constraint_envelope_contract_report,
-    list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields,
-    render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown,
+    GovernedTransitionIntakeDeclaredTransitionDependencyEnvelopeContractField,
+    governed_transition_intake_declared_transition_dependency_envelope_contract_as_dicts,
+    governed_transition_intake_declared_transition_dependency_envelope_contract_field_ids,
+    governed_transition_intake_declared_transition_dependency_envelope_contract_report,
+    list_governed_transition_intake_declared_transition_dependency_envelope_contract_fields,
+    render_governed_transition_intake_declared_transition_dependency_envelope_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m3-governed-transition-intake-declared-transition-constraint-envelope-contract-id",
+    "p4-m3-governed-transition-intake-declared-transition-dependency-envelope-contract-id",
+    "p4-m3-governed-transition-intake-declared-transition-constraint-envelope-contract-reference",
     "p4-m3-governed-transition-intake-declared-transition-reason-envelope-contract-reference",
     "p4-m3-governed-transition-intake-target-phase-envelope-contract-reference",
     "p4-m3-governed-transition-intake-declared-human-context-envelope-contract-reference",
@@ -31,15 +32,14 @@ FIELD_IDS = (
     "p4-m3-governed-transition-intake-boundary-contract-reference",
     "p4-m2-closure-handoff-contract-reference",
     "p4-m2-final-non-execution-boundary-audit-reference",
-    "p4-m3-declared-transition-constraint-envelope-source-reference",
-    "p4-m3-declared-transition-constraint-envelope-scope",
-    "p4-m3-declared-transition-constraint-envelope-request-reference-field",
-    "p4-m3-declared-transition-constraint-envelope-target-phase-reference-field",
-    "p4-m3-declared-transition-constraint-envelope-reason-reference-field",
-    "p4-m3-declared-transition-constraint-envelope-constraint-label-field",
-    "p4-m3-declared-transition-constraint-envelope-constraint-description-field",
-    "p4-m3-declared-transition-constraint-envelope-non-constraint-validation-boundary",
-    "p4-m3-declared-transition-constraint-envelope-semantics-disabled",
+    "p4-m3-declared-transition-dependency-envelope-source-reference",
+    "p4-m3-declared-transition-dependency-envelope-scope",
+    "p4-m3-declared-transition-dependency-envelope-request-reference-field",
+    "p4-m3-declared-transition-dependency-envelope-target-phase-reference-field",
+    "p4-m3-declared-transition-dependency-envelope-constraint-reference-field",
+    "p4-m3-declared-transition-dependency-envelope-dependency-label-field",
+    "p4-m3-declared-transition-dependency-envelope-dependency-description-field",
+    "p4-m3-declared-transition-dependency-envelope-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -47,8 +47,8 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m3_declared_transition_constraint_envelope_contract_category",
-    "p4_m3_declared_transition_constraint_envelope_semantics_disabled",
+    "p4_m3_declared_transition_dependency_envelope_contract_category",
+    "p4_m3_declared_transition_dependency_envelope_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -87,29 +87,33 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-target-phase-envelope-contract",
     "governed-transition-intake-declared-transition-reason-envelope-contract",
     "governed-transition-intake-declared-transition-constraint-envelope-contract",
-        "governed-transition-intake-declared-transition-dependency-envelope-contract",
+    "governed-transition-intake-declared-transition-dependency-envelope-contract",
 }
 
-PREVIOUS_P4_M3_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "governed-transition-intake-declared-transition-constraint-envelope-contract"
+PREVIOUS_P4_M3_6_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "governed-transition-intake-declared-transition-dependency-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "validate-transition-dependency",
+    "validate-dependency-correctness",
+    "validate-dependency-satisfaction",
+    "validate-prerequisite",
+    "score-dependency",
+    "rank-dependency",
+    "arbitrate-dependency",
+    "accept-declared-dependency",
+    "reject-declared-dependency",
+    "persist-transition-dependency",
+    "store-transition-dependency",
+    "mutate-transition-dependency",
+    "create-transition-dependency-record",
+    "update-transition-dependency-record",
+    "delete-transition-dependency-record",
     "validate-transition-constraint",
     "validate-constraint-correctness",
     "validate-constraint-feasibility",
     "validate-feasibility",
-    "score-constraint",
-    "rank-constraint",
-    "arbitrate-constraint",
-    "accept-declared-constraint",
-    "reject-declared-constraint",
-    "persist-transition-constraint",
-    "store-transition-constraint",
-    "mutate-transition-constraint",
-    "create-transition-constraint-record",
-    "update-transition-constraint-record",
-    "delete-transition-constraint-record",
     "validate-transition-reason",
     "validate-reason-correctness",
     "validate-justification",
@@ -128,8 +132,10 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "recommend-transition",
     "rank-transition",
     "suggest-next-action",
-    "create-target-phase-record",
+    "create-transition-dependency-record",
+    "create-transition-constraint-record",
     "create-transition-reason-record",
+    "create-target-phase-record",
     "create-request-record",
     "create-transition-record",
     "accept-request",
@@ -153,8 +159,8 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "MCP",
     "connector",
     "call-agent",
-    "p4-m3-7",
-    "start-p4-m3-7",
+    "p4-m3-8",
+    "start-p4-m3-8",
     "start-p4-m4",
     "start-p4-m5",
     "start-v7",
@@ -165,45 +171,45 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_declared_transition_constraint_envelope_field_order_count_and_ids_are_stable():
+def test_declared_transition_dependency_envelope_field_order_count_and_ids_are_stable():
     fields = (
-        list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields()
+        list_governed_transition_intake_declared_transition_dependency_envelope_contract_fields()
     )
 
     assert [field.field_order for field in fields] == list(range(1, 19))
     assert len(fields) == 18
     assert (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_field_ids()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_field_ids()
         == FIELD_IDS
     )
 
 
-def test_every_declared_transition_constraint_envelope_field_has_required_values():
+def test_every_declared_transition_dependency_envelope_field_has_required_values():
     for field in (
-        list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields()
+        list_governed_transition_intake_declared_transition_dependency_envelope_contract_fields()
     ):
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.p4_m3_declared_transition_constraint_envelope_contract_category.strip()
+        assert field.p4_m3_declared_transition_dependency_envelope_contract_category.strip()
         assert (
-            field.p4_m3_declared_transition_constraint_envelope_semantics_disabled.strip()
+            field.p4_m3_declared_transition_dependency_envelope_semantics_disabled.strip()
         )
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
     first = (
-        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown()
+        render_governed_transition_intake_declared_transition_dependency_envelope_contract_markdown()
     )
     second = (
-        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown()
+        render_governed_transition_intake_declared_transition_dependency_envelope_contract_markdown()
     )
 
     assert first == second
     assert first.startswith(
-        "# P4-M3.6 Governed Transition Intake Declared Transition Constraint Envelope Contract\n"
+        "# P4-M3.7 Governed Transition Intake Declared Transition Dependency Envelope Contract\n"
     )
     assert (
-        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
         in first
     )
     for field_id in FIELD_IDS:
@@ -215,7 +221,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "governed-transition-intake-declared-transition-constraint-envelope-contract",
+        "governed-transition-intake-declared-transition-dependency-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -232,12 +238,18 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert first_payload == second_payload
     assert (
         first_payload["boundary"]
-        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
     )
     assert first_payload["count"] == 18
+    assert first_payload["status"]["phase"] == "P4-M3.7"
+    assert (
+        first_payload["status"]["feature"]
+        == "Governed Transition Intake Declared Transition Dependency Envelope Contract"
+    )
+    assert first_payload["status"]["mode"] == "read-only"
     assert (
         first_payload["status"]
-        == governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+        == governed_transition_intake_declared_transition_dependency_envelope_contract_report()
     )
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
@@ -248,42 +260,42 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 def test_dict_conversion_and_status_report_are_deterministic():
     first_fields = (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_as_dicts()
     )
     second_fields = (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_as_dicts()
     )
     first_status = (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_report()
     )
     second_status = (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_report()
     )
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M3.6"
+    assert first_status["phase"] == "P4-M3.7"
     assert (
         first_status["feature"]
-        == "Governed Transition Intake Declared Transition Constraint Envelope Contract"
+        == "Governed Transition Intake Declared Transition Dependency Envelope Contract"
     )
     assert first_status["mode"] == "read-only"
     assert (
         first_status[
-            "governed_transition_intake_declared_transition_constraint_envelope_contract_field_count"
+            "governed_transition_intake_declared_transition_dependency_envelope_contract_field_count"
         ]
         == 18
     )
     assert (
         first_status["boundary"]
-        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
     )
 
 
 def test_status_report_locks_true_and_disabled_flags():
     status = (
-        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+        governed_transition_intake_declared_transition_dependency_envelope_contract_report()
     )
 
     for flag in TRUE_STATUS_FLAGS:
@@ -296,7 +308,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-declared-transition-constraint-envelope-contract",
+            "governed-transition-intake-declared-transition-dependency-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -306,11 +318,11 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert payload == {}
     assert stderr == ""
     assert stdout.startswith(
-        "# P4-M3.6 Governed Transition Intake Declared Transition Constraint Envelope Contract\n"
+        "# P4-M3.7 Governed Transition Intake Declared Transition Dependency Envelope Contract\n"
     )
     assert "## Status Report" in stdout
     assert (
-        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
         in stdout
     )
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -321,7 +333,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "governed-transition-intake-declared-transition-constraint-envelope-contract",
+        "governed-transition-intake-declared-transition-dependency-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -337,7 +349,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M3.6")
+    assert first_stdout.startswith("# P4-M3.7")
     assert not (tmp_path / ".local").exists()
 
 
@@ -353,7 +365,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-declared-transition-constraint-envelope-contract",
+            "governed-transition-intake-declared-transition-dependency-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -361,7 +373,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-declared-transition-constraint-envelope-contract",
+            "governed-transition-intake-declared-transition-dependency-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -371,7 +383,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M3.6")
+    assert markdown_stdout.startswith("# P4-M3.7")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 18
@@ -382,7 +394,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-declared-transition-constraint-envelope-contract",
+            "governed-transition-intake-declared-transition-dependency-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -390,6 +402,9 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
+        "declared_transition_dependency_envelope_contract.jsonl",
+        "transition_dependency_records.jsonl",
+        "transition_dependencies.jsonl",
         "declared_transition_constraint_envelope_contract.jsonl",
         "transition_constraint_records.jsonl",
         "transition_constraints.jsonl",
@@ -439,14 +454,14 @@ def test_read_only_allowlist_includes_new_command_and_preserves_previous_command
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
     assert (
-        "governed-transition-intake-declared-transition-constraint-envelope-contract"
+        "governed-transition-intake-declared-transition-dependency-envelope-contract"
         in commands
     )
-    assert PREVIOUS_P4_M3_5_READ_ONLY_COMMANDS.issubset(commands)
+    assert PREVIOUS_P4_M3_6_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m3_5_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m3_6_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -482,6 +497,7 @@ def test_existing_p4_m1_0_through_p4_m3_5_memory_loop_commands_still_work(tmp_pa
         "governed-transition-intake-declared-human-context-envelope-contract": "# P4-M3.3 Governed Transition Intake Declared Human Context Envelope Contract\n",
         "governed-transition-intake-target-phase-envelope-contract": "# P4-M3.4 Governed Transition Intake Target Phase Envelope Contract\n",
         "governed-transition-intake-declared-transition-reason-envelope-contract": "# P4-M3.5 Governed Transition Intake Declared Transition Reason Envelope Contract\n",
+        "governed-transition-intake-declared-transition-constraint-envelope-contract": "# P4-M3.6 Governed Transition Intake Declared Transition Constraint Envelope Contract\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -497,7 +513,7 @@ def test_existing_p4_m1_0_through_p4_m3_5_memory_loop_commands_still_work(tmp_pa
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M3_6_GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M3_7_GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -516,11 +532,11 @@ def test_package_version_lock_and_no_entry_point():
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
     assert (
-        "p4_m3_governed_transition_intake_declared_transition_constraint_envelope_contract"
+        "p4_m3_governed_transition_intake_declared_transition_dependency_envelope_contract"
         not in entry_points
     )
     assert (
-        "governed-transition-intake-declared-transition-constraint-envelope-contract"
+        "governed-transition-intake-declared-transition-dependency-envelope-contract"
         not in entry_points
     )
 
@@ -530,35 +546,35 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = GovernedTransitionIntakeDeclaredTransitionConstraintEnvelopeContractField(
+    field = GovernedTransitionIntakeDeclaredTransitionDependencyEnvelopeContractField(
         field_order=1,
         field_id=(
-            "custom-governed-transition-intake-declared-transition-constraint-"
+            "custom-governed-transition-intake-declared-transition-dependency-"
             "envelope-contract"
         ),
         field_name=(
-            "Custom Governed Transition Intake Declared Transition Constraint "
+            "Custom Governed Transition Intake Declared Transition Dependency "
             "Envelope Contract Field"
         ),
         field_purpose="Custom inspection-only purpose.",
-        p4_m3_declared_transition_constraint_envelope_contract_category=(
-            "custom-governed-transition-intake-declared-transition-constraint-"
+        p4_m3_declared_transition_dependency_envelope_contract_category=(
+            "custom-governed-transition-intake-declared-transition-dependency-"
             "envelope-contract-category"
         ),
-        p4_m3_declared_transition_constraint_envelope_semantics_disabled=(
-            "Custom governed transition declared transition constraint envelope "
+        p4_m3_declared_transition_dependency_envelope_semantics_disabled=(
+            "Custom governed transition declared transition dependency envelope "
             "semantics are disabled."
         ),
     )
 
     markdown = (
-        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown(
+        render_governed_transition_intake_declared_transition_dependency_envelope_contract_markdown(
             [field]
         )
     )
 
     assert (
-        "custom-governed-transition-intake-declared-transition-constraint-envelope-contract"
+        "custom-governed-transition-intake-declared-transition-dependency-envelope-contract"
         in markdown
     )
     assert "Custom inspection-only purpose." in markdown
