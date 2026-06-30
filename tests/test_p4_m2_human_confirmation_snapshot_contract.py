@@ -85,6 +85,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-target-phase-envelope-contract",
     "governed-transition-intake-declared-transition-reason-envelope-contract",
     "governed-transition-intake-declared-transition-constraint-envelope-contract",
+        "governed-transition-intake-declared-transition-dependency-envelope-contract",
 }
 
 TRUE_STATUS_FLAGS = (
