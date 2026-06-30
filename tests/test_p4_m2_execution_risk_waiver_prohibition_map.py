@@ -78,6 +78,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-negative-evidence-non-override-map",
     "execution-decision-conflicting-evidence-isolation-map",
     "execution-decision-evidence-precedence-prohibition-map",
+    "final-non-execution-boundary-audit",
 }
 
 PREVIOUS_P4_M2_7_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
