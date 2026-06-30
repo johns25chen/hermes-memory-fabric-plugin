@@ -71,6 +71,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-acknowledgement-map",
     "execution-risk-acceptance-prohibition-map",
     "execution-risk-waiver-prohibition-map",
+    "execution-decision-non-equivalence-map",
 }
 
 PREVIOUS_P4_M2_7_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {

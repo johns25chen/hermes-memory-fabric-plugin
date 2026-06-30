@@ -117,6 +117,12 @@ from .p4_m2_execution_risk_waiver_prohibition_map import (
     execution_risk_waiver_prohibition_map_report,
     render_execution_risk_waiver_prohibition_map_markdown,
 )
+from .p4_m2_execution_decision_non_equivalence_map import (
+    EXECUTION_DECISION_NON_EQUIVALENCE_MAP_BOUNDARY,
+    execution_decision_non_equivalence_map_as_dicts,
+    execution_decision_non_equivalence_map_report,
+    render_execution_decision_non_equivalence_map_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -406,6 +412,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_execution_risk_waiver_prohibition_map)
     memory_loop_execution_risk_waiver_prohibition_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_execution_decision_non_equivalence_map = memory_loop_subparsers.add_parser(
+        "execution-decision-non-equivalence-map"
+    )
+    _add_workspace_root(memory_loop_execution_decision_non_equivalence_map)
+    memory_loop_execution_decision_non_equivalence_map.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -903,6 +919,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 f"unsupported_memory_loop_execution_risk_waiver_prohibition_map_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "execution-decision-non-equivalence-map":
+            if args.format == "markdown":
+                return render_execution_decision_non_equivalence_map_markdown()
+            if args.format == "json":
+                fields = execution_decision_non_equivalence_map_as_dicts()
+                return {
+                    "boundary": EXECUTION_DECISION_NON_EQUIVALENCE_MAP_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": execution_decision_non_equivalence_map_report(),
+                }
+            raise ValueError(
+                f"unsupported_memory_loop_execution_decision_non_equivalence_map_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

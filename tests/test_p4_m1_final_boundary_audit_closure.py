@@ -92,6 +92,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-acknowledgement-map",
     "execution-risk-acceptance-prohibition-map",
     "execution-risk-waiver-prohibition-map",
+    "execution-decision-non-equivalence-map",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
