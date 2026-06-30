@@ -7,37 +7,39 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_closure_handoff_contract import (
+from hermes_memory_fabric.p4_m3_governed_transition_intake_declared_transition_constraint_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
-    CLOSURE_HANDOFF_CONTRACT_BOUNDARY,
-    ClosureHandoffContractField,
-    closure_handoff_contract_as_dicts,
-    closure_handoff_contract_field_ids,
-    closure_handoff_contract_report,
-    list_closure_handoff_contract_fields,
-    render_closure_handoff_contract_markdown,
+    FALSE_STATUS_FLAGS,
+    GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY,
+    TRUE_STATUS_FLAGS,
+    GovernedTransitionIntakeDeclaredTransitionConstraintEnvelopeContractField,
+    governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts,
+    governed_transition_intake_declared_transition_constraint_envelope_contract_field_ids,
+    governed_transition_intake_declared_transition_constraint_envelope_contract_report,
+    list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields,
+    render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m2-closure-handoff-contract-id",
-    "p4-m2-closure-source-reference",
+    "p4-m3-governed-transition-intake-declared-transition-constraint-envelope-contract-id",
+    "p4-m3-governed-transition-intake-declared-transition-reason-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-target-phase-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-declared-human-context-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-evidence-reference-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-request-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-boundary-contract-reference",
+    "p4-m2-closure-handoff-contract-reference",
     "p4-m2-final-non-execution-boundary-audit-reference",
-    "p4-m2-prior-definition-layer-reference-set",
-    "p4-m3-target-label-reference",
-    "p4-m3-not-started-boundary",
-    "closure-handoff-contract-scope",
-    "closure-handoff-non-execution-boundary",
-    "closure-handoff-non-authorization-boundary",
-    "closure-handoff-non-confirmation-boundary",
-    "closure-handoff-non-approval-boundary",
-    "closure-handoff-non-recommendation-boundary",
-    "closure-handoff-non-ranking-boundary",
-    "closure-handoff-non-verdict-boundary",
-    "closure-handoff-non-override-boundary",
-    "closure-handoff-non-mutation-boundary",
-    "closure-handoff-contract-category",
-    "closure-handoff-semantics-disabled",
+    "p4-m3-declared-transition-constraint-envelope-source-reference",
+    "p4-m3-declared-transition-constraint-envelope-scope",
+    "p4-m3-declared-transition-constraint-envelope-request-reference-field",
+    "p4-m3-declared-transition-constraint-envelope-target-phase-reference-field",
+    "p4-m3-declared-transition-constraint-envelope-reason-reference-field",
+    "p4-m3-declared-transition-constraint-envelope-constraint-label-field",
+    "p4-m3-declared-transition-constraint-envelope-constraint-description-field",
+    "p4-m3-declared-transition-constraint-envelope-non-constraint-validation-boundary",
+    "p4-m3-declared-transition-constraint-envelope-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -45,8 +47,8 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "closure_handoff_contract_category",
-    "closure_handoff_semantics_disabled",
+    "p4_m3_declared_transition_constraint_envelope_contract_category",
+    "p4_m3_declared_transition_constraint_envelope_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -87,71 +89,71 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-declared-transition-constraint-envelope-contract",
 }
 
-PREVIOUS_P4_M2_16_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "p4-m2-closure-handoff-contract"
+PREVIOUS_P4_M3_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "governed-transition-intake-declared-transition-constraint-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "confirm",
-    "authorization",
-    "approve",
-    "reject",
-    "execute",
-    "recommend-decision",
-    "rank-decision",
+    "validate-transition-constraint",
+    "validate-constraint-correctness",
+    "validate-constraint-feasibility",
+    "validate-feasibility",
+    "score-constraint",
+    "rank-constraint",
+    "arbitrate-constraint",
+    "accept-declared-constraint",
+    "reject-declared-constraint",
+    "persist-transition-constraint",
+    "store-transition-constraint",
+    "mutate-transition-constraint",
+    "create-transition-constraint-record",
+    "update-transition-constraint-record",
+    "delete-transition-constraint-record",
+    "validate-transition-reason",
+    "validate-reason-correctness",
+    "validate-justification",
+    "validate-rationale",
+    "validate-target-phase",
+    "select-target-phase",
+    "validate-phase-eligibility",
+    "validate-phase-compatibility",
+    "validate-transition-readiness",
+    "readiness-verdict",
+    "validation-verdict",
+    "execute-transition",
+    "authorize-transition",
+    "approve-transition",
+    "confirm-transition",
+    "recommend-transition",
+    "rank-transition",
     "suggest-next-action",
+    "create-target-phase-record",
+    "create-transition-reason-record",
+    "create-request-record",
+    "create-transition-record",
+    "accept-request",
+    "reject-request",
+    "validate-request",
     "validate-evidence",
-    "validate-consent",
-    "rank-evidence",
-    "score-evidence",
-    "rank-source",
-    "select-winning-evidence",
-    "choose-evidence-precedence",
-    "arbitrate-evidence",
-    "resolve-conflict",
-    "merge-evidence",
-    "reconcile-evidence",
-    "create-evidence-precedence-record",
-    "create-evidence-ranking-record",
-    "create-evidence-score-record",
-    "create-evidence-winner-record",
-    "create-evidence-arbitration-record",
-    "create-conflict-resolution-record",
-    "create-evidence-merge-record",
-    "create-evidence-override-record",
-    "create-approval-override-record",
-    "create-consent-record",
-    "create-non-consent-record",
+    "validate-human-context",
+    "fetch-source",
+    "write-provenance",
+    "mutate-citation",
     "write-memory",
     "create-memory",
     "update-memory",
     "delete-memory",
-    "mutate-proposal",
-    "fetch-source",
-    "write-provenance",
-    "mutate-evidence",
-    "mutate-citation",
     "mutate-roadmap",
-    "transition",
-    "transition-execution",
-    "phase-transition-action",
-    "handoff-execution",
-    "handoff-authorization",
-    "handoff-approval",
-    "handoff-recommendation",
-    "handoff-ranking",
-    "handoff-readiness-verdict",
-    "handoff-validation-verdict",
-    "handoff-override-verdict",
-    "call-agent",
+    "mutate-lifecycle",
+    "mutate-proposal",
+    "mutate-evidence",
+    "mutate-human-context",
     "API",
     "MCP",
     "connector",
-    "start-p4-m3",
-    "p4-m3",
-    "p4-m3-command",
-    "activate-p4-m3",
-    "implement-p4-m3",
+    "call-agent",
+    "p4-m3-7",
+    "start-p4-m3-7",
     "start-p4-m4",
     "start-p4-m5",
     "start-v7",
@@ -161,177 +163,48 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "deploy",
 }
 
-TRUE_STATUS_FLAGS = (
-    "definition_only",
-    "inspection_only",
-    "p4_m2_started",
-    "p4_m2_closure_handoff_contract_started",
-    "p4_m2_closure_handoff_contract_definition_only",
-    "p4_m2_1_through_p4_m2_16_references_defined",
-    "p4_m2_closure_handoff_contract_defined",
-    "p4_m2_to_p4_m3_boundary_documented",
-    "p4_m3_start_deferred",
-    "p4_m2_execution_semantics_prohibited",
-    "p4_m2_authorization_semantics_prohibited",
-    "p4_m2_confirmation_semantics_prohibited",
-    "p4_m2_approval_semantics_prohibited",
-    "p4_m2_recommendation_semantics_prohibited",
-    "p4_m2_ranking_semantics_prohibited",
-    "p4_m2_validation_verdict_semantics_prohibited",
-    "p4_m2_precedence_verdict_semantics_prohibited",
-    "p4_m2_override_semantics_prohibited",
-    "p4_m2_transition_semantics_prohibited",
-    "p4_m2_mutation_semantics_prohibited",
-)
 
-FALSE_STATUS_FLAGS = (
-    "execution_enabled",
-    "decision_execution_enabled",
-    "authorization_enabled",
-    "decision_authorization_enabled",
-    "confirmation_enabled",
-    "decision_confirmation_enabled",
-    "approval_enabled",
-    "decision_approval_enabled",
-    "rejection_enabled",
-    "decision_rejection_enabled",
-    "recommendation_enabled",
-    "decision_recommendation_enabled",
-    "ranking_enabled",
-    "decision_ranking_enabled",
-    "suggested_next_action_enabled",
-    "readiness_verdict_enabled",
-    "validation_verdict_enabled",
-    "override_verdict_enabled",
-    "precedence_verdict_enabled",
-    "conflict_resolution_verdict_enabled",
-    "automatic_readiness_verdict_enabled",
-    "execution_hint_enabled",
-    "authorization_hint_enabled",
-    "confirmation_hint_enabled",
-    "approval_hint_enabled",
-    "recommendation_hint_enabled",
-    "readiness_hint_enabled",
-    "validation_hint_enabled",
-    "override_hint_enabled",
-    "resolution_hint_enabled",
-    "precedence_hint_enabled",
-    "default_readiness_enabled",
-    "default_approval_enabled",
-    "default_allow_enabled",
-    "default_permit_enabled",
-    "default_continue_enabled",
-    "default_execute_enabled",
-    "auto_pass_enabled",
-    "auto_execution_hint_enabled",
-    "advisory_verdict_enabled",
-    "evidence_validation_enabled",
-    "live_evidence_validation_enabled",
-    "consent_validation_enabled",
-    "live_consent_validation_enabled",
-    "live_confirmation_validation_enabled",
-    "live_authorization_validation_enabled",
-    "live_contract_validation_enabled",
-    "input_validation_enabled",
-    "record_validation_enabled",
-    "risk_acceptance_enabled",
-    "risk_waiver_enabled",
-    "evidence_precedence_enabled",
-    "source_precedence_enabled",
-    "chronological_precedence_enabled",
-    "recency_precedence_enabled",
-    "confidence_precedence_enabled",
-    "authority_precedence_enabled",
-    "citation_precedence_enabled",
-    "winning_evidence_enabled",
-    "evidence_winner_enabled",
-    "evidence_ranking_enabled",
-    "evidence_scoring_enabled",
-    "source_ranking_enabled",
-    "evidence_tie_breaker_enabled",
-    "evidence_arbitration_enabled",
-    "conflict_resolution_enabled",
-    "evidence_resolution_enabled",
-    "evidence_merge_enabled",
-    "evidence_reconciliation_enabled",
-    "evidence_override_enabled",
-    "approval_override_enabled",
-    "authorization_override_enabled",
-    "readiness_override_enabled",
-    "execution_override_enabled",
-    "consent_override_enabled",
-    "risk_acceptance_override_enabled",
-    "risk_waiver_override_enabled",
-    "transition_execution_enabled",
-    "transition_command_enabled",
-    "phase_transition_action_enabled",
-    "handoff_execution_enabled",
-    "handoff_authorization_enabled",
-    "handoff_approval_enabled",
-    "handoff_recommendation_enabled",
-    "handoff_ranking_enabled",
-    "handoff_readiness_verdict_enabled",
-    "handoff_validation_verdict_enabled",
-    "handoff_override_verdict_enabled",
-    "handoff_mutation_enabled",
-    "memory_mutation_enabled",
-    "memory_record_creation_enabled",
-    "memory_record_update_enabled",
-    "memory_record_deletion_enabled",
-    "proposal_mutation_enabled",
-    "lifecycle_mutation_enabled",
-    "retry_policy_mutation_enabled",
-    "source_fetching_enabled",
-    "provenance_writing_enabled",
-    "evidence_mutation_enabled",
-    "citation_mutation_enabled",
-    "roadmap_mutation_enabled",
-    "api_enabled",
-    "mcp_enabled",
-    "connector_enabled",
-    "agent_call_enabled",
-    "codex_hermes_chatgpt_product_code_auto_call_enabled",
-    "p4_m3_started",
-    "p4_m3_command_enabled",
-    "p4_m3_activation_enabled",
-    "p4_m3_implementation_enabled",
-    "p4_m4_started",
-    "p4_m5_started",
-    "v7_started",
-    "productization_started",
-    "ui_started",
-    "operator_console_started",
-    "mvp_started",
-    "deploy_started",
-    "full_memory_graph_started",
-    "version_bump_enabled",
-    "tag_creation_enabled",
-)
-
-
-def test_closure_handoff_contract_field_order_count_and_ids_are_stable():
-    fields = list_closure_handoff_contract_fields()
+def test_declared_transition_constraint_envelope_field_order_count_and_ids_are_stable():
+    fields = (
+        list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields()
+    )
 
     assert [field.field_order for field in fields] == list(range(1, 19))
     assert len(fields) == 18
-    assert closure_handoff_contract_field_ids() == FIELD_IDS
+    assert (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_field_ids()
+        == FIELD_IDS
+    )
 
 
-def test_every_closure_handoff_contract_field_has_required_non_empty_values():
-    for field in list_closure_handoff_contract_fields():
+def test_every_declared_transition_constraint_envelope_field_has_required_values():
+    for field in (
+        list_governed_transition_intake_declared_transition_constraint_envelope_contract_fields()
+    ):
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.closure_handoff_contract_category.strip()
-        assert field.closure_handoff_semantics_disabled.strip()
+        assert field.p4_m3_declared_transition_constraint_envelope_contract_category.strip()
+        assert (
+            field.p4_m3_declared_transition_constraint_envelope_semantics_disabled.strip()
+        )
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_closure_handoff_contract_markdown()
-    second = render_closure_handoff_contract_markdown()
+    first = (
+        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown()
+    )
+    second = (
+        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown()
+    )
 
     assert first == second
-    assert first.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
-    assert CLOSURE_HANDOFF_CONTRACT_BOUNDARY in first
+    assert first.startswith(
+        "# P4-M3.6 Governed Transition Intake Declared Transition Constraint Envelope Contract\n"
+    )
+    assert (
+        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        in first
+    )
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -341,7 +214,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "p4-m2-closure-handoff-contract",
+        "governed-transition-intake-declared-transition-constraint-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -356,9 +229,15 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == CLOSURE_HANDOFF_CONTRACT_BOUNDARY
+    assert (
+        first_payload["boundary"]
+        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+    )
     assert first_payload["count"] == 18
-    assert first_payload["status"] == closure_handoff_contract_report()
+    assert (
+        first_payload["status"]
+        == governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+    )
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -367,23 +246,44 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = closure_handoff_contract_as_dicts()
-    second_fields = closure_handoff_contract_as_dicts()
-    first_status = closure_handoff_contract_report()
-    second_status = closure_handoff_contract_report()
+    first_fields = (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts()
+    )
+    second_fields = (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_as_dicts()
+    )
+    first_status = (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+    )
+    second_status = (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+    )
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.17"
-    assert first_status["feature"] == "P4-M2 Closure Handoff Contract"
+    assert first_status["phase"] == "P4-M3.6"
+    assert (
+        first_status["feature"]
+        == "Governed Transition Intake Declared Transition Constraint Envelope Contract"
+    )
     assert first_status["mode"] == "read-only"
-    assert first_status["closure_handoff_contract_field_count"] == 18
-    assert first_status["boundary"] == CLOSURE_HANDOFF_CONTRACT_BOUNDARY
+    assert (
+        first_status[
+            "governed_transition_intake_declared_transition_constraint_envelope_contract_field_count"
+        ]
+        == 18
+    )
+    assert (
+        first_status["boundary"]
+        == GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+    )
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = closure_handoff_contract_report()
+    status = (
+        governed_transition_intake_declared_transition_constraint_envelope_contract_report()
+    )
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -395,7 +295,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m2-closure-handoff-contract",
+            "governed-transition-intake-declared-transition-constraint-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -404,9 +304,14 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
+    assert stdout.startswith(
+        "# P4-M3.6 Governed Transition Intake Declared Transition Constraint Envelope Contract\n"
+    )
     assert "## Status Report" in stdout
-    assert CLOSURE_HANDOFF_CONTRACT_BOUNDARY in stdout
+    assert (
+        GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT_BOUNDARY
+        in stdout
+    )
     for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -415,7 +320,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "p4-m2-closure-handoff-contract",
+        "governed-transition-intake-declared-transition-constraint-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -431,7 +336,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
+    assert first_stdout.startswith("# P4-M3.6")
     assert not (tmp_path / ".local").exists()
 
 
@@ -447,7 +352,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m2-closure-handoff-contract",
+            "governed-transition-intake-declared-transition-constraint-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -455,7 +360,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "p4-m2-closure-handoff-contract",
+            "governed-transition-intake-declared-transition-constraint-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -465,7 +370,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.17")
+    assert markdown_stdout.startswith("# P4-M3.6")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 18
@@ -476,7 +381,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "p4-m2-closure-handoff-contract",
+            "governed-transition-intake-declared-transition-constraint-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -484,33 +389,39 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "closure_handoff_contract.jsonl",
+        "declared_transition_constraint_envelope_contract.jsonl",
+        "transition_constraint_records.jsonl",
+        "transition_constraints.jsonl",
+        "declared_transition_reason_envelope_contract.jsonl",
+        "transition_reason_records.jsonl",
+        "transition_reasons.jsonl",
+        "target_phase_records.jsonl",
+        "target_phases.jsonl",
+        "request_records.jsonl",
+        "transition_records.jsonl",
+        "transition_readiness_records.jsonl",
+        "transition_validation_records.jsonl",
+        "transition_approval_records.jsonl",
+        "transition_authorization_records.jsonl",
+        "transition_confirmation_records.jsonl",
+        "transition_execution_records.jsonl",
+        "transition_recommendation_records.jsonl",
+        "transition_ranking_records.jsonl",
+        "transition_next_action_records.jsonl",
+        "human_context_records.jsonl",
+        "evidence_records.jsonl",
         "execution.jsonl",
         "authorization.jsonl",
         "confirmation.jsonl",
         "approvals.jsonl",
-        "rejections.jsonl",
         "recommendations.jsonl",
         "rankings.jsonl",
         "next_actions.jsonl",
         "validation.jsonl",
         "readiness.jsonl",
-        "evidence_precedence.jsonl",
-        "evidence_rankings.jsonl",
-        "evidence_scores.jsonl",
-        "evidence_winners.jsonl",
-        "evidence_arbitration.jsonl",
-        "conflict_resolution.jsonl",
-        "evidence_resolution.jsonl",
-        "evidence_merge.jsonl",
-        "evidence_overrides.jsonl",
-        "approval_overrides.jsonl",
-        "consent.jsonl",
-        "non_consent.jsonl",
         "memories.jsonl",
         "proposals.jsonl",
         "lifecycle.jsonl",
-        "retry_policy.jsonl",
         "sources.jsonl",
         "provenance.jsonl",
         "evidence.jsonl",
@@ -522,16 +433,19 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_16_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "p4-m2-closure-handoff-contract" in commands
-    assert PREVIOUS_P4_M2_16_READ_ONLY_COMMANDS.issubset(commands)
+    assert (
+        "governed-transition-intake-declared-transition-constraint-envelope-contract"
+        in commands
+    )
+    assert PREVIOUS_P4_M3_5_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_16_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m3_5_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -560,6 +474,13 @@ def test_existing_p4_m1_0_through_p4_m2_16_memory_loop_commands_still_work(tmp_p
         "execution-decision-conflicting-evidence-isolation-map": "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n",
         "execution-decision-evidence-precedence-prohibition-map": "# P4-M2.15 Execution Decision Evidence Precedence Prohibition Map\n",
         "final-non-execution-boundary-audit": "# P4-M2.16 Final Non-Execution Boundary Audit\n",
+        "p4-m2-closure-handoff-contract": "# P4-M2.17 P4-M2 Closure Handoff Contract\n",
+        "governed-transition-intake-boundary-contract": "# P4-M3.0 Governed Transition Intake Boundary Contract\n",
+        "governed-transition-intake-request-envelope-contract": "# P4-M3.1 Governed Transition Intake Request Envelope Contract\n",
+        "governed-transition-intake-evidence-reference-envelope-contract": "# P4-M3.2 Governed Transition Intake Evidence Reference Envelope Contract\n",
+        "governed-transition-intake-declared-human-context-envelope-contract": "# P4-M3.3 Governed Transition Intake Declared Human Context Envelope Contract\n",
+        "governed-transition-intake-target-phase-envelope-contract": "# P4-M3.4 Governed Transition Intake Target Phase Envelope Contract\n",
+        "governed-transition-intake-declared-transition-reason-envelope-contract": "# P4-M3.5 Governed Transition Intake Declared Transition Reason Envelope Contract\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -575,7 +496,7 @@ def test_existing_p4_m1_0_through_p4_m2_16_memory_loop_commands_still_work(tmp_p
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_17_CLOSURE_HANDOFF_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M3_6_GOVERNED_TRANSITION_INTAKE_DECLARED_TRANSITION_CONSTRAINT_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -593,8 +514,14 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_closure_handoff_contract" not in entry_points
-    assert "p4-m2-closure-handoff-contract" not in entry_points
+    assert (
+        "p4_m3_governed_transition_intake_declared_transition_constraint_envelope_contract"
+        not in entry_points
+    )
+    assert (
+        "governed-transition-intake-declared-transition-constraint-envelope-contract"
+        not in entry_points
+    )
 
 
 def test_no_uv_lock_is_created():
@@ -602,18 +529,37 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ClosureHandoffContractField(
+    field = GovernedTransitionIntakeDeclaredTransitionConstraintEnvelopeContractField(
         field_order=1,
-        field_id="custom-closure-handoff-contract",
-        field_name="Custom Closure Handoff Contract Field",
+        field_id=(
+            "custom-governed-transition-intake-declared-transition-constraint-"
+            "envelope-contract"
+        ),
+        field_name=(
+            "Custom Governed Transition Intake Declared Transition Constraint "
+            "Envelope Contract Field"
+        ),
         field_purpose="Custom inspection-only purpose.",
-        closure_handoff_contract_category="custom-closure-handoff-contract-category",
-        closure_handoff_semantics_disabled="Custom closure handoff semantics are disabled.",
+        p4_m3_declared_transition_constraint_envelope_contract_category=(
+            "custom-governed-transition-intake-declared-transition-constraint-"
+            "envelope-contract-category"
+        ),
+        p4_m3_declared_transition_constraint_envelope_semantics_disabled=(
+            "Custom governed transition declared transition constraint envelope "
+            "semantics are disabled."
+        ),
     )
 
-    markdown = render_closure_handoff_contract_markdown([field])
+    markdown = (
+        render_governed_transition_intake_declared_transition_constraint_envelope_contract_markdown(
+            [field]
+        )
+    )
 
-    assert "custom-closure-handoff-contract" in markdown
+    assert (
+        "custom-governed-transition-intake-declared-transition-constraint-envelope-contract"
+        in markdown
+    )
     assert "Custom inspection-only purpose." in markdown
 
 
