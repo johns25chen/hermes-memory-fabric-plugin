@@ -101,6 +101,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-evidence-precedence-prohibition-map",
     "final-non-execution-boundary-audit",
     "p4-m2-closure-handoff-contract",
+    "governed-transition-intake-boundary-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
