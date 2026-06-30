@@ -73,6 +73,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-non-equivalence-map",
     "execution-decision-default-denial-boundary-map",
     "execution-decision-silence-non-consent-map",
+    "execution-decision-negative-evidence-non-override-map",
     "execution-decision-recommendation-prohibition-map",
 }
 
