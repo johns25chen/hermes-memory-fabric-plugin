@@ -7,37 +7,37 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_final_non_execution_boundary_audit import (
+from hermes_memory_fabric.p4_m3_governed_transition_intake_evidence_reference_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
-    FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY,
-    FinalNonExecutionBoundaryAuditField,
-    final_non_execution_boundary_audit_as_dicts,
-    final_non_execution_boundary_audit_field_ids,
-    final_non_execution_boundary_audit_report,
-    list_final_non_execution_boundary_audit_fields,
-    render_final_non_execution_boundary_audit_markdown,
+    GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY,
+    GovernedTransitionIntakeEvidenceReferenceEnvelopeContractField,
+    governed_transition_intake_evidence_reference_envelope_contract_as_dicts,
+    governed_transition_intake_evidence_reference_envelope_contract_field_ids,
+    governed_transition_intake_evidence_reference_envelope_contract_report,
+    list_governed_transition_intake_evidence_reference_envelope_contract_fields,
+    render_governed_transition_intake_evidence_reference_envelope_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "final-non-execution-boundary-audit-id",
-    "execution-surface-contract-reference",
-    "execution-contract-validation-matrix-reference",
-    "manual-authorization-evidence-envelope-reference",
-    "human-confirmation-snapshot-contract-reference",
-    "execution-preconditions-snapshot-map-reference",
-    "execution-risk-acknowledgement-map-reference",
-    "execution-risk-acceptance-prohibition-map-reference",
-    "execution-risk-waiver-prohibition-map-reference",
-    "execution-decision-non-equivalence-map-reference",
-    "execution-decision-recommendation-prohibition-map-reference",
-    "execution-decision-default-denial-boundary-map-reference",
-    "execution-decision-silence-non-consent-map-reference",
-    "execution-decision-negative-evidence-non-override-map-reference",
-    "execution-decision-conflicting-evidence-isolation-map-reference",
-    "execution-decision-evidence-precedence-prohibition-map-reference",
-    "final-non-execution-boundary-audit-category",
-    "final-non-execution-semantics-disabled",
+    "p4-m3-governed-transition-intake-evidence-reference-envelope-contract-id",
+    "p4-m3-governed-transition-intake-request-envelope-contract-reference",
+    "p4-m3-governed-transition-intake-boundary-contract-reference",
+    "p4-m2-closure-handoff-contract-reference",
+    "p4-m2-final-non-execution-boundary-audit-reference",
+    "p4-m3-evidence-reference-envelope-source-reference",
+    "p4-m3-evidence-reference-envelope-scope",
+    "p4-m3-evidence-reference-envelope-target-label-reference",
+    "p4-m3-evidence-reference-envelope-request-reference-field",
+    "p4-m3-evidence-reference-envelope-declared-evidence-id-field",
+    "p4-m3-evidence-reference-envelope-declared-evidence-type-field",
+    "p4-m3-evidence-reference-envelope-declared-evidence-source-label-field",
+    "p4-m3-evidence-reference-envelope-declared-evidence-citation-placeholder-field",
+    "p4-m3-evidence-reference-envelope-declared-evidence-human-context-field",
+    "p4-m3-evidence-reference-envelope-non-fetch-boundary",
+    "p4-m3-evidence-reference-envelope-non-validation-boundary",
+    "p4-m3-evidence-reference-envelope-contract-category",
+    "p4-m3-evidence-reference-envelope-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -45,8 +45,8 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "final_non_execution_boundary_audit_category",
-    "final_non_execution_semantics_disabled",
+    "p4_m3_evidence_reference_envelope_contract_category",
+    "p4_m3_evidence_reference_envelope_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -83,8 +83,8 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-evidence-reference-envelope-contract",
 }
 
-PREVIOUS_P4_M2_15_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "final-non-execution-boundary-audit"
+PREVIOUS_P4_M3_1_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "governed-transition-intake-evidence-reference-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
@@ -93,45 +93,52 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "approve",
     "reject",
     "execute",
-    "recommend-decision",
-    "rank-decision",
-    "suggest-next-action",
+    "intake-evidence",
+    "read-evidence",
+    "fetch-evidence",
+    "load-evidence",
+    "lookup-evidence",
     "validate-evidence",
-    "validate-consent",
-    "rank-evidence",
     "score-evidence",
-    "rank-source",
-    "select-winning-evidence",
+    "rank-evidence",
     "choose-evidence-precedence",
-    "arbitrate-evidence",
+    "select-evidence-winner",
+    "validate-citation",
+    "validate-source",
+    "accept-request",
+    "reject-request",
+    "validate-request",
+    "parse-transition-request",
+    "recommend-transition",
+    "rank-transition",
+    "suggest-next-action",
+    "validate-transition-readiness",
+    "readiness-verdict",
+    "validation-verdict",
+    "override-verdict",
     "resolve-conflict",
-    "merge-evidence",
-    "reconcile-evidence",
-    "create-evidence-precedence-record",
-    "create-evidence-ranking-record",
-    "create-evidence-score-record",
-    "create-evidence-winner-record",
-    "create-evidence-arbitration-record",
-    "create-conflict-resolution-record",
-    "create-evidence-merge-record",
-    "create-evidence-override-record",
-    "create-approval-override-record",
-    "create-consent-record",
-    "create-non-consent-record",
+    "accept-risk",
+    "waive-risk",
+    "create-evidence-record",
+    "create-request-record",
+    "create-transition-record",
     "write-memory",
     "create-memory",
     "update-memory",
     "delete-memory",
     "mutate-proposal",
+    "mutate-lifecycle",
     "fetch-source",
     "write-provenance",
     "mutate-evidence",
     "mutate-citation",
-    "call-agent",
+    "mutate-roadmap",
     "API",
     "MCP",
     "connector",
-    "start-p4-m3",
+    "call-agent",
+    "p4-m3-3",
+    "start-p4-m3-3",
     "start-p4-m4",
     "start-p4-m5",
     "start-v7",
@@ -144,66 +151,116 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 TRUE_STATUS_FLAGS = (
     "definition_only",
     "inspection_only",
-    "p4_m2_started",
-    "final_non_execution_boundary_audit_started",
-    "final_non_execution_boundary_audit_definition_only",
-    "p4_m2_1_through_p4_m2_15_references_defined",
-    "p4_m2_non_execution_boundary_closed",
-    "p4_m2_execution_semantics_prohibited",
-    "p4_m2_authorization_semantics_prohibited",
-    "p4_m2_confirmation_semantics_prohibited",
-    "p4_m2_approval_semantics_prohibited",
-    "p4_m2_recommendation_semantics_prohibited",
-    "p4_m2_ranking_semantics_prohibited",
-    "p4_m2_validation_verdict_semantics_prohibited",
-    "p4_m2_precedence_verdict_semantics_prohibited",
-    "p4_m2_override_semantics_prohibited",
-    "p4_m2_mutation_semantics_prohibited",
+    "p4_m3_evidence_reference_envelope_definition_started",
+    "p4_m3_2_governed_transition_intake_evidence_reference_envelope_contract_started",
+    "p4_m3_2_definition_only",
+    "p4_m3_1_request_envelope_contract_reference_defined",
+    "p4_m3_0_intake_boundary_contract_reference_defined",
+    "p4_m2_17_closure_handoff_contract_reference_defined",
+    "p4_m2_final_non_execution_boundary_reference_defined",
+    "p4_m3_evidence_reference_envelope_contract_defined",
+    "p4_m3_evidence_reference_envelope_scope_defined",
+    "p4_m3_evidence_reference_envelope_field_shape_defined",
+    "p4_m3_evidence_fetch_semantics_prohibited",
+    "p4_m3_evidence_validation_semantics_prohibited",
+    "p4_m3_evidence_scoring_semantics_prohibited",
+    "p4_m3_evidence_ranking_semantics_prohibited",
+    "p4_m3_evidence_precedence_semantics_prohibited",
+    "p4_m3_evidence_arbitration_semantics_prohibited",
+    "p4_m3_evidence_resolution_semantics_prohibited",
+    "p4_m3_evidence_merge_semantics_prohibited",
+    "p4_m3_evidence_winner_semantics_prohibited",
+    "p4_m3_evidence_mutation_semantics_prohibited",
+    "p4_m3_request_validation_semantics_prohibited",
+    "p4_m3_transition_execution_semantics_prohibited",
+    "p4_m3_transition_authorization_semantics_prohibited",
+    "p4_m3_transition_approval_semantics_prohibited",
+    "p4_m3_transition_confirmation_semantics_prohibited",
+    "p4_m3_transition_recommendation_semantics_prohibited",
+    "p4_m3_transition_ranking_semantics_prohibited",
+    "p4_m3_transition_readiness_verdict_semantics_prohibited",
+    "p4_m3_transition_validation_verdict_semantics_prohibited",
+    "p4_m3_transition_mutation_semantics_prohibited",
+    "p4_m3_3_start_deferred",
 )
 
 FALSE_STATUS_FLAGS = (
+    "live_evidence_intake_enabled",
+    "evidence_reading_enabled",
+    "evidence_fetching_enabled",
+    "evidence_loading_enabled",
+    "evidence_lookup_enabled",
+    "evidence_validation_enabled",
+    "declared_evidence_validation_enabled",
+    "evidence_type_validation_enabled",
+    "evidence_source_validation_enabled",
+    "evidence_citation_validation_enabled",
+    "evidence_completeness_validation_enabled",
+    "evidence_integrity_validation_enabled",
+    "evidence_authenticity_validation_enabled",
+    "evidence_scoring_enabled",
+    "evidence_ranking_enabled",
+    "evidence_precedence_enabled",
+    "evidence_arbitration_enabled",
+    "evidence_resolution_enabled",
+    "evidence_merge_enabled",
+    "evidence_reconciliation_enabled",
+    "evidence_winner_selection_enabled",
+    "evidence_record_creation_enabled",
+    "evidence_record_update_enabled",
+    "evidence_record_deletion_enabled",
+    "citation_validation_enabled",
+    "source_validation_enabled",
+    "source_fetching_enabled",
+    "provenance_writing_enabled",
+    "citation_mutation_enabled",
+    "live_request_intake_enabled",
+    "request_acceptance_enabled",
+    "request_rejection_enabled",
+    "request_validation_enabled",
+    "request_schema_validation_enabled",
+    "request_content_validation_enabled",
+    "request_completeness_validation_enabled",
+    "request_eligibility_validation_enabled",
+    "request_normalization_enabled",
+    "request_enrichment_enabled",
+    "request_routing_enabled",
+    "request_queueing_enabled",
+    "request_persistence_enabled",
+    "request_storage_enabled",
+    "request_mutation_enabled",
+    "request_record_creation_enabled",
+    "request_record_update_enabled",
+    "request_record_deletion_enabled",
     "execution_enabled",
     "decision_execution_enabled",
+    "transition_execution_enabled",
+    "transition_command_execution_enabled",
+    "phase_transition_execution_enabled",
     "authorization_enabled",
-    "decision_authorization_enabled",
-    "confirmation_enabled",
-    "decision_confirmation_enabled",
+    "transition_authorization_enabled",
     "approval_enabled",
-    "decision_approval_enabled",
-    "rejection_enabled",
-    "decision_rejection_enabled",
+    "transition_approval_enabled",
+    "confirmation_enabled",
+    "transition_confirmation_enabled",
     "recommendation_enabled",
-    "decision_recommendation_enabled",
+    "transition_recommendation_enabled",
     "ranking_enabled",
-    "decision_ranking_enabled",
+    "transition_ranking_enabled",
     "suggested_next_action_enabled",
+    "next_action_generation_enabled",
     "readiness_verdict_enabled",
+    "transition_readiness_verdict_enabled",
     "validation_verdict_enabled",
+    "transition_validation_verdict_enabled",
     "override_verdict_enabled",
+    "transition_override_verdict_enabled",
     "precedence_verdict_enabled",
     "conflict_resolution_verdict_enabled",
     "automatic_readiness_verdict_enabled",
-    "execution_hint_enabled",
-    "authorization_hint_enabled",
-    "confirmation_hint_enabled",
-    "approval_hint_enabled",
-    "recommendation_hint_enabled",
-    "readiness_hint_enabled",
-    "validation_hint_enabled",
-    "override_hint_enabled",
-    "resolution_hint_enabled",
-    "precedence_hint_enabled",
-    "default_readiness_enabled",
-    "default_approval_enabled",
-    "default_allow_enabled",
-    "default_permit_enabled",
-    "default_continue_enabled",
-    "default_execute_enabled",
-    "auto_pass_enabled",
-    "auto_execution_hint_enabled",
-    "advisory_verdict_enabled",
-    "evidence_validation_enabled",
     "live_evidence_validation_enabled",
+    "transition_readiness_validation_enabled",
+    "live_transition_readiness_validation_enabled",
     "consent_validation_enabled",
     "live_consent_validation_enabled",
     "live_confirmation_validation_enabled",
@@ -213,7 +270,6 @@ FALSE_STATUS_FLAGS = (
     "record_validation_enabled",
     "risk_acceptance_enabled",
     "risk_waiver_enabled",
-    "evidence_precedence_enabled",
     "source_precedence_enabled",
     "chronological_precedence_enabled",
     "recency_precedence_enabled",
@@ -222,23 +278,28 @@ FALSE_STATUS_FLAGS = (
     "citation_precedence_enabled",
     "winning_evidence_enabled",
     "evidence_winner_enabled",
-    "evidence_ranking_enabled",
-    "evidence_scoring_enabled",
     "source_ranking_enabled",
     "evidence_tie_breaker_enabled",
-    "evidence_arbitration_enabled",
     "conflict_resolution_enabled",
-    "evidence_resolution_enabled",
-    "evidence_merge_enabled",
-    "evidence_reconciliation_enabled",
     "evidence_override_enabled",
     "approval_override_enabled",
     "authorization_override_enabled",
     "readiness_override_enabled",
     "execution_override_enabled",
+    "transition_override_enabled",
     "consent_override_enabled",
     "risk_acceptance_override_enabled",
     "risk_waiver_override_enabled",
+    "transition_record_creation_enabled",
+    "transition_readiness_record_creation_enabled",
+    "transition_validation_record_creation_enabled",
+    "transition_approval_record_creation_enabled",
+    "transition_authorization_record_creation_enabled",
+    "transition_confirmation_record_creation_enabled",
+    "transition_execution_record_creation_enabled",
+    "transition_recommendation_record_creation_enabled",
+    "transition_ranking_record_creation_enabled",
+    "transition_next_action_record_creation_enabled",
     "memory_mutation_enabled",
     "memory_record_creation_enabled",
     "memory_record_update_enabled",
@@ -246,16 +307,17 @@ FALSE_STATUS_FLAGS = (
     "proposal_mutation_enabled",
     "lifecycle_mutation_enabled",
     "retry_policy_mutation_enabled",
-    "source_fetching_enabled",
-    "provenance_writing_enabled",
     "evidence_mutation_enabled",
-    "citation_mutation_enabled",
+    "roadmap_mutation_enabled",
     "api_enabled",
     "mcp_enabled",
     "connector_enabled",
     "agent_call_enabled",
     "codex_hermes_chatgpt_product_code_auto_call_enabled",
-    "p4_m3_started",
+    "p4_m3_3_started",
+    "p4_m3_3_command_enabled",
+    "p4_m3_3_activation_enabled",
+    "p4_m3_3_implementation_enabled",
     "p4_m4_started",
     "p4_m5_started",
     "v7_started",
@@ -265,32 +327,36 @@ FALSE_STATUS_FLAGS = (
     "mvp_started",
     "deploy_started",
     "full_memory_graph_started",
+    "version_bump_enabled",
+    "tag_creation_enabled",
 )
 
 
-def test_final_non_execution_boundary_audit_field_order_count_and_ids_are_stable():
-    fields = list_final_non_execution_boundary_audit_fields()
+def test_evidence_reference_envelope_field_order_count_and_ids_are_stable():
+    fields = list_governed_transition_intake_evidence_reference_envelope_contract_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 19))
     assert len(fields) == 18
-    assert final_non_execution_boundary_audit_field_ids() == FIELD_IDS
+    assert governed_transition_intake_evidence_reference_envelope_contract_field_ids() == FIELD_IDS
 
 
-def test_every_final_non_execution_boundary_audit_field_has_required_non_empty_values():
-    for field in list_final_non_execution_boundary_audit_fields():
+def test_every_evidence_reference_envelope_field_has_required_values():
+    for field in list_governed_transition_intake_evidence_reference_envelope_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.final_non_execution_boundary_audit_category.strip()
-        assert field.final_non_execution_semantics_disabled.strip()
+        assert field.p4_m3_evidence_reference_envelope_contract_category.strip()
+        assert field.p4_m3_evidence_reference_envelope_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_final_non_execution_boundary_audit_markdown()
-    second = render_final_non_execution_boundary_audit_markdown()
+    first = render_governed_transition_intake_evidence_reference_envelope_contract_markdown()
+    second = render_governed_transition_intake_evidence_reference_envelope_contract_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
-    assert FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY in first
+    assert first.startswith(
+        "# P4-M3.2 Governed Transition Intake Evidence Reference Envelope Contract\n"
+    )
+    assert GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -300,7 +366,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "final-non-execution-boundary-audit",
+        "governed-transition-intake-evidence-reference-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -315,9 +381,15 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY
+    assert (
+        first_payload["boundary"]
+        == GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY
+    )
     assert first_payload["count"] == 18
-    assert first_payload["status"] == final_non_execution_boundary_audit_report()
+    assert (
+        first_payload["status"]
+        == governed_transition_intake_evidence_reference_envelope_contract_report()
+    )
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -326,23 +398,34 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = final_non_execution_boundary_audit_as_dicts()
-    second_fields = final_non_execution_boundary_audit_as_dicts()
-    first_status = final_non_execution_boundary_audit_report()
-    second_status = final_non_execution_boundary_audit_report()
+    first_fields = governed_transition_intake_evidence_reference_envelope_contract_as_dicts()
+    second_fields = governed_transition_intake_evidence_reference_envelope_contract_as_dicts()
+    first_status = governed_transition_intake_evidence_reference_envelope_contract_report()
+    second_status = governed_transition_intake_evidence_reference_envelope_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.16"
-    assert first_status["feature"] == "Final Non-Execution Boundary Audit"
+    assert first_status["phase"] == "P4-M3.2"
+    assert (
+        first_status["feature"]
+        == "Governed Transition Intake Evidence Reference Envelope Contract"
+    )
     assert first_status["mode"] == "read-only"
-    assert first_status["final_non_execution_boundary_audit_field_count"] == 18
-    assert first_status["boundary"] == FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY
+    assert (
+        first_status[
+            "governed_transition_intake_evidence_reference_envelope_contract_field_count"
+        ]
+        == 18
+    )
+    assert (
+        first_status["boundary"]
+        == GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY
+    )
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = final_non_execution_boundary_audit_report()
+    status = governed_transition_intake_evidence_reference_envelope_contract_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -354,7 +437,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "governed-transition-intake-evidence-reference-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -363,9 +446,11 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
+    assert stdout.startswith(
+        "# P4-M3.2 Governed Transition Intake Evidence Reference Envelope Contract\n"
+    )
     assert "## Status Report" in stdout
-    assert FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY in stdout
+    assert GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -374,7 +459,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "final-non-execution-boundary-audit",
+        "governed-transition-intake-evidence-reference-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -390,7 +475,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
+    assert first_stdout.startswith("# P4-M3.2")
     assert not (tmp_path / ".local").exists()
 
 
@@ -406,7 +491,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "governed-transition-intake-evidence-reference-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -414,7 +499,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "governed-transition-intake-evidence-reference-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -424,7 +509,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.16")
+    assert markdown_stdout.startswith("# P4-M3.2")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 18
@@ -435,7 +520,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "governed-transition-intake-evidence-reference-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -443,29 +528,36 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "final_non_execution_boundary_audit.jsonl",
+        "governed_transition_intake_evidence_reference_envelope_contract.jsonl",
+        "evidence_records.jsonl",
+        "evidence_reference_records.jsonl",
+        "request_records.jsonl",
+        "transition_records.jsonl",
+        "transition_readiness_records.jsonl",
+        "transition_validation_records.jsonl",
+        "transition_approval_records.jsonl",
+        "transition_authorization_records.jsonl",
+        "transition_confirmation_records.jsonl",
+        "transition_execution_records.jsonl",
+        "transition_recommendation_records.jsonl",
+        "transition_ranking_records.jsonl",
+        "transition_next_action_records.jsonl",
+        "evidence_precedence.jsonl",
+        "evidence_ranking.jsonl",
+        "evidence_scores.jsonl",
+        "evidence_winners.jsonl",
+        "evidence_arbitration.jsonl",
+        "evidence_merge.jsonl",
+        "evidence_override.jsonl",
         "execution.jsonl",
         "authorization.jsonl",
         "confirmation.jsonl",
         "approvals.jsonl",
-        "rejections.jsonl",
         "recommendations.jsonl",
         "rankings.jsonl",
         "next_actions.jsonl",
         "validation.jsonl",
         "readiness.jsonl",
-        "evidence_precedence.jsonl",
-        "evidence_rankings.jsonl",
-        "evidence_scores.jsonl",
-        "evidence_winners.jsonl",
-        "evidence_arbitration.jsonl",
-        "conflict_resolution.jsonl",
-        "evidence_resolution.jsonl",
-        "evidence_merge.jsonl",
-        "evidence_overrides.jsonl",
-        "approval_overrides.jsonl",
-        "consent.jsonl",
-        "non_consent.jsonl",
         "memories.jsonl",
         "proposals.jsonl",
         "lifecycle.jsonl",
@@ -474,22 +566,23 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
         "provenance.jsonl",
         "evidence.jsonl",
         "citations.jsonl",
+        "roadmap.jsonl",
         "audit.jsonl",
     ):
         assert not (storage_root / filename).exists()
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_15_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "final-non-execution-boundary-audit" in commands
-    assert PREVIOUS_P4_M2_15_READ_ONLY_COMMANDS.issubset(commands)
+    assert "governed-transition-intake-evidence-reference-envelope-contract" in commands
+    assert PREVIOUS_P4_M3_1_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m3_1_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -517,6 +610,10 @@ def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_p
         "execution-decision-negative-evidence-non-override-map": "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n",
         "execution-decision-conflicting-evidence-isolation-map": "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n",
         "execution-decision-evidence-precedence-prohibition-map": "# P4-M2.15 Execution Decision Evidence Precedence Prohibition Map\n",
+        "final-non-execution-boundary-audit": "# P4-M2.16 Final Non-Execution Boundary Audit\n",
+        "p4-m2-closure-handoff-contract": "# P4-M2.17 P4-M2 Closure Handoff Contract\n",
+        "governed-transition-intake-boundary-contract": "# P4-M3.0 Governed Transition Intake Boundary Contract\n",
+        "governed-transition-intake-request-envelope-contract": "# P4-M3.1 Governed Transition Intake Request Envelope Contract\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -532,7 +629,7 @@ def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_p
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_16_FINAL_NON_EXECUTION_BOUNDARY_AUDIT.md"
+        "docs/CIVILIZATION_CORE_P4_M3_2_GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -550,8 +647,11 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_final_non_execution_boundary_audit" not in entry_points
-    assert "final-non-execution-boundary-audit" not in entry_points
+    assert (
+        "p4_m3_governed_transition_intake_evidence_reference_envelope_contract"
+        not in entry_points
+    )
+    assert "governed-transition-intake-evidence-reference-envelope-contract" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -559,22 +659,26 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = FinalNonExecutionBoundaryAuditField(
+    field = GovernedTransitionIntakeEvidenceReferenceEnvelopeContractField(
         field_order=1,
-        field_id="custom-final-non-execution-boundary-audit",
-        field_name="Custom Final Non-Execution Boundary Audit Field",
-        field_purpose="Custom inspection-only purpose.",
-        final_non_execution_boundary_audit_category=(
-            "custom-final-non-execution-boundary-audit-category"
+        field_id="custom-governed-transition-intake-evidence-reference-envelope-contract",
+        field_name=(
+            "Custom Governed Transition Intake Evidence Reference Envelope Contract Field"
         ),
-        final_non_execution_semantics_disabled=(
-            "Custom final non-execution semantics are disabled."
+        field_purpose="Custom inspection-only purpose.",
+        p4_m3_evidence_reference_envelope_contract_category=(
+            "custom-governed-transition-intake-evidence-reference-envelope-contract-category"
+        ),
+        p4_m3_evidence_reference_envelope_semantics_disabled=(
+            "Custom governed transition evidence reference envelope semantics are disabled."
         ),
     )
 
-    markdown = render_final_non_execution_boundary_audit_markdown([field])
+    markdown = render_governed_transition_intake_evidence_reference_envelope_contract_markdown(
+        [field]
+    )
 
-    assert "custom-final-non-execution-boundary-audit" in markdown
+    assert "custom-governed-transition-intake-evidence-reference-envelope-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
