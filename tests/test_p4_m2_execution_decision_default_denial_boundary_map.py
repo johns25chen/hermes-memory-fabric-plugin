@@ -80,6 +80,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-recommendation-prohibition-map",
     "p4-m2-closure-handoff-contract",
     "governed-transition-intake-boundary-contract",
+    "governed-transition-intake-request-envelope-contract",
 }
 
 PREVIOUS_P4_M2_10_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {

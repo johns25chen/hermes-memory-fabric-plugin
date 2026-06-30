@@ -423,6 +423,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutat
     "final-non-execution-boundary-audit",
     "p4-m2-closure-handoff-contract",
     "governed-transition-intake-boundary-contract",
+        "governed-transition-intake-request-envelope-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
