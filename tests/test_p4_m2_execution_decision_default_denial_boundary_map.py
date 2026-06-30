@@ -7,35 +7,35 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_execution_risk_waiver_prohibition_map import (
-    EXECUTION_RISK_WAIVER_PROHIBITION_MAP_BOUNDARY,
-    ExecutionRiskWaiverProhibitionMapField,
-    execution_risk_waiver_prohibition_map_as_dicts,
-    execution_risk_waiver_prohibition_map_field_ids,
-    execution_risk_waiver_prohibition_map_report,
-    list_execution_risk_waiver_prohibition_map_fields,
-    render_execution_risk_waiver_prohibition_map_markdown,
+from hermes_memory_fabric.p4_m2_execution_decision_default_denial_boundary_map import (
+    EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP_BOUNDARY,
+    ExecutionDecisionDefaultDenialBoundaryMapField,
+    execution_decision_default_denial_boundary_map_as_dicts,
+    execution_decision_default_denial_boundary_map_field_ids,
+    execution_decision_default_denial_boundary_map_report,
+    list_execution_decision_default_denial_boundary_map_fields,
+    render_execution_decision_default_denial_boundary_map_markdown,
 )
 
 
 FIELD_IDS = (
-    "execution-risk-waiver-prohibition-map-id",
-    "execution-risk-acceptance-prohibition-map-reference",
+    "execution-decision-default-denial-boundary-map-id",
+    "execution-decision-recommendation-prohibition-map-reference",
+    "execution-decision-non-equivalence-map-reference",
+    "manual-decision-reference",
+    "operator-reference",
     "execution-risk-acknowledgement-map-reference",
+    "execution-risk-acceptance-prohibition-map-reference",
+    "execution-risk-waiver-prohibition-map-reference",
     "execution-preconditions-snapshot-map-reference",
     "execution-surface-reference",
     "execution-contract-validation-matrix-reference",
     "manual-authorization-evidence-envelope-reference",
     "human-confirmation-snapshot-reference",
-    "manual-decision-reference",
-    "operator-reference",
-    "risk-waiver-category",
-    "risk-waiver-prohibition-signal",
-    "implied-waiver-prohibition-signal",
-    "risk-waiver-evidence-reference",
-    "risk-waiver-blocking-boundary",
-    "waiver-semantics-disabled",
-    "execution-semantics-disabled",
+    "default-denial-boundary-category",
+    "absence-as-permission-prohibition-signal",
+    "default-no-action-signal",
+    "default-allowance-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -43,12 +43,11 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "risk_waiver_category",
-    "risk_waiver_prohibition_signal",
-    "implied_waiver_prohibition_signal",
-    "risk_waiver_evidence_boundary",
-    "risk_waiver_blocking_boundary",
-    "disabled_semantics",
+    "default_denial_boundary_category",
+    "absence_as_permission_prohibition_signal",
+    "default_no_action_signal",
+    "default_allowance_semantics_disabled",
+    "default_denial_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -72,25 +71,33 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-acceptance-prohibition-map",
     "execution-risk-waiver-prohibition-map",
     "execution-decision-non-equivalence-map",
-    "execution-decision-recommendation-prohibition-map",
     "execution-decision-default-denial-boundary-map",
+    "execution-decision-recommendation-prohibition-map",
 }
 
-PREVIOUS_P4_M2_7_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "execution-risk-waiver-prohibition-map"
+PREVIOUS_P4_M2_10_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "execution-decision-default-denial-boundary-map"
 }
 
 BOUNDARY_PHRASES = (
-    "P4-M2.8",
-    "Execution Risk Waiver Prohibition Map",
+    "P4-M2.11",
+    "Execution Decision Default Denial Boundary Map",
     "read-only",
     "definition-only",
     "inspection-only",
     "no execution",
+    "no decision execution",
     "no confirmation",
+    "no decision confirmation",
     "no authorization",
+    "no decision authorization",
     "no approval",
+    "no default approval",
+    "no decision approval",
     "no rejection",
+    "no live rejection",
+    "no active denial",
+    "no decision rejection",
     "no risk acceptance",
     "no risk waiver",
     "no implied risk acceptance",
@@ -99,9 +106,56 @@ BOUNDARY_PHRASES = (
     "no acknowledgement-as-waiver",
     "no acceptance-prohibition-as-waiver",
     "no absence-of-acceptance-as-waiver",
+    "no absence-as-permission",
+    "no absence-as-approval",
+    "no absence-as-recommendation",
+    "no absence-as-readiness",
+    "no absence-as-validation",
+    "no absence-as-authorization",
+    "no absence-as-confirmation",
+    "no absence-as-risk-acceptance",
+    "no absence-as-risk-waiver",
     "no waiver evidence creation",
     "no waiver approval",
     "no waiver authorization",
+    "no manual-decision-as-execution",
+    "no manual-decision-as-authorization",
+    "no manual-decision-as-confirmation",
+    "no manual-decision-as-approval",
+    "no manual-decision-as-recommendation",
+    "no operator-as-authorization",
+    "no operator-as-confirmation",
+    "no operator-as-approval",
+    "no operator-as-recommendation",
+    "no risk-map-as-readiness",
+    "no risk-map-as-validation",
+    "no risk-map-as-recommendation",
+    "no non-equivalence-map-as-recommendation",
+    "no recommendation-map-as-approval",
+    "no recommendation-map-as-readiness",
+    "no reference-as-verdict",
+    "no reference-as-execution",
+    "no reference-as-authorization",
+    "no reference-as-confirmation",
+    "no reference-as-approval",
+    "no reference-as-recommendation",
+    "no decision recommendation",
+    "no decision ranking",
+    "no suggested next action",
+    "no default readiness",
+    "no default allow",
+    "no default permit",
+    "no default continue",
+    "no default execute",
+    "no default mutate",
+    "no auto-pass",
+    "no auto-execution hint",
+    "no advisory verdict",
+    "no execution hint",
+    "no authorization hint",
+    "no confirmation hint",
+    "no readiness hint",
+    "no validation hint",
     "no live risk acknowledgement",
     "no memory mutation",
     "no memory record creation",
@@ -122,8 +176,14 @@ BOUNDARY_PHRASES = (
     "no validation verdict",
     "no readiness verdict",
     "no automatic readiness verdict",
-    "no decision recommendation",
-    "no decision ranking",
+    "no decision equivalence semantics",
+    "no recommendation semantics",
+    "no ranking semantics",
+    "no next-action semantics",
+    "no default-allowance semantics",
+    "no permission semantics",
+    "no denial execution semantics",
+    "no rejection execution semantics",
     "no acceptance semantics",
     "no waiver semantics",
     "no acknowledgement semantics",
@@ -158,25 +218,55 @@ TRUE_STATUS_FLAGS = (
     "execution_preconditions_snapshot_map_available",
     "execution_risk_acknowledgement_map_available",
     "execution_risk_acceptance_prohibition_map_available",
-    "execution_risk_waiver_prohibition_map_started",
-    "execution_risk_waiver_prohibition_map_definition_only",
-    "risk_waiver_prohibition_map_fields_defined",
-    "risk_waiver_structure_prohibited",
-    "implied_risk_waiver_structure_prohibited",
-    "acknowledgement_as_waiver_prohibited",
-    "acceptance_prohibition_as_waiver_prohibited",
-    "absence_of_acceptance_as_waiver_prohibited",
-    "waiver_evidence_creation_prohibited",
-    "waiver_approval_prohibited",
-    "waiver_authorization_prohibited",
+    "execution_risk_waiver_prohibition_map_available",
+    "execution_decision_non_equivalence_map_available",
+    "execution_decision_recommendation_prohibition_map_available",
+    "execution_decision_default_denial_boundary_map_started",
+    "execution_decision_default_denial_boundary_map_definition_only",
+    "decision_default_denial_boundary_map_fields_defined",
+    "absence_as_permission_prohibited",
+    "absence_as_approval_prohibited",
+    "absence_as_recommendation_prohibited",
+    "absence_as_readiness_prohibited",
+    "absence_as_validation_prohibited",
+    "absence_as_authorization_prohibited",
+    "absence_as_confirmation_prohibited",
+    "absence_as_risk_acceptance_prohibited",
+    "absence_as_risk_waiver_prohibited",
+    "default_no_action_signal_defined",
+    "default_allowance_semantics_disabled",
+    "manual_decision_as_recommendation_prohibited",
+    "operator_as_recommendation_prohibited",
+    "risk_map_as_recommendation_prohibited",
+    "non_equivalence_map_as_recommendation_prohibited",
+    "reference_as_recommendation_prohibited",
+    "suggested_next_action_prohibited",
+    "default_readiness_prohibited",
+    "default_approval_prohibited",
+    "auto_pass_prohibited",
+    "auto_execution_hint_prohibited",
+    "advisory_verdict_prohibited",
+    "execution_hint_prohibited",
+    "authorization_hint_prohibited",
+    "confirmation_hint_prohibited",
+    "readiness_hint_prohibited",
+    "validation_hint_prohibited",
 )
 
 DISABLED_STATUS_FLAGS = (
     "execution_enabled",
+    "decision_execution_enabled",
     "confirmation_enabled",
+    "decision_confirmation_enabled",
     "authorization_enabled",
+    "decision_authorization_enabled",
     "approval_enabled",
+    "default_approval_enabled",
+    "decision_approval_enabled",
     "rejection_enabled",
+    "live_rejection_enabled",
+    "active_denial_enabled",
+    "decision_rejection_enabled",
     "risk_acceptance_enabled",
     "risk_waiver_enabled",
     "implied_risk_acceptance_enabled",
@@ -210,6 +300,38 @@ DISABLED_STATUS_FLAGS = (
     "automatic_readiness_verdict_enabled",
     "decision_recommendation_enabled",
     "decision_ranking_enabled",
+    "suggested_next_action_enabled",
+    "default_readiness_enabled",
+    "auto_pass_enabled",
+    "auto_execution_hint_enabled",
+    "advisory_verdict_enabled",
+    "execution_hint_enabled",
+    "authorization_hint_enabled",
+    "confirmation_hint_enabled",
+    "readiness_hint_enabled",
+    "validation_hint_enabled",
+    "default_allow_enabled",
+    "default_permit_enabled",
+    "default_continue_enabled",
+    "default_execute_enabled",
+    "default_mutate_enabled",
+    "absence_as_permission_enabled",
+    "absence_as_approval_enabled",
+    "absence_as_recommendation_enabled",
+    "absence_as_readiness_enabled",
+    "absence_as_validation_enabled",
+    "absence_as_authorization_enabled",
+    "absence_as_confirmation_enabled",
+    "absence_as_risk_acceptance_enabled",
+    "absence_as_risk_waiver_enabled",
+    "decision_equivalence_semantics_granted",
+    "recommendation_semantics_granted",
+    "ranking_semantics_granted",
+    "next_action_semantics_granted",
+    "default_allowance_semantics_granted",
+    "permission_semantics_granted",
+    "denial_execution_semantics_granted",
+    "rejection_execution_semantics_granted",
     "acceptance_semantics_granted",
     "waiver_semantics_granted",
     "acknowledgement_semantics_granted",
@@ -251,6 +373,12 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "manual-execute",
     "recommend-decision",
     "rank-decision",
+    "suggest-next-action",
+    "default-approval",
+    "default-readiness",
+    "auto-pass",
+    "auto-execution-hint",
+    "advisory-verdict",
     "readiness-verdict",
     "validation-verdict",
     "validate-contract",
@@ -288,33 +416,32 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_waiver_prohibition_map_field_order_count_and_ids_are_stable():
-    fields = list_execution_risk_waiver_prohibition_map_fields()
+def test_default_denial_boundary_map_field_order_count_and_ids_are_stable():
+    fields = list_execution_decision_default_denial_boundary_map_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 18))
     assert len(fields) == 17
-    assert execution_risk_waiver_prohibition_map_field_ids() == FIELD_IDS
+    assert execution_decision_default_denial_boundary_map_field_ids() == FIELD_IDS
 
 
-def test_every_waiver_prohibition_map_field_has_required_non_empty_values():
-    for field in list_execution_risk_waiver_prohibition_map_fields():
+def test_every_default_denial_boundary_map_field_has_required_non_empty_values():
+    for field in list_execution_decision_default_denial_boundary_map_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.risk_waiver_category.strip()
-        assert field.risk_waiver_prohibition_signal.strip()
-        assert field.implied_waiver_prohibition_signal.strip()
-        assert field.risk_waiver_evidence_boundary.strip()
-        assert field.risk_waiver_blocking_boundary.strip()
-        assert field.disabled_semantics.strip()
+        assert field.default_denial_boundary_category.strip()
+        assert field.absence_as_permission_prohibition_signal.strip()
+        assert field.default_no_action_signal.strip()
+        assert field.default_allowance_semantics_disabled.strip()
+        assert field.default_denial_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_execution_risk_waiver_prohibition_map_markdown()
-    second = render_execution_risk_waiver_prohibition_map_markdown()
+    first = render_execution_decision_default_denial_boundary_map_markdown()
+    second = render_execution_decision_default_denial_boundary_map_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.8 Execution Risk Waiver Prohibition Map\n")
-    assert EXECUTION_RISK_WAIVER_PROHIBITION_MAP_BOUNDARY in first
+    assert first.startswith("# P4-M2.11 Execution Decision Default Denial Boundary Map\n")
+    assert EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASES:
@@ -324,7 +451,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-waiver-prohibition-map",
+        "execution-decision-default-denial-boundary-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -339,9 +466,9 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EXECUTION_RISK_WAIVER_PROHIBITION_MAP_BOUNDARY
+    assert first_payload["boundary"] == EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP_BOUNDARY
     assert first_payload["count"] == 17
-    assert first_payload["status"] == execution_risk_waiver_prohibition_map_report()
+    assert first_payload["status"] == execution_decision_default_denial_boundary_map_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASES:
@@ -350,23 +477,23 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = execution_risk_waiver_prohibition_map_as_dicts()
-    second_fields = execution_risk_waiver_prohibition_map_as_dicts()
-    first_status = execution_risk_waiver_prohibition_map_report()
-    second_status = execution_risk_waiver_prohibition_map_report()
+    first_fields = execution_decision_default_denial_boundary_map_as_dicts()
+    second_fields = execution_decision_default_denial_boundary_map_as_dicts()
+    first_status = execution_decision_default_denial_boundary_map_report()
+    second_status = execution_decision_default_denial_boundary_map_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.8"
-    assert first_status["feature"] == "Execution Risk Waiver Prohibition Map"
+    assert first_status["phase"] == "P4-M2.11"
+    assert first_status["feature"] == "Execution Decision Default Denial Boundary Map"
     assert first_status["mode"] == "read-only"
-    assert first_status["risk_waiver_prohibition_map_field_count"] == 17
-    assert first_status["boundary"] == EXECUTION_RISK_WAIVER_PROHIBITION_MAP_BOUNDARY
+    assert first_status["execution_decision_default_denial_boundary_map_field_count"] == 17
+    assert first_status["boundary"] == EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = execution_risk_waiver_prohibition_map_report()
+    status = execution_decision_default_denial_boundary_map_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -378,7 +505,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-waiver-prohibition-map",
+            "execution-decision-default-denial-boundary-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -387,9 +514,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.8 Execution Risk Waiver Prohibition Map\n")
+    assert stdout.startswith("# P4-M2.11 Execution Decision Default Denial Boundary Map\n")
     assert "## Status Report" in stdout
-    assert EXECUTION_RISK_WAIVER_PROHIBITION_MAP_BOUNDARY in stdout
+    assert EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -398,7 +525,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-waiver-prohibition-map",
+        "execution-decision-default-denial-boundary-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -414,7 +541,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.8 Execution Risk Waiver Prohibition Map\n")
+    assert first_stdout.startswith("# P4-M2.11 Execution Decision Default Denial Boundary Map\n")
     assert not (tmp_path / ".local").exists()
 
 
@@ -430,7 +557,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-waiver-prohibition-map",
+            "execution-decision-default-denial-boundary-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -438,7 +565,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-risk-waiver-prohibition-map",
+            "execution-decision-default-denial-boundary-map",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -448,7 +575,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.8")
+    assert markdown_stdout.startswith("# P4-M2.11")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 17
@@ -459,7 +586,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "execution-risk-waiver-prohibition-map",
+            "execution-decision-default-denial-boundary-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -467,15 +594,21 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "execution_risk_waiver_prohibition_map.jsonl",
-        "risk_waiver.jsonl",
-        "risk_waiver.jsonl",
-        "risk_acknowledgement.jsonl",
+        "execution_decision_default_denial_boundary_map.jsonl",
+        "execution_decision_non_equivalence_map.jsonl",
+        "decisions.jsonl",
+        "decision_execution.jsonl",
+        "recommendations.jsonl",
+        "rankings.jsonl",
+        "next_actions.jsonl",
         "confirmation.jsonl",
         "authorization.jsonl",
         "execution.jsonl",
         "approvals.jsonl",
         "rejections.jsonl",
+        "risk_acceptance.jsonl",
+        "risk_waiver.jsonl",
+        "risk_acknowledgement.jsonl",
         "validation.jsonl",
         "readiness.jsonl",
         "memories.jsonl",
@@ -492,16 +625,16 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_6_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_9_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "execution-risk-waiver-prohibition-map" in commands
-    assert PREVIOUS_P4_M2_7_READ_ONLY_COMMANDS.issubset(commands)
+    assert "execution-decision-default-denial-boundary-map" in commands
+    assert PREVIOUS_P4_M2_10_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_6_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_9_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -521,6 +654,9 @@ def test_existing_p4_m1_0_through_p4_m2_6_memory_loop_commands_still_work(tmp_pa
         "execution-preconditions-snapshot-map": "# P4-M2.5 Execution Preconditions Snapshot Map\n",
         "execution-risk-acknowledgement-map": "# P4-M2.6 Execution Risk Acknowledgement Map\n",
         "execution-risk-acceptance-prohibition-map": "# P4-M2.7 Execution Risk Acceptance Prohibition Map\n",
+        "execution-risk-waiver-prohibition-map": "# P4-M2.8 Execution Risk Waiver Prohibition Map\n",
+        "execution-decision-non-equivalence-map": "# P4-M2.9 Execution Decision Non-Equivalence Map\n",
+        "execution-decision-recommendation-prohibition-map": "# P4-M2.10 Execution Decision Recommendation Prohibition Map\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -536,7 +672,7 @@ def test_existing_p4_m1_0_through_p4_m2_6_memory_loop_commands_still_work(tmp_pa
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_8_EXECUTION_RISK_WAIVER_PROHIBITION_MAP.md"
+        "docs/CIVILIZATION_CORE_P4_M2_11_EXECUTION_DECISION_DEFAULT_DENIAL_BOUNDARY_MAP.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASES:
@@ -554,8 +690,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_risk_waiver_prohibition_map" not in entry_points
-    assert "execution-risk-waiver-prohibition-map" not in entry_points
+    assert "p4_m2_execution_decision_default_denial_boundary_map" not in entry_points
+    assert "execution-decision-default-denial-boundary-map" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -563,22 +699,21 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionRiskWaiverProhibitionMapField(
+    field = ExecutionDecisionDefaultDenialBoundaryMapField(
         field_order=1,
-        field_id="custom-execution-risk-waiver-prohibition-map",
-        field_name="Custom Risk Waiver Prohibition Map Field",
+        field_id="custom-execution-decision-default-denial-boundary-map",
+        field_name="Custom Execution Decision Default Denial Boundary Map Field",
         field_purpose="Custom inspection-only purpose.",
-        risk_waiver_category="custom-prohibition",
-        risk_waiver_prohibition_signal="Custom waiver prohibition signal is visible.",
-        implied_waiver_prohibition_signal="Custom implied waiver prohibition signal is visible.",
-        risk_waiver_evidence_boundary="Custom evidence boundary is read-only.",
-        risk_waiver_blocking_boundary="Acceptance, waiver, acknowledgement, validation, readiness, confirmation, authorization, execution, or mutation behavior is introduced.",
-        disabled_semantics="no acceptance semantics, no waiver semantics, no acknowledgement semantics, no validation verdict, no readiness verdict, no execution semantics.",
+        default_denial_boundary_category="custom-default-denial-boundary",
+        absence_as_permission_prohibition_signal="Custom decision ranking is disabled.",
+        default_no_action_signal="Custom suggested next action is disabled.",
+        default_allowance_semantics_disabled="Custom default readiness is disabled.",
+        default_denial_semantics_disabled="no recommendation semantics, no ranking semantics, no next-action semantics.",
     )
 
-    markdown = render_execution_risk_waiver_prohibition_map_markdown([field])
+    markdown = render_execution_decision_default_denial_boundary_map_markdown([field])
 
-    assert "custom-execution-risk-waiver-prohibition-map" in markdown
+    assert "custom-execution-decision-default-denial-boundary-map" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 

@@ -72,6 +72,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-waiver-prohibition-map",
     "execution-decision-non-equivalence-map",
     "execution-decision-recommendation-prohibition-map",
+    "execution-decision-default-denial-boundary-map",
 }
 
 PREVIOUS_P4_M2_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
@@ -81,6 +82,7 @@ PREVIOUS_P4_M2_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
     "execution-risk-waiver-prohibition-map",
     "execution-decision-non-equivalence-map",
     "execution-decision-recommendation-prohibition-map",
+    "execution-decision-default-denial-boundary-map",
 }
 
 BOUNDARY_PHRASES = (
