@@ -135,6 +135,12 @@ from .p4_m2_execution_decision_default_denial_boundary_map import (
     execution_decision_default_denial_boundary_map_report,
     render_execution_decision_default_denial_boundary_map_markdown,
 )
+from .p4_m2_execution_decision_silence_non_consent_map import (
+    EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY,
+    execution_decision_silence_non_consent_map_as_dicts,
+    execution_decision_silence_non_consent_map_report,
+    render_execution_decision_silence_non_consent_map_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -458,6 +464,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_execution_decision_default_denial_boundary_map)
     memory_loop_execution_decision_default_denial_boundary_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_execution_decision_silence_non_consent_map = (
+        memory_loop_subparsers.add_parser(
+            "execution-decision-silence-non-consent-map"
+        )
+    )
+    _add_workspace_root(memory_loop_execution_decision_silence_non_consent_map)
+    memory_loop_execution_decision_silence_non_consent_map.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -1001,6 +1019,22 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 "unsupported_memory_loop_execution_decision_default_denial_boundary_map_format:"
+                f"{args.format}"
+            )
+
+        if args.memory_loop_command == "execution-decision-silence-non-consent-map":
+            if args.format == "markdown":
+                return render_execution_decision_silence_non_consent_map_markdown()
+            if args.format == "json":
+                fields = execution_decision_silence_non_consent_map_as_dicts()
+                return {
+                    "boundary": EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": execution_decision_silence_non_consent_map_report(),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_execution_decision_silence_non_consent_map_format:"
                 f"{args.format}"
             )
 

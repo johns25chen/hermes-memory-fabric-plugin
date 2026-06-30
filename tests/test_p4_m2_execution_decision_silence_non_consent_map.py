@@ -7,35 +7,35 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_execution_risk_acknowledgement_map import (
-    EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY,
-    ExecutionRiskAcknowledgementMapField,
-    execution_risk_acknowledgement_map_as_dicts,
-    execution_risk_acknowledgement_map_field_ids,
-    execution_risk_acknowledgement_map_report,
-    list_execution_risk_acknowledgement_map_fields,
-    render_execution_risk_acknowledgement_map_markdown,
+from hermes_memory_fabric.p4_m2_execution_decision_silence_non_consent_map import (
+    EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY,
+    ExecutionDecisionSilenceNonConsentMapField,
+    execution_decision_silence_non_consent_map_as_dicts,
+    execution_decision_silence_non_consent_map_field_ids,
+    execution_decision_silence_non_consent_map_report,
+    list_execution_decision_silence_non_consent_map_fields,
+    render_execution_decision_silence_non_consent_map_markdown,
 )
 
 
 FIELD_IDS = (
-    "execution-risk-acknowledgement-map-id",
-    "execution-preconditions-snapshot-map-reference",
-    "execution-surface-reference",
-    "execution-contract-validation-matrix-reference",
-    "manual-authorization-evidence-envelope-reference",
-    "human-confirmation-snapshot-reference",
+    "execution-decision-silence-non-consent-map-id",
+    "execution-decision-default-denial-boundary-map-reference",
+    "execution-decision-recommendation-prohibition-map-reference",
+    "execution-decision-non-equivalence-map-reference",
     "manual-decision-reference",
     "operator-reference",
-    "risk-category",
-    "risk-acknowledgement-signal",
-    "risk-evidence-reference",
-    "risk-severity-label",
-    "risk-blocking-boundary",
-    "revocation-or-expiry-reference",
-    "acknowledgement-semantics-disabled",
-    "validation-semantics-disabled",
-    "execution-semantics-disabled",
+    "human-confirmation-snapshot-reference",
+    "manual-authorization-evidence-envelope-reference",
+    "execution-preconditions-snapshot-map-reference",
+    "execution-risk-acknowledgement-map-reference",
+    "execution-risk-acceptance-prohibition-map-reference",
+    "execution-risk-waiver-prohibition-map-reference",
+    "execution-surface-reference",
+    "execution-contract-validation-matrix-reference",
+    "silence-non-consent-boundary-category",
+    "missing-evidence-as-consent-prohibition-signal",
+    "consent-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -43,11 +43,10 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "risk_acknowledgement_signal",
-    "evidence_boundary",
-    "prohibited_semantics",
-    "blocking_boundary",
-    "future_acknowledgement_note",
+    "silence_non_consent_boundary_category",
+    "missing_evidence_as_consent_prohibition_signal",
+    "consent_semantics_disabled",
+    "non_consent_execution_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -76,28 +75,123 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-silence-non-consent-map",
 }
 
-PREVIOUS_P4_M2_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "execution-risk-acknowledgement-map",
-    "execution-risk-acceptance-prohibition-map",
-    "execution-risk-waiver-prohibition-map",
-    "execution-decision-non-equivalence-map",
-    "execution-decision-recommendation-prohibition-map",
-    "execution-decision-default-denial-boundary-map",
+PREVIOUS_P4_M2_11_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "execution-decision-silence-non-consent-map"
 }
 
 BOUNDARY_PHRASES = (
-    "P4-M2.6",
-    "Execution Risk Acknowledgement Map",
+    "P4-M2.12",
+    "Execution Decision Silence Non-Consent Map",
     "read-only",
     "definition-only",
     "inspection-only",
+    "silence is not consent",
+    "non-response is not consent",
+    "missing record is not consent",
+    "missing evidence is not consent",
+    "missing objection is not approval",
+    "missing rejection is not approval",
+    "missing denial is not permission",
     "no execution",
+    "no decision execution",
     "no confirmation",
+    "no decision confirmation",
     "no authorization",
+    "no decision authorization",
     "no approval",
+    "no default approval",
+    "no decision approval",
     "no rejection",
+    "no live rejection",
+    "no active denial",
+    "no decision rejection",
+    "no consent validation",
+    "no live consent validation",
+    "no consent record creation",
+    "no non-consent record creation",
     "no risk acceptance",
     "no risk waiver",
+    "no implied risk acceptance",
+    "no implied risk waiver",
+    "no acknowledgement-as-acceptance",
+    "no acknowledgement-as-waiver",
+    "no acceptance-prohibition-as-waiver",
+    "no absence-of-acceptance-as-waiver",
+    "no silence-as-consent",
+    "no silence-as-authorization",
+    "no silence-as-confirmation",
+    "no silence-as-approval",
+    "no silence-as-recommendation",
+    "no silence-as-readiness",
+    "no silence-as-validation",
+    "no silence-as-risk-acceptance",
+    "no silence-as-risk-waiver",
+    "no non-response-as-consent",
+    "no missing-record-as-consent",
+    "no missing-evidence-as-consent",
+    "no missing-objection-as-approval",
+    "no missing-rejection-as-approval",
+    "no missing-denial-as-permission",
+    "no missing-confirmation-as-confirmation",
+    "no missing-authorization-as-authorization",
+    "no missing-recommendation-as-recommendation",
+    "no missing-readiness-as-readiness",
+    "no missing-validation-as-validation",
+    "no missing-risk-acceptance-as-risk-acceptance",
+    "no missing-risk-waiver-as-risk-waiver",
+    "no absence-as-permission",
+    "no absence-as-approval",
+    "no absence-as-recommendation",
+    "no absence-as-readiness",
+    "no absence-as-validation",
+    "no absence-as-authorization",
+    "no absence-as-confirmation",
+    "no absence-as-risk-acceptance",
+    "no absence-as-risk-waiver",
+    "no waiver evidence creation",
+    "no waiver approval",
+    "no waiver authorization",
+    "no manual-decision-as-execution",
+    "no manual-decision-as-authorization",
+    "no manual-decision-as-confirmation",
+    "no manual-decision-as-approval",
+    "no manual-decision-as-recommendation",
+    "no operator-as-authorization",
+    "no operator-as-confirmation",
+    "no operator-as-approval",
+    "no operator-as-recommendation",
+    "no risk-map-as-readiness",
+    "no risk-map-as-validation",
+    "no risk-map-as-recommendation",
+    "no non-equivalence-map-as-recommendation",
+    "no recommendation-map-as-approval",
+    "no recommendation-map-as-readiness",
+    "no default-denial-map-as-consent",
+    "no default-denial-map-as-execution",
+    "no reference-as-verdict",
+    "no reference-as-execution",
+    "no reference-as-authorization",
+    "no reference-as-confirmation",
+    "no reference-as-approval",
+    "no reference-as-recommendation",
+    "no reference-as-consent",
+    "no decision recommendation",
+    "no decision ranking",
+    "no suggested next action",
+    "no default readiness",
+    "no default allow",
+    "no default permit",
+    "no default continue",
+    "no default execute",
+    "no default mutate",
+    "no auto-pass",
+    "no auto-execution hint",
+    "no advisory verdict",
+    "no execution hint",
+    "no authorization hint",
+    "no confirmation hint",
+    "no readiness hint",
+    "no validation hint",
     "no live risk acknowledgement",
     "no memory mutation",
     "no memory record creation",
@@ -118,8 +212,18 @@ BOUNDARY_PHRASES = (
     "no validation verdict",
     "no readiness verdict",
     "no automatic readiness verdict",
-    "no decision recommendation",
-    "no decision ranking",
+    "no consent semantics",
+    "no non-consent execution semantics",
+    "no decision equivalence semantics",
+    "no recommendation semantics",
+    "no ranking semantics",
+    "no next-action semantics",
+    "no default-allowance semantics",
+    "no permission semantics",
+    "no denial execution semantics",
+    "no rejection execution semantics",
+    "no acceptance semantics",
+    "no waiver semantics",
     "no acknowledgement semantics",
     "no confirmation semantics",
     "no authorization semantics",
@@ -150,20 +254,65 @@ TRUE_STATUS_FLAGS = (
     "manual_authorization_evidence_envelope_available",
     "human_confirmation_snapshot_contract_available",
     "execution_preconditions_snapshot_map_available",
-    "execution_risk_acknowledgement_map_started",
-    "execution_risk_acknowledgement_map_definition_only",
-    "risk_acknowledgement_map_fields_defined",
-    "risk_acknowledgement_structure_defined",
+    "execution_risk_acknowledgement_map_available",
+    "execution_risk_acceptance_prohibition_map_available",
+    "execution_risk_waiver_prohibition_map_available",
+    "execution_decision_non_equivalence_map_available",
+    "execution_decision_recommendation_prohibition_map_available",
+    "execution_decision_default_denial_boundary_map_available",
+    "execution_decision_silence_non_consent_map_started",
+    "execution_decision_silence_non_consent_map_definition_only",
+    "decision_silence_non_consent_map_fields_defined",
+    "silence_as_consent_prohibited",
+    "non_response_as_consent_prohibited",
+    "missing_record_as_consent_prohibited",
+    "missing_evidence_as_consent_prohibited",
+    "missing_objection_as_approval_prohibited",
+    "missing_rejection_as_approval_prohibited",
+    "missing_denial_as_permission_prohibited",
+    "missing_confirmation_as_confirmation_prohibited",
+    "missing_authorization_as_authorization_prohibited",
+    "missing_recommendation_as_recommendation_prohibited",
+    "missing_readiness_as_readiness_prohibited",
+    "missing_validation_as_validation_prohibited",
+    "missing_risk_acceptance_as_risk_acceptance_prohibited",
+    "missing_risk_waiver_as_risk_waiver_prohibited",
+    "consent_semantics_disabled",
+    "non_consent_execution_semantics_disabled",
+    "default_denial_map_as_consent_prohibited",
+    "default_denial_map_as_execution_prohibited",
+    "reference_as_consent_prohibited",
 )
 
 DISABLED_STATUS_FLAGS = (
     "execution_enabled",
+    "decision_execution_enabled",
     "confirmation_enabled",
+    "decision_confirmation_enabled",
     "authorization_enabled",
+    "decision_authorization_enabled",
     "approval_enabled",
+    "default_approval_enabled",
+    "decision_approval_enabled",
     "rejection_enabled",
+    "live_rejection_enabled",
+    "active_denial_enabled",
+    "decision_rejection_enabled",
+    "consent_validation_enabled",
+    "live_consent_validation_enabled",
+    "consent_record_creation_enabled",
+    "non_consent_record_creation_enabled",
     "risk_acceptance_enabled",
     "risk_waiver_enabled",
+    "implied_risk_acceptance_enabled",
+    "implied_risk_waiver_enabled",
+    "acknowledgement_as_acceptance_enabled",
+    "acknowledgement_as_waiver_enabled",
+    "acceptance_prohibition_as_waiver_enabled",
+    "absence_of_acceptance_as_waiver_enabled",
+    "waiver_evidence_creation_enabled",
+    "waiver_approval_enabled",
+    "waiver_authorization_enabled",
     "live_risk_acknowledgement_enabled",
     "memory_mutation_enabled",
     "memory_record_creation_enabled",
@@ -186,6 +335,33 @@ DISABLED_STATUS_FLAGS = (
     "automatic_readiness_verdict_enabled",
     "decision_recommendation_enabled",
     "decision_ranking_enabled",
+    "suggested_next_action_enabled",
+    "default_readiness_enabled",
+    "auto_pass_enabled",
+    "auto_execution_hint_enabled",
+    "advisory_verdict_enabled",
+    "execution_hint_enabled",
+    "authorization_hint_enabled",
+    "confirmation_hint_enabled",
+    "readiness_hint_enabled",
+    "validation_hint_enabled",
+    "default_allow_enabled",
+    "default_permit_enabled",
+    "default_continue_enabled",
+    "default_execute_enabled",
+    "default_mutate_enabled",
+    "consent_semantics_granted",
+    "non_consent_execution_semantics_granted",
+    "decision_equivalence_semantics_granted",
+    "recommendation_semantics_granted",
+    "ranking_semantics_granted",
+    "next_action_semantics_granted",
+    "default_allowance_semantics_granted",
+    "permission_semantics_granted",
+    "denial_execution_semantics_granted",
+    "rejection_execution_semantics_granted",
+    "acceptance_semantics_granted",
+    "waiver_semantics_granted",
     "acknowledgement_semantics_granted",
     "confirmation_semantics_granted",
     "authorization_semantics_granted",
@@ -209,41 +385,22 @@ DISABLED_STATUS_FLAGS = (
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "confirm",
-    "confirmation",
-    "authorize",
     "authorization",
     "approve",
     "reject",
-    "accept-risk",
-    "risk-acceptance",
-    "waive-risk",
-    "risk-waiver",
-    "acknowledge-risk",
-    "live-risk-acknowledgement",
     "execute",
-    "execute-decision",
-    "manual-execute",
     "recommend-decision",
     "rank-decision",
-    "readiness-verdict",
-    "validation-verdict",
-    "validate-contract",
-    "validate-confirmation-snapshot",
-    "validate-authorization-envelope",
-    "live-confirmation-validation",
-    "live-authorization-validation",
-    "live-validation",
-    "input-validation",
-    "record-validation",
+    "suggest-next-action",
+    "validate-consent",
+    "create-consent-record",
+    "create-non-consent-record",
     "write-memory",
     "create-memory",
     "update-memory",
     "delete-memory",
     "mutate-proposal",
-    "lifecycle-mutate",
-    "retry-policy-update",
     "fetch-source",
-    "source-fetch",
     "write-provenance",
     "mutate-evidence",
     "mutate-citation",
@@ -262,33 +419,31 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_risk_acknowledgement_map_field_order_count_and_ids_are_stable():
-    fields = list_execution_risk_acknowledgement_map_fields()
+def test_silence_non_consent_map_field_order_count_and_ids_are_stable():
+    fields = list_execution_decision_silence_non_consent_map_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 18))
     assert len(fields) == 17
-    assert execution_risk_acknowledgement_map_field_ids() == FIELD_IDS
-    assert execution_risk_acknowledgement_map_field_ids() == FIELD_IDS
+    assert execution_decision_silence_non_consent_map_field_ids() == FIELD_IDS
 
 
-def test_every_risk_acknowledgement_map_field_has_required_non_empty_values():
-    for field in list_execution_risk_acknowledgement_map_fields():
+def test_every_silence_non_consent_map_field_has_required_non_empty_values():
+    for field in list_execution_decision_silence_non_consent_map_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.risk_acknowledgement_signal.strip()
-        assert field.evidence_boundary.strip()
-        assert field.prohibited_semantics.strip()
-        assert field.blocking_boundary.strip()
-        assert field.future_acknowledgement_note.strip()
+        assert field.silence_non_consent_boundary_category.strip()
+        assert field.missing_evidence_as_consent_prohibition_signal.strip()
+        assert field.consent_semantics_disabled.strip()
+        assert field.non_consent_execution_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_execution_risk_acknowledgement_map_markdown()
-    second = render_execution_risk_acknowledgement_map_markdown()
+    first = render_execution_decision_silence_non_consent_map_markdown()
+    second = render_execution_decision_silence_non_consent_map_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
-    assert EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY in first
+    assert first.startswith("# P4-M2.12 Execution Decision Silence Non-Consent Map\n")
+    assert EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASES:
@@ -298,7 +453,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-acknowledgement-map",
+        "execution-decision-silence-non-consent-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -313,9 +468,9 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY
+    assert first_payload["boundary"] == EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY
     assert first_payload["count"] == 17
-    assert first_payload["status"] == execution_risk_acknowledgement_map_report()
+    assert first_payload["status"] == execution_decision_silence_non_consent_map_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASES:
@@ -324,23 +479,23 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = execution_risk_acknowledgement_map_as_dicts()
-    second_fields = execution_risk_acknowledgement_map_as_dicts()
-    first_status = execution_risk_acknowledgement_map_report()
-    second_status = execution_risk_acknowledgement_map_report()
+    first_fields = execution_decision_silence_non_consent_map_as_dicts()
+    second_fields = execution_decision_silence_non_consent_map_as_dicts()
+    first_status = execution_decision_silence_non_consent_map_report()
+    second_status = execution_decision_silence_non_consent_map_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.6"
-    assert first_status["feature"] == "Execution Risk Acknowledgement Map"
+    assert first_status["phase"] == "P4-M2.12"
+    assert first_status["feature"] == "Execution Decision Silence Non-Consent Map"
     assert first_status["mode"] == "read-only"
-    assert first_status["risk_acknowledgement_map_field_count"] == 17
-    assert first_status["boundary"] == EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY
+    assert first_status["execution_decision_silence_non_consent_map_field_count"] == 17
+    assert first_status["boundary"] == EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = execution_risk_acknowledgement_map_report()
+    status = execution_decision_silence_non_consent_map_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -352,7 +507,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-silence-non-consent-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -361,9 +516,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
+    assert stdout.startswith("# P4-M2.12 Execution Decision Silence Non-Consent Map\n")
     assert "## Status Report" in stdout
-    assert EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY in stdout
+    assert EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -372,7 +527,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-acknowledgement-map",
+        "execution-decision-silence-non-consent-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -388,7 +543,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
+    assert first_stdout.startswith("# P4-M2.12 Execution Decision Silence Non-Consent Map\n")
     assert not (tmp_path / ".local").exists()
 
 
@@ -404,7 +559,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-silence-non-consent-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -412,7 +567,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-silence-non-consent-map",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -422,7 +577,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.6")
+    assert markdown_stdout.startswith("# P4-M2.12")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 17
@@ -433,7 +588,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-silence-non-consent-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -441,15 +596,21 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "execution_risk_acknowledgement_map.jsonl",
-        "risk_acceptance.jsonl",
-        "risk_waiver.jsonl",
-        "risk_acknowledgement.jsonl",
+        "execution_decision_silence_non_consent_map.jsonl",
+        "consent.jsonl",
+        "non_consent.jsonl",
+        "decisions.jsonl",
+        "decision_execution.jsonl",
+        "recommendations.jsonl",
+        "rankings.jsonl",
+        "next_actions.jsonl",
         "confirmation.jsonl",
         "authorization.jsonl",
         "execution.jsonl",
         "approvals.jsonl",
         "rejections.jsonl",
+        "risk_acceptance.jsonl",
+        "risk_waiver.jsonl",
         "validation.jsonl",
         "readiness.jsonl",
         "memories.jsonl",
@@ -466,16 +627,16 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_5_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_11_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "execution-risk-acknowledgement-map" in commands
-    assert PREVIOUS_P4_M2_5_READ_ONLY_COMMANDS.issubset(commands)
+    assert "execution-decision-silence-non-consent-map" in commands
+    assert PREVIOUS_P4_M2_11_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_11_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -493,6 +654,12 @@ def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_pa
         "manual-authorization-evidence-envelope": "# P4-M2.3 Manual Authorization Evidence Envelope\n",
         "human-confirmation-snapshot-contract": "# P4-M2.4 Human Confirmation Snapshot Contract\n",
         "execution-preconditions-snapshot-map": "# P4-M2.5 Execution Preconditions Snapshot Map\n",
+        "execution-risk-acknowledgement-map": "# P4-M2.6 Execution Risk Acknowledgement Map\n",
+        "execution-risk-acceptance-prohibition-map": "# P4-M2.7 Execution Risk Acceptance Prohibition Map\n",
+        "execution-risk-waiver-prohibition-map": "# P4-M2.8 Execution Risk Waiver Prohibition Map\n",
+        "execution-decision-non-equivalence-map": "# P4-M2.9 Execution Decision Non-Equivalence Map\n",
+        "execution-decision-recommendation-prohibition-map": "# P4-M2.10 Execution Decision Recommendation Prohibition Map\n",
+        "execution-decision-default-denial-boundary-map": "# P4-M2.11 Execution Decision Default Denial Boundary Map\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -508,7 +675,7 @@ def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_pa
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_6_EXECUTION_RISK_ACKNOWLEDGEMENT_MAP.md"
+        "docs/CIVILIZATION_CORE_P4_M2_12_EXECUTION_DECISION_SILENCE_NON_CONSENT_MAP.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASES:
@@ -526,8 +693,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_risk_acknowledgement_map" not in entry_points
-    assert "execution-risk-acknowledgement-map" not in entry_points
+    assert "p4_m2_execution_decision_silence_non_consent_map" not in entry_points
+    assert "execution-decision-silence-non-consent-map" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -535,21 +702,20 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionRiskAcknowledgementMapField(
+    field = ExecutionDecisionSilenceNonConsentMapField(
         field_order=1,
-        field_id="custom-execution-risk-acknowledgement-map",
-        field_name="Custom Risk Acknowledgement Map Field",
+        field_id="custom-execution-decision-silence-non-consent-map",
+        field_name="Custom Execution Decision Silence Non-Consent Map Field",
         field_purpose="Custom inspection-only purpose.",
-        risk_acknowledgement_signal="Custom risk acknowledgement signal is visible.",
-        evidence_boundary="Custom evidence boundary is read-only.",
-        prohibited_semantics="no execution, no confirmation, no authorization, no validation verdict, no readiness verdict, no risk acceptance, no risk waiver, and no mutation semantics.",
-        blocking_boundary="Execution, confirmation, authorization, validation, readiness, acknowledgement, acceptance, waiver, or mutation behavior is introduced.",
-        future_acknowledgement_note="A later path may inspect this custom field.",
+        silence_non_consent_boundary_category="custom-silence-non-consent-boundary",
+        missing_evidence_as_consent_prohibition_signal="Custom missing evidence is not consent.",
+        consent_semantics_disabled="Custom consent semantics are disabled.",
+        non_consent_execution_semantics_disabled="Custom non-consent execution semantics are disabled.",
     )
 
-    markdown = render_execution_risk_acknowledgement_map_markdown([field])
+    markdown = render_execution_decision_silence_non_consent_map_markdown([field])
 
-    assert "custom-execution-risk-acknowledgement-map" in markdown
+    assert "custom-execution-decision-silence-non-consent-map" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
