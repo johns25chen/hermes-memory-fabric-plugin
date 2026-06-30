@@ -105,6 +105,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-recommendation-prohibition-map",
     "execution-decision-default-denial-boundary-map",
     "execution-decision-silence-non-consent-map",
+    "execution-decision-negative-evidence-non-override-map",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

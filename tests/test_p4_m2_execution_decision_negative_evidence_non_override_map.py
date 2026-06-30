@@ -7,35 +7,36 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_execution_risk_acknowledgement_map import (
-    EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY,
-    ExecutionRiskAcknowledgementMapField,
-    execution_risk_acknowledgement_map_as_dicts,
-    execution_risk_acknowledgement_map_field_ids,
-    execution_risk_acknowledgement_map_report,
-    list_execution_risk_acknowledgement_map_fields,
-    render_execution_risk_acknowledgement_map_markdown,
+from hermes_memory_fabric.p4_m2_execution_decision_negative_evidence_non_override_map import (
+    BOUNDARY_PHRASE_LINES,
+    EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY,
+    ExecutionDecisionNegativeEvidenceNonOverrideMapField,
+    execution_decision_negative_evidence_non_override_map_as_dicts,
+    execution_decision_negative_evidence_non_override_map_field_ids,
+    execution_decision_negative_evidence_non_override_map_report,
+    list_execution_decision_negative_evidence_non_override_map_fields,
+    render_execution_decision_negative_evidence_non_override_map_markdown,
 )
 
 
 FIELD_IDS = (
-    "execution-risk-acknowledgement-map-id",
-    "execution-preconditions-snapshot-map-reference",
-    "execution-surface-reference",
-    "execution-contract-validation-matrix-reference",
-    "manual-authorization-evidence-envelope-reference",
-    "human-confirmation-snapshot-reference",
+    "execution-decision-negative-evidence-non-override-map-id",
+    "execution-decision-silence-non-consent-map-reference",
+    "execution-decision-default-denial-boundary-map-reference",
+    "execution-decision-recommendation-prohibition-map-reference",
+    "execution-decision-non-equivalence-map-reference",
     "manual-decision-reference",
     "operator-reference",
-    "risk-category",
-    "risk-acknowledgement-signal",
-    "risk-evidence-reference",
-    "risk-severity-label",
-    "risk-blocking-boundary",
-    "revocation-or-expiry-reference",
-    "acknowledgement-semantics-disabled",
-    "validation-semantics-disabled",
-    "execution-semantics-disabled",
+    "human-confirmation-snapshot-reference",
+    "manual-authorization-evidence-envelope-reference",
+    "execution-preconditions-snapshot-map-reference",
+    "execution-risk-acknowledgement-map-reference",
+    "execution-risk-acceptance-prohibition-map-reference",
+    "execution-risk-waiver-prohibition-map-reference",
+    "execution-surface-reference",
+    "execution-contract-validation-matrix-reference",
+    "negative-evidence-non-override-boundary-category",
+    "override-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -43,11 +44,8 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "risk_acknowledgement_signal",
-    "evidence_boundary",
-    "prohibited_semantics",
-    "blocking_boundary",
-    "future_acknowledgement_note",
+    "negative_evidence_non_override_boundary_category",
+    "override_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -77,174 +75,27 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-negative-evidence-non-override-map",
 }
 
-PREVIOUS_P4_M2_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "execution-risk-acknowledgement-map",
-    "execution-risk-acceptance-prohibition-map",
-    "execution-risk-waiver-prohibition-map",
-    "execution-decision-non-equivalence-map",
-    "execution-decision-recommendation-prohibition-map",
-    "execution-decision-default-denial-boundary-map",
-}
-
-BOUNDARY_PHRASES = (
-    "P4-M2.6",
-    "Execution Risk Acknowledgement Map",
-    "read-only",
-    "definition-only",
-    "inspection-only",
-    "no execution",
-    "no confirmation",
-    "no authorization",
-    "no approval",
-    "no rejection",
-    "no risk acceptance",
-    "no risk waiver",
-    "no live risk acknowledgement",
-    "no memory mutation",
-    "no memory record creation",
-    "no memory record update",
-    "no memory record deletion",
-    "no proposal mutation",
-    "no lifecycle mutation",
-    "no retry policy mutation",
-    "no source fetching",
-    "no provenance writing",
-    "no evidence mutation",
-    "no citation mutation",
-    "no live confirmation validation",
-    "no live authorization validation",
-    "no live contract validation",
-    "no input validation",
-    "no record validation",
-    "no validation verdict",
-    "no readiness verdict",
-    "no automatic readiness verdict",
-    "no decision recommendation",
-    "no decision ranking",
-    "no acknowledgement semantics",
-    "no confirmation semantics",
-    "no authorization semantics",
-    "no execution semantics",
-    "no API",
-    "no MCP",
-    "no connector",
-    "no agent call",
-    "no Codex/Hermes/ChatGPT product-code auto-call",
-    "no P4-M3",
-    "no P4-M4",
-    "no P4-M5",
-    "no v7",
-    "no productization",
-    "no UI",
-    "no Operator Console",
-    "no MVP",
-    "no deploy",
-    "no full Memory Graph",
-)
-
-TRUE_STATUS_FLAGS = (
-    "definition_only",
-    "inspection_only",
-    "p4_m2_started",
-    "execution_surface_contract_definition_available",
-    "execution_contract_validation_matrix_available",
-    "manual_authorization_evidence_envelope_available",
-    "human_confirmation_snapshot_contract_available",
-    "execution_preconditions_snapshot_map_available",
-    "execution_risk_acknowledgement_map_started",
-    "execution_risk_acknowledgement_map_definition_only",
-    "risk_acknowledgement_map_fields_defined",
-    "risk_acknowledgement_structure_defined",
-)
-
-DISABLED_STATUS_FLAGS = (
-    "execution_enabled",
-    "confirmation_enabled",
-    "authorization_enabled",
-    "approval_enabled",
-    "rejection_enabled",
-    "risk_acceptance_enabled",
-    "risk_waiver_enabled",
-    "live_risk_acknowledgement_enabled",
-    "memory_mutation_enabled",
-    "memory_record_creation_enabled",
-    "memory_record_update_enabled",
-    "memory_record_deletion_enabled",
-    "proposal_mutation_enabled",
-    "lifecycle_mutation_enabled",
-    "retry_policy_mutation_enabled",
-    "source_fetching_enabled",
-    "provenance_writing_enabled",
-    "evidence_mutation_enabled",
-    "citation_mutation_enabled",
-    "live_confirmation_validation_enabled",
-    "live_authorization_validation_enabled",
-    "live_contract_validation_enabled",
-    "input_validation_enabled",
-    "record_validation_enabled",
-    "validation_verdict_enabled",
-    "readiness_verdict_enabled",
-    "automatic_readiness_verdict_enabled",
-    "decision_recommendation_enabled",
-    "decision_ranking_enabled",
-    "acknowledgement_semantics_granted",
-    "confirmation_semantics_granted",
-    "authorization_semantics_granted",
-    "execution_semantics_granted",
-    "api_enabled",
-    "mcp_enabled",
-    "connector_enabled",
-    "agent_call_enabled",
-    "codex_hermes_chatgpt_product_code_auto_call_enabled",
-    "p4_m3_started",
-    "p4_m4_started",
-    "p4_m5_started",
-    "v7_started",
-    "productization_started",
-    "ui_started",
-    "operator_console_started",
-    "mvp_started",
-    "deploy_started",
-    "full_memory_graph_started",
-)
-
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "confirm",
-    "confirmation",
-    "authorize",
     "authorization",
     "approve",
     "reject",
-    "accept-risk",
-    "risk-acceptance",
-    "waive-risk",
-    "risk-waiver",
-    "acknowledge-risk",
-    "live-risk-acknowledgement",
     "execute",
-    "execute-decision",
-    "manual-execute",
     "recommend-decision",
     "rank-decision",
-    "readiness-verdict",
-    "validation-verdict",
-    "validate-contract",
-    "validate-confirmation-snapshot",
-    "validate-authorization-envelope",
-    "live-confirmation-validation",
-    "live-authorization-validation",
-    "live-validation",
-    "input-validation",
-    "record-validation",
+    "suggest-next-action",
+    "validate-evidence",
+    "validate-consent",
+    "create-evidence-override-record",
+    "create-approval-override-record",
+    "create-consent-record",
+    "create-non-consent-record",
     "write-memory",
     "create-memory",
     "update-memory",
     "delete-memory",
     "mutate-proposal",
-    "lifecycle-mutate",
-    "retry-policy-update",
     "fetch-source",
-    "source-fetch",
     "write-provenance",
     "mutate-evidence",
     "mutate-citation",
@@ -263,43 +114,41 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_risk_acknowledgement_map_field_order_count_and_ids_are_stable():
-    fields = list_execution_risk_acknowledgement_map_fields()
+def test_negative_evidence_non_override_map_field_order_count_and_ids_are_stable():
+    fields = list_execution_decision_negative_evidence_non_override_map_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 18))
     assert len(fields) == 17
-    assert execution_risk_acknowledgement_map_field_ids() == FIELD_IDS
-    assert execution_risk_acknowledgement_map_field_ids() == FIELD_IDS
+    assert execution_decision_negative_evidence_non_override_map_field_ids() == FIELD_IDS
 
 
-def test_every_risk_acknowledgement_map_field_has_required_non_empty_values():
-    for field in list_execution_risk_acknowledgement_map_fields():
+def test_every_negative_evidence_non_override_map_field_has_required_non_empty_values():
+    for field in list_execution_decision_negative_evidence_non_override_map_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.risk_acknowledgement_signal.strip()
-        assert field.evidence_boundary.strip()
-        assert field.prohibited_semantics.strip()
-        assert field.blocking_boundary.strip()
-        assert field.future_acknowledgement_note.strip()
+        assert field.negative_evidence_non_override_boundary_category.strip()
+        assert field.override_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_execution_risk_acknowledgement_map_markdown()
-    second = render_execution_risk_acknowledgement_map_markdown()
+    first = render_execution_decision_negative_evidence_non_override_map_markdown()
+    second = render_execution_decision_negative_evidence_non_override_map_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
-    assert EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY in first
+    assert first.startswith(
+        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+    )
+    assert EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
-    for phrase in BOUNDARY_PHRASES:
+    for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in first
 
 
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-acknowledgement-map",
+        "execution-decision-negative-evidence-non-override-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -314,38 +163,90 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY
+    assert first_payload["boundary"] == EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY
     assert first_payload["count"] == 17
-    assert first_payload["status"] == execution_risk_acknowledgement_map_report()
+    assert first_payload["status"] == execution_decision_negative_evidence_non_override_map_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
-    for phrase in BOUNDARY_PHRASES:
+    for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in first_stdout
     assert not (tmp_path / ".local").exists()
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = execution_risk_acknowledgement_map_as_dicts()
-    second_fields = execution_risk_acknowledgement_map_as_dicts()
-    first_status = execution_risk_acknowledgement_map_report()
-    second_status = execution_risk_acknowledgement_map_report()
+    first_fields = execution_decision_negative_evidence_non_override_map_as_dicts()
+    second_fields = execution_decision_negative_evidence_non_override_map_as_dicts()
+    first_status = execution_decision_negative_evidence_non_override_map_report()
+    second_status = execution_decision_negative_evidence_non_override_map_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.6"
-    assert first_status["feature"] == "Execution Risk Acknowledgement Map"
+    assert first_status["phase"] == "P4-M2.13"
+    assert first_status["feature"] == "Execution Decision Negative Evidence Non-Override Map"
     assert first_status["mode"] == "read-only"
-    assert first_status["risk_acknowledgement_map_field_count"] == 17
-    assert first_status["boundary"] == EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY
+    assert first_status["execution_decision_negative_evidence_non_override_map_field_count"] == 17
+    assert first_status["boundary"] == EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = execution_risk_acknowledgement_map_report()
+    status = execution_decision_negative_evidence_non_override_map_report()
 
-    for flag in TRUE_STATUS_FLAGS:
+    for flag in (
+        "definition_only",
+        "inspection_only",
+        "p4_m2_started",
+        "execution_decision_silence_non_consent_map_available",
+        "execution_decision_negative_evidence_non_override_map_started",
+        "execution_decision_negative_evidence_non_override_map_definition_only",
+        "decision_negative_evidence_non_override_map_fields_defined",
+        "negative_evidence_as_approval_prohibited",
+        "negative_evidence_as_authorization_prohibited",
+        "negative_evidence_as_readiness_prohibited",
+        "negative_evidence_as_execution_prohibited",
+        "conflicting_evidence_as_resolved_prohibited",
+        "expired_evidence_as_current_prohibited",
+        "stale_evidence_as_current_prohibited",
+        "revoked_evidence_as_valid_prohibited",
+        "superseded_evidence_as_valid_prohibited",
+        "invalid_evidence_as_valid_prohibited",
+        "incomplete_evidence_as_sufficient_prohibited",
+        "positive_reference_as_override_prohibited",
+    ):
         assert status[flag] is True
-    for flag in DISABLED_STATUS_FLAGS:
+    for flag in (
+        "execution_enabled",
+        "decision_execution_enabled",
+        "authorization_enabled",
+        "decision_authorization_enabled",
+        "approval_enabled",
+        "decision_approval_enabled",
+        "rejection_enabled",
+        "live_rejection_enabled",
+        "active_denial_enabled",
+        "evidence_validation_enabled",
+        "live_evidence_validation_enabled",
+        "consent_validation_enabled",
+        "live_consent_validation_enabled",
+        "evidence_override_record_creation_enabled",
+        "approval_override_record_creation_enabled",
+        "consent_record_creation_enabled",
+        "non_consent_record_creation_enabled",
+        "override_verdict_enabled",
+        "override_hint_enabled",
+        "override_semantics_granted",
+        "evidence_override_semantics_granted",
+        "approval_override_semantics_granted",
+        "memory_mutation_enabled",
+        "p4_m3_started",
+        "p4_m4_started",
+        "p4_m5_started",
+        "v7_started",
+        "productization_started",
+        "ui_started",
+        "operator_console_started",
+        "full_memory_graph_started",
+    ):
         assert status[flag] is False
 
 
@@ -353,7 +254,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-negative-evidence-non-override-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -362,10 +263,12 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
+    assert stdout.startswith(
+        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+    )
     assert "## Status Report" in stdout
-    assert EXECUTION_RISK_ACKNOWLEDGEMENT_MAP_BOUNDARY in stdout
-    for phrase in BOUNDARY_PHRASES:
+    assert EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY in stdout
+    for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
 
@@ -373,7 +276,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "execution-risk-acknowledgement-map",
+        "execution-decision-negative-evidence-non-override-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -389,7 +292,9 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.6 Execution Risk Acknowledgement Map\n")
+    assert first_stdout.startswith(
+        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+    )
     assert not (tmp_path / ".local").exists()
 
 
@@ -405,7 +310,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-negative-evidence-non-override-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -413,7 +318,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-negative-evidence-non-override-map",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -423,7 +328,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.6")
+    assert markdown_stdout.startswith("# P4-M2.13")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 17
@@ -434,7 +339,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "execution-risk-acknowledgement-map",
+            "execution-decision-negative-evidence-non-override-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -442,15 +347,23 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "execution_risk_acknowledgement_map.jsonl",
-        "risk_acceptance.jsonl",
-        "risk_waiver.jsonl",
-        "risk_acknowledgement.jsonl",
+        "execution_decision_negative_evidence_non_override_map.jsonl",
+        "evidence_overrides.jsonl",
+        "approval_overrides.jsonl",
+        "consent.jsonl",
+        "non_consent.jsonl",
+        "decisions.jsonl",
+        "decision_execution.jsonl",
+        "recommendations.jsonl",
+        "rankings.jsonl",
+        "next_actions.jsonl",
         "confirmation.jsonl",
         "authorization.jsonl",
         "execution.jsonl",
         "approvals.jsonl",
         "rejections.jsonl",
+        "risk_acceptance.jsonl",
+        "risk_waiver.jsonl",
         "validation.jsonl",
         "readiness.jsonl",
         "memories.jsonl",
@@ -467,16 +380,16 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_5_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_12_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "execution-risk-acknowledgement-map" in commands
-    assert PREVIOUS_P4_M2_5_READ_ONLY_COMMANDS.issubset(commands)
+    assert "execution-decision-negative-evidence-non-override-map" in commands
+    assert "execution-decision-silence-non-consent-map" in commands
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_12_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -494,6 +407,13 @@ def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_pa
         "manual-authorization-evidence-envelope": "# P4-M2.3 Manual Authorization Evidence Envelope\n",
         "human-confirmation-snapshot-contract": "# P4-M2.4 Human Confirmation Snapshot Contract\n",
         "execution-preconditions-snapshot-map": "# P4-M2.5 Execution Preconditions Snapshot Map\n",
+        "execution-risk-acknowledgement-map": "# P4-M2.6 Execution Risk Acknowledgement Map\n",
+        "execution-risk-acceptance-prohibition-map": "# P4-M2.7 Execution Risk Acceptance Prohibition Map\n",
+        "execution-risk-waiver-prohibition-map": "# P4-M2.8 Execution Risk Waiver Prohibition Map\n",
+        "execution-decision-non-equivalence-map": "# P4-M2.9 Execution Decision Non-Equivalence Map\n",
+        "execution-decision-recommendation-prohibition-map": "# P4-M2.10 Execution Decision Recommendation Prohibition Map\n",
+        "execution-decision-default-denial-boundary-map": "# P4-M2.11 Execution Decision Default Denial Boundary Map\n",
+        "execution-decision-silence-non-consent-map": "# P4-M2.12 Execution Decision Silence Non-Consent Map\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -509,10 +429,10 @@ def test_existing_p4_m1_0_through_p4_m2_5_memory_loop_commands_still_work(tmp_pa
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_6_EXECUTION_RISK_ACKNOWLEDGEMENT_MAP.md"
+        "docs/CIVILIZATION_CORE_P4_M2_13_EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP.md"
     ).read_text()
 
-    for phrase in BOUNDARY_PHRASES:
+    for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in doc
     for field_id in FIELD_IDS:
         assert field_id in doc
@@ -527,8 +447,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_risk_acknowledgement_map" not in entry_points
-    assert "execution-risk-acknowledgement-map" not in entry_points
+    assert "p4_m2_execution_decision_negative_evidence_non_override_map" not in entry_points
+    assert "execution-decision-negative-evidence-non-override-map" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -536,21 +456,20 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionRiskAcknowledgementMapField(
+    field = ExecutionDecisionNegativeEvidenceNonOverrideMapField(
         field_order=1,
-        field_id="custom-execution-risk-acknowledgement-map",
-        field_name="Custom Risk Acknowledgement Map Field",
+        field_id="custom-execution-decision-negative-evidence-non-override-map",
+        field_name="Custom Execution Decision Negative Evidence Non-Override Map Field",
         field_purpose="Custom inspection-only purpose.",
-        risk_acknowledgement_signal="Custom risk acknowledgement signal is visible.",
-        evidence_boundary="Custom evidence boundary is read-only.",
-        prohibited_semantics="no execution, no confirmation, no authorization, no validation verdict, no readiness verdict, no risk acceptance, no risk waiver, and no mutation semantics.",
-        blocking_boundary="Execution, confirmation, authorization, validation, readiness, acknowledgement, acceptance, waiver, or mutation behavior is introduced.",
-        future_acknowledgement_note="A later path may inspect this custom field.",
+        negative_evidence_non_override_boundary_category=(
+            "custom-negative-evidence-non-override-boundary"
+        ),
+        override_semantics_disabled="Custom override semantics are disabled.",
     )
 
-    markdown = render_execution_risk_acknowledgement_map_markdown([field])
+    markdown = render_execution_decision_negative_evidence_non_override_map_markdown([field])
 
-    assert "custom-execution-risk-acknowledgement-map" in markdown
+    assert "custom-execution-decision-negative-evidence-non-override-map" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
