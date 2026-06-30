@@ -427,6 +427,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutat
         "governed-transition-intake-evidence-reference-envelope-contract",
     "governed-transition-intake-declared-human-context-envelope-contract",
     "governed-transition-intake-target-phase-envelope-contract",
+    "governed-transition-intake-declared-transition-reason-envelope-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
