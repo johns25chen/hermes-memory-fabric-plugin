@@ -84,6 +84,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-request-envelope-contract",
     "governed-transition-intake-evidence-reference-envelope-contract",
     "governed-transition-intake-declared-human-context-envelope-contract",
+    "governed-transition-intake-target-phase-envelope-contract",
 }
 
 PREVIOUS_P4_M2_7_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
