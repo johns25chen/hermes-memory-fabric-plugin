@@ -159,6 +159,12 @@ from .p4_m2_execution_decision_evidence_precedence_prohibition_map import (
     execution_decision_evidence_precedence_prohibition_map_report,
     render_execution_decision_evidence_precedence_prohibition_map_markdown,
 )
+from .p4_m2_final_non_execution_boundary_audit import (
+    FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY,
+    final_non_execution_boundary_audit_as_dicts,
+    final_non_execution_boundary_audit_report,
+    render_final_non_execution_boundary_audit_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -530,6 +536,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_execution_decision_evidence_precedence_prohibition_map)
     memory_loop_execution_decision_evidence_precedence_prohibition_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_final_non_execution_boundary_audit = memory_loop_subparsers.add_parser(
+        "final-non-execution-boundary-audit"
+    )
+    _add_workspace_root(memory_loop_final_non_execution_boundary_audit)
+    memory_loop_final_non_execution_boundary_audit.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -1137,6 +1153,22 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 "unsupported_memory_loop_execution_decision_evidence_precedence_prohibition_map_format:"
+                f"{args.format}"
+            )
+
+        if args.memory_loop_command == "final-non-execution-boundary-audit":
+            if args.format == "markdown":
+                return render_final_non_execution_boundary_audit_markdown()
+            if args.format == "json":
+                fields = final_non_execution_boundary_audit_as_dicts()
+                return {
+                    "boundary": FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": final_non_execution_boundary_audit_report(),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_final_non_execution_boundary_audit_format:"
                 f"{args.format}"
             )
 
