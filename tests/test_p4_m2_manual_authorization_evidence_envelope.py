@@ -71,6 +71,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-non-equivalence-map",
     "execution-decision-recommendation-prohibition-map",
     "execution-decision-default-denial-boundary-map",
+    "execution-decision-silence-non-consent-map",
 }
 
 TRUE_STATUS_FLAGS = (
