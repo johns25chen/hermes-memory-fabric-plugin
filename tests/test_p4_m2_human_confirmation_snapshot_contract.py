@@ -79,6 +79,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "final-non-execution-boundary-audit",
     "p4-m2-closure-handoff-contract",
     "governed-transition-intake-boundary-contract",
+    "governed-transition-intake-request-envelope-contract",
 }
 
 TRUE_STATUS_FLAGS = (
