@@ -99,6 +99,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m2-closure-handoff-contract",
     "governed-transition-intake-boundary-contract",
     "governed-transition-intake-request-envelope-contract",
+    "governed-transition-intake-evidence-reference-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

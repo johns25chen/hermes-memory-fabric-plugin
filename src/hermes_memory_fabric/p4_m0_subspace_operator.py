@@ -183,6 +183,12 @@ from .p4_m3_governed_transition_intake_request_envelope_contract import (
     governed_transition_intake_request_envelope_contract_report,
     render_governed_transition_intake_request_envelope_contract_markdown,
 )
+from .p4_m3_governed_transition_intake_evidence_reference_envelope_contract import (
+    GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY,
+    governed_transition_intake_evidence_reference_envelope_contract_as_dicts,
+    governed_transition_intake_evidence_reference_envelope_contract_report,
+    render_governed_transition_intake_evidence_reference_envelope_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -598,6 +604,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_governed_transition_intake_request_envelope_contract)
     memory_loop_governed_transition_intake_request_envelope_contract.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_governed_transition_intake_evidence_reference_envelope_contract = (
+        memory_loop_subparsers.add_parser(
+            "governed-transition-intake-evidence-reference-envelope-contract"
+        )
+    )
+    _add_workspace_root(memory_loop_governed_transition_intake_evidence_reference_envelope_contract)
+    memory_loop_governed_transition_intake_evidence_reference_envelope_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -1270,6 +1288,33 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_governed_transition_intake_request_envelope_contract_format:"
                 f"{args.format}"
+            )
+
+        if (
+            args.memory_loop_command
+            == "governed-transition-intake-evidence-reference-envelope-contract"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_governed_transition_intake_evidence_reference_envelope_contract_markdown()
+                )
+            if args.format == "json":
+                fields = (
+                    governed_transition_intake_evidence_reference_envelope_contract_as_dicts()
+                )
+                return {
+                    "boundary": (
+                        GOVERNED_TRANSITION_INTAKE_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        governed_transition_intake_evidence_reference_envelope_contract_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_governed_transition_intake_evidence_reference_"
+                f"envelope_contract_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
