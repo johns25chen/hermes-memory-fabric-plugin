@@ -358,6 +358,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     "execution-risk-waiver-prohibition-map",
     "execution-decision-non-equivalence-map",
     "execution-decision-recommendation-prohibition-map",
+    "execution-decision-default-denial-boundary-map",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

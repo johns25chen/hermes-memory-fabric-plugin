@@ -74,6 +74,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-risk-waiver-prohibition-map",
     "execution-decision-non-equivalence-map",
     "execution-decision-recommendation-prohibition-map",
+    "execution-decision-default-denial-boundary-map",
 }
 
 TRUE_STATUS_FLAGS = (
