@@ -75,6 +75,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-silence-non-consent-map",
     "execution-decision-negative-evidence-non-override-map",
     "execution-decision-conflicting-evidence-isolation-map",
+    "execution-decision-evidence-precedence-prohibition-map",
     "execution-decision-recommendation-prohibition-map",
 }
 
