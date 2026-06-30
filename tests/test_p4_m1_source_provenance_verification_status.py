@@ -458,6 +458,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
     "execution-decision-conflicting-evidence-isolation-map",
     "execution-decision-evidence-precedence-prohibition-map",
     "final-non-execution-boundary-audit",
+    "p4-m2-closure-handoff-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

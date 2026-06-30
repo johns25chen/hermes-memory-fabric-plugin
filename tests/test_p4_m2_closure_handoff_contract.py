@@ -7,37 +7,37 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_final_non_execution_boundary_audit import (
+from hermes_memory_fabric.p4_m2_closure_handoff_contract import (
     BOUNDARY_PHRASE_LINES,
-    FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY,
-    FinalNonExecutionBoundaryAuditField,
-    final_non_execution_boundary_audit_as_dicts,
-    final_non_execution_boundary_audit_field_ids,
-    final_non_execution_boundary_audit_report,
-    list_final_non_execution_boundary_audit_fields,
-    render_final_non_execution_boundary_audit_markdown,
+    CLOSURE_HANDOFF_CONTRACT_BOUNDARY,
+    ClosureHandoffContractField,
+    closure_handoff_contract_as_dicts,
+    closure_handoff_contract_field_ids,
+    closure_handoff_contract_report,
+    list_closure_handoff_contract_fields,
+    render_closure_handoff_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "final-non-execution-boundary-audit-id",
-    "execution-surface-contract-reference",
-    "execution-contract-validation-matrix-reference",
-    "manual-authorization-evidence-envelope-reference",
-    "human-confirmation-snapshot-contract-reference",
-    "execution-preconditions-snapshot-map-reference",
-    "execution-risk-acknowledgement-map-reference",
-    "execution-risk-acceptance-prohibition-map-reference",
-    "execution-risk-waiver-prohibition-map-reference",
-    "execution-decision-non-equivalence-map-reference",
-    "execution-decision-recommendation-prohibition-map-reference",
-    "execution-decision-default-denial-boundary-map-reference",
-    "execution-decision-silence-non-consent-map-reference",
-    "execution-decision-negative-evidence-non-override-map-reference",
-    "execution-decision-conflicting-evidence-isolation-map-reference",
-    "execution-decision-evidence-precedence-prohibition-map-reference",
-    "final-non-execution-boundary-audit-category",
-    "final-non-execution-semantics-disabled",
+    "p4-m2-closure-handoff-contract-id",
+    "p4-m2-closure-source-reference",
+    "p4-m2-final-non-execution-boundary-audit-reference",
+    "p4-m2-prior-definition-layer-reference-set",
+    "p4-m3-target-label-reference",
+    "p4-m3-not-started-boundary",
+    "closure-handoff-contract-scope",
+    "closure-handoff-non-execution-boundary",
+    "closure-handoff-non-authorization-boundary",
+    "closure-handoff-non-confirmation-boundary",
+    "closure-handoff-non-approval-boundary",
+    "closure-handoff-non-recommendation-boundary",
+    "closure-handoff-non-ranking-boundary",
+    "closure-handoff-non-verdict-boundary",
+    "closure-handoff-non-override-boundary",
+    "closure-handoff-non-mutation-boundary",
+    "closure-handoff-contract-category",
+    "closure-handoff-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -45,8 +45,8 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "final_non_execution_boundary_audit_category",
-    "final_non_execution_semantics_disabled",
+    "closure_handoff_contract_category",
+    "closure_handoff_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -80,8 +80,8 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m2-closure-handoff-contract",
 }
 
-PREVIOUS_P4_M2_15_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "final-non-execution-boundary-audit"
+PREVIOUS_P4_M2_16_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "p4-m2-closure-handoff-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
@@ -124,11 +124,27 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "write-provenance",
     "mutate-evidence",
     "mutate-citation",
+    "mutate-roadmap",
+    "transition",
+    "transition-execution",
+    "phase-transition-action",
+    "handoff-execution",
+    "handoff-authorization",
+    "handoff-approval",
+    "handoff-recommendation",
+    "handoff-ranking",
+    "handoff-readiness-verdict",
+    "handoff-validation-verdict",
+    "handoff-override-verdict",
     "call-agent",
     "API",
     "MCP",
     "connector",
     "start-p4-m3",
+    "p4-m3",
+    "p4-m3-command",
+    "activate-p4-m3",
+    "implement-p4-m3",
     "start-p4-m4",
     "start-p4-m5",
     "start-v7",
@@ -142,10 +158,12 @@ TRUE_STATUS_FLAGS = (
     "definition_only",
     "inspection_only",
     "p4_m2_started",
-    "final_non_execution_boundary_audit_started",
-    "final_non_execution_boundary_audit_definition_only",
-    "p4_m2_1_through_p4_m2_15_references_defined",
-    "p4_m2_non_execution_boundary_closed",
+    "p4_m2_closure_handoff_contract_started",
+    "p4_m2_closure_handoff_contract_definition_only",
+    "p4_m2_1_through_p4_m2_16_references_defined",
+    "p4_m2_closure_handoff_contract_defined",
+    "p4_m2_to_p4_m3_boundary_documented",
+    "p4_m3_start_deferred",
     "p4_m2_execution_semantics_prohibited",
     "p4_m2_authorization_semantics_prohibited",
     "p4_m2_confirmation_semantics_prohibited",
@@ -155,6 +173,7 @@ TRUE_STATUS_FLAGS = (
     "p4_m2_validation_verdict_semantics_prohibited",
     "p4_m2_precedence_verdict_semantics_prohibited",
     "p4_m2_override_semantics_prohibited",
+    "p4_m2_transition_semantics_prohibited",
     "p4_m2_mutation_semantics_prohibited",
 )
 
@@ -236,6 +255,18 @@ FALSE_STATUS_FLAGS = (
     "consent_override_enabled",
     "risk_acceptance_override_enabled",
     "risk_waiver_override_enabled",
+    "transition_execution_enabled",
+    "transition_command_enabled",
+    "phase_transition_action_enabled",
+    "handoff_execution_enabled",
+    "handoff_authorization_enabled",
+    "handoff_approval_enabled",
+    "handoff_recommendation_enabled",
+    "handoff_ranking_enabled",
+    "handoff_readiness_verdict_enabled",
+    "handoff_validation_verdict_enabled",
+    "handoff_override_verdict_enabled",
+    "handoff_mutation_enabled",
     "memory_mutation_enabled",
     "memory_record_creation_enabled",
     "memory_record_update_enabled",
@@ -247,12 +278,16 @@ FALSE_STATUS_FLAGS = (
     "provenance_writing_enabled",
     "evidence_mutation_enabled",
     "citation_mutation_enabled",
+    "roadmap_mutation_enabled",
     "api_enabled",
     "mcp_enabled",
     "connector_enabled",
     "agent_call_enabled",
     "codex_hermes_chatgpt_product_code_auto_call_enabled",
     "p4_m3_started",
+    "p4_m3_command_enabled",
+    "p4_m3_activation_enabled",
+    "p4_m3_implementation_enabled",
     "p4_m4_started",
     "p4_m5_started",
     "v7_started",
@@ -262,32 +297,34 @@ FALSE_STATUS_FLAGS = (
     "mvp_started",
     "deploy_started",
     "full_memory_graph_started",
+    "version_bump_enabled",
+    "tag_creation_enabled",
 )
 
 
-def test_final_non_execution_boundary_audit_field_order_count_and_ids_are_stable():
-    fields = list_final_non_execution_boundary_audit_fields()
+def test_closure_handoff_contract_field_order_count_and_ids_are_stable():
+    fields = list_closure_handoff_contract_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 19))
     assert len(fields) == 18
-    assert final_non_execution_boundary_audit_field_ids() == FIELD_IDS
+    assert closure_handoff_contract_field_ids() == FIELD_IDS
 
 
-def test_every_final_non_execution_boundary_audit_field_has_required_non_empty_values():
-    for field in list_final_non_execution_boundary_audit_fields():
+def test_every_closure_handoff_contract_field_has_required_non_empty_values():
+    for field in list_closure_handoff_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.final_non_execution_boundary_audit_category.strip()
-        assert field.final_non_execution_semantics_disabled.strip()
+        assert field.closure_handoff_contract_category.strip()
+        assert field.closure_handoff_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_final_non_execution_boundary_audit_markdown()
-    second = render_final_non_execution_boundary_audit_markdown()
+    first = render_closure_handoff_contract_markdown()
+    second = render_closure_handoff_contract_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
-    assert FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY in first
+    assert first.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
+    assert CLOSURE_HANDOFF_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -297,7 +334,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "final-non-execution-boundary-audit",
+        "p4-m2-closure-handoff-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -312,9 +349,9 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY
+    assert first_payload["boundary"] == CLOSURE_HANDOFF_CONTRACT_BOUNDARY
     assert first_payload["count"] == 18
-    assert first_payload["status"] == final_non_execution_boundary_audit_report()
+    assert first_payload["status"] == closure_handoff_contract_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -323,23 +360,23 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = final_non_execution_boundary_audit_as_dicts()
-    second_fields = final_non_execution_boundary_audit_as_dicts()
-    first_status = final_non_execution_boundary_audit_report()
-    second_status = final_non_execution_boundary_audit_report()
+    first_fields = closure_handoff_contract_as_dicts()
+    second_fields = closure_handoff_contract_as_dicts()
+    first_status = closure_handoff_contract_report()
+    second_status = closure_handoff_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.16"
-    assert first_status["feature"] == "Final Non-Execution Boundary Audit"
+    assert first_status["phase"] == "P4-M2.17"
+    assert first_status["feature"] == "P4-M2 Closure Handoff Contract"
     assert first_status["mode"] == "read-only"
-    assert first_status["final_non_execution_boundary_audit_field_count"] == 18
-    assert first_status["boundary"] == FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY
+    assert first_status["closure_handoff_contract_field_count"] == 18
+    assert first_status["boundary"] == CLOSURE_HANDOFF_CONTRACT_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = final_non_execution_boundary_audit_report()
+    status = closure_handoff_contract_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -351,7 +388,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "p4-m2-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -360,9 +397,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
+    assert stdout.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
     assert "## Status Report" in stdout
-    assert FINAL_NON_EXECUTION_BOUNDARY_AUDIT_BOUNDARY in stdout
+    assert CLOSURE_HANDOFF_CONTRACT_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -371,7 +408,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "final-non-execution-boundary-audit",
+        "p4-m2-closure-handoff-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -387,7 +424,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M2.16 Final Non-Execution Boundary Audit\n")
+    assert first_stdout.startswith("# P4-M2.17 P4-M2 Closure Handoff Contract\n")
     assert not (tmp_path / ".local").exists()
 
 
@@ -403,7 +440,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "p4-m2-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -411,7 +448,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "p4-m2-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -421,7 +458,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.16")
+    assert markdown_stdout.startswith("# P4-M2.17")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 18
@@ -432,7 +469,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "final-non-execution-boundary-audit",
+            "p4-m2-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -440,7 +477,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "final_non_execution_boundary_audit.jsonl",
+        "closure_handoff_contract.jsonl",
         "execution.jsonl",
         "authorization.jsonl",
         "confirmation.jsonl",
@@ -471,22 +508,23 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
         "provenance.jsonl",
         "evidence.jsonl",
         "citations.jsonl",
+        "roadmap.jsonl",
         "audit.jsonl",
     ):
         assert not (storage_root / filename).exists()
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_15_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_16_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "final-non-execution-boundary-audit" in commands
-    assert PREVIOUS_P4_M2_15_READ_ONLY_COMMANDS.issubset(commands)
+    assert "p4-m2-closure-handoff-contract" in commands
+    assert PREVIOUS_P4_M2_16_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_16_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -514,6 +552,7 @@ def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_p
         "execution-decision-negative-evidence-non-override-map": "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n",
         "execution-decision-conflicting-evidence-isolation-map": "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n",
         "execution-decision-evidence-precedence-prohibition-map": "# P4-M2.15 Execution Decision Evidence Precedence Prohibition Map\n",
+        "final-non-execution-boundary-audit": "# P4-M2.16 Final Non-Execution Boundary Audit\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -529,7 +568,7 @@ def test_existing_p4_m1_0_through_p4_m2_15_memory_loop_commands_still_work(tmp_p
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_16_FINAL_NON_EXECUTION_BOUNDARY_AUDIT.md"
+        "docs/CIVILIZATION_CORE_P4_M2_17_CLOSURE_HANDOFF_CONTRACT.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -547,8 +586,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_final_non_execution_boundary_audit" not in entry_points
-    assert "final-non-execution-boundary-audit" not in entry_points
+    assert "p4_m2_closure_handoff_contract" not in entry_points
+    assert "p4-m2-closure-handoff-contract" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -556,22 +595,18 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = FinalNonExecutionBoundaryAuditField(
+    field = ClosureHandoffContractField(
         field_order=1,
-        field_id="custom-final-non-execution-boundary-audit",
-        field_name="Custom Final Non-Execution Boundary Audit Field",
+        field_id="custom-closure-handoff-contract",
+        field_name="Custom Closure Handoff Contract Field",
         field_purpose="Custom inspection-only purpose.",
-        final_non_execution_boundary_audit_category=(
-            "custom-final-non-execution-boundary-audit-category"
-        ),
-        final_non_execution_semantics_disabled=(
-            "Custom final non-execution semantics are disabled."
-        ),
+        closure_handoff_contract_category="custom-closure-handoff-contract-category",
+        closure_handoff_semantics_disabled="Custom closure handoff semantics are disabled.",
     )
 
-    markdown = render_final_non_execution_boundary_audit_markdown([field])
+    markdown = render_closure_handoff_contract_markdown([field])
 
-    assert "custom-final-non-execution-boundary-audit" in markdown
+    assert "custom-closure-handoff-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
