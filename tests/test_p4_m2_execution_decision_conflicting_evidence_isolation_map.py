@@ -7,20 +7,21 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m2_execution_decision_negative_evidence_non_override_map import (
+from hermes_memory_fabric.p4_m2_execution_decision_conflicting_evidence_isolation_map import (
     BOUNDARY_PHRASE_LINES,
-    EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY,
-    ExecutionDecisionNegativeEvidenceNonOverrideMapField,
-    execution_decision_negative_evidence_non_override_map_as_dicts,
-    execution_decision_negative_evidence_non_override_map_field_ids,
-    execution_decision_negative_evidence_non_override_map_report,
-    list_execution_decision_negative_evidence_non_override_map_fields,
-    render_execution_decision_negative_evidence_non_override_map_markdown,
+    EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP_BOUNDARY,
+    ExecutionDecisionConflictingEvidenceIsolationMapField,
+    execution_decision_conflicting_evidence_isolation_map_as_dicts,
+    execution_decision_conflicting_evidence_isolation_map_field_ids,
+    execution_decision_conflicting_evidence_isolation_map_report,
+    list_execution_decision_conflicting_evidence_isolation_map_fields,
+    render_execution_decision_conflicting_evidence_isolation_map_markdown,
 )
 
 
 FIELD_IDS = (
-    "execution-decision-negative-evidence-non-override-map-id",
+    "execution-decision-conflicting-evidence-isolation-map-id",
+    "execution-decision-negative-evidence-non-override-map-reference",
     "execution-decision-silence-non-consent-map-reference",
     "execution-decision-default-denial-boundary-map-reference",
     "execution-decision-recommendation-prohibition-map-reference",
@@ -35,8 +36,7 @@ FIELD_IDS = (
     "execution-risk-waiver-prohibition-map-reference",
     "execution-surface-reference",
     "execution-contract-validation-matrix-reference",
-    "negative-evidence-non-override-boundary-category",
-    "override-semantics-disabled",
+    "conflict-isolation-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -44,8 +44,9 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "negative_evidence_non_override_boundary_category",
-    "override_semantics_disabled",
+    "conflict_isolation_boundary_category",
+    "conflict_context_isolated",
+    "isolation_semantics_disabled",
 }
 
 EXPECTED_MEMORY_LOOP_COMMANDS = {
@@ -76,6 +77,10 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "execution-decision-conflicting-evidence-isolation-map",
 }
 
+PREVIOUS_P4_M2_13_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "execution-decision-conflicting-evidence-isolation-map"
+}
+
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "confirm",
     "authorization",
@@ -87,6 +92,14 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "suggest-next-action",
     "validate-evidence",
     "validate-consent",
+    "resolve-conflict",
+    "merge-evidence",
+    "reconcile-evidence",
+    "arbitrate-evidence",
+    "choose-evidence-precedence",
+    "create-conflict-resolution-record",
+    "create-evidence-merge-record",
+    "create-evidence-arbitration-record",
     "create-evidence-override-record",
     "create-approval-override-record",
     "create-consent-record",
@@ -115,31 +128,32 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_negative_evidence_non_override_map_field_order_count_and_ids_are_stable():
-    fields = list_execution_decision_negative_evidence_non_override_map_fields()
+def test_conflicting_evidence_isolation_map_field_order_count_and_ids_are_stable():
+    fields = list_execution_decision_conflicting_evidence_isolation_map_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 18))
     assert len(fields) == 17
-    assert execution_decision_negative_evidence_non_override_map_field_ids() == FIELD_IDS
+    assert execution_decision_conflicting_evidence_isolation_map_field_ids() == FIELD_IDS
 
 
-def test_every_negative_evidence_non_override_map_field_has_required_non_empty_values():
-    for field in list_execution_decision_negative_evidence_non_override_map_fields():
+def test_every_conflicting_evidence_isolation_map_field_has_required_non_empty_values():
+    for field in list_execution_decision_conflicting_evidence_isolation_map_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.negative_evidence_non_override_boundary_category.strip()
-        assert field.override_semantics_disabled.strip()
+        assert field.conflict_isolation_boundary_category.strip()
+        assert field.conflict_context_isolated.strip()
+        assert field.isolation_semantics_disabled.strip()
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_execution_decision_negative_evidence_non_override_map_markdown()
-    second = render_execution_decision_negative_evidence_non_override_map_markdown()
+    first = render_execution_decision_conflicting_evidence_isolation_map_markdown()
+    second = render_execution_decision_conflicting_evidence_isolation_map_markdown()
 
     assert first == second
     assert first.startswith(
-        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+        "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n"
     )
-    assert EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY in first
+    assert EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -149,7 +163,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "execution-decision-negative-evidence-non-override-map",
+        "execution-decision-conflicting-evidence-isolation-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -164,9 +178,9 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY
+    assert first_payload["boundary"] == EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP_BOUNDARY
     assert first_payload["count"] == 17
-    assert first_payload["status"] == execution_decision_negative_evidence_non_override_map_report()
+    assert first_payload["status"] == execution_decision_conflicting_evidence_isolation_map_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -175,43 +189,45 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = execution_decision_negative_evidence_non_override_map_as_dicts()
-    second_fields = execution_decision_negative_evidence_non_override_map_as_dicts()
-    first_status = execution_decision_negative_evidence_non_override_map_report()
-    second_status = execution_decision_negative_evidence_non_override_map_report()
+    first_fields = execution_decision_conflicting_evidence_isolation_map_as_dicts()
+    second_fields = execution_decision_conflicting_evidence_isolation_map_as_dicts()
+    first_status = execution_decision_conflicting_evidence_isolation_map_report()
+    second_status = execution_decision_conflicting_evidence_isolation_map_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M2.13"
-    assert first_status["feature"] == "Execution Decision Negative Evidence Non-Override Map"
+    assert first_status["phase"] == "P4-M2.14"
+    assert first_status["feature"] == "Execution Decision Conflicting Evidence Isolation Map"
     assert first_status["mode"] == "read-only"
-    assert first_status["execution_decision_negative_evidence_non_override_map_field_count"] == 17
-    assert first_status["boundary"] == EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY
+    assert first_status["execution_decision_conflicting_evidence_isolation_map_field_count"] == 17
+    assert first_status["boundary"] == EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = execution_decision_negative_evidence_non_override_map_report()
+    status = execution_decision_conflicting_evidence_isolation_map_report()
 
     for flag in (
         "definition_only",
         "inspection_only",
         "p4_m2_started",
-        "execution_decision_silence_non_consent_map_available",
-        "execution_decision_negative_evidence_non_override_map_started",
-        "execution_decision_negative_evidence_non_override_map_definition_only",
-        "decision_negative_evidence_non_override_map_fields_defined",
-        "negative_evidence_as_approval_prohibited",
-        "negative_evidence_as_authorization_prohibited",
-        "negative_evidence_as_readiness_prohibited",
-        "negative_evidence_as_execution_prohibited",
+        "execution_decision_negative_evidence_non_override_map_available",
+        "execution_decision_conflicting_evidence_isolation_map_started",
+        "execution_decision_conflicting_evidence_isolation_map_definition_only",
+        "decision_conflicting_evidence_isolation_map_fields_defined",
+        "conflicting_evidence_isolated",
         "conflicting_evidence_as_resolved_prohibited",
-        "expired_evidence_as_current_prohibited",
-        "stale_evidence_as_current_prohibited",
-        "revoked_evidence_as_valid_prohibited",
-        "superseded_evidence_as_valid_prohibited",
-        "invalid_evidence_as_valid_prohibited",
-        "incomplete_evidence_as_sufficient_prohibited",
+        "conflicting_evidence_as_merged_prohibited",
+        "conflicting_evidence_as_reconciled_prohibited",
+        "conflicting_evidence_as_valid_prohibited",
+        "conflicting_evidence_as_approval_prohibited",
+        "conflicting_evidence_as_authorization_prohibited",
+        "conflicting_evidence_as_readiness_prohibited",
+        "conflicting_evidence_as_execution_prohibited",
+        "ambiguous_evidence_as_resolved_prohibited",
+        "unresolved_evidence_as_resolved_prohibited",
+        "contradictory_evidence_as_reconciled_prohibited",
+        "positive_reference_as_resolution_prohibited",
         "positive_reference_as_override_prohibited",
     ):
         assert status[flag] is True
@@ -225,6 +241,16 @@ def test_status_report_locks_true_and_disabled_flags():
         "rejection_enabled",
         "live_rejection_enabled",
         "active_denial_enabled",
+        "conflict_resolution_enabled",
+        "evidence_resolution_enabled",
+        "evidence_merge_enabled",
+        "evidence_reconciliation_enabled",
+        "evidence_arbitration_enabled",
+        "evidence_precedence_enabled",
+        "evidence_tie_breaker_enabled",
+        "conflict_resolution_record_creation_enabled",
+        "evidence_merge_record_creation_enabled",
+        "evidence_arbitration_record_creation_enabled",
         "evidence_validation_enabled",
         "live_evidence_validation_enabled",
         "consent_validation_enabled",
@@ -233,8 +259,14 @@ def test_status_report_locks_true_and_disabled_flags():
         "approval_override_record_creation_enabled",
         "consent_record_creation_enabled",
         "non_consent_record_creation_enabled",
-        "override_verdict_enabled",
-        "override_hint_enabled",
+        "conflict_resolution_verdict_enabled",
+        "resolution_hint_enabled",
+        "conflict_isolation_semantics_as_execution_granted",
+        "conflict_resolution_semantics_granted",
+        "evidence_resolution_semantics_granted",
+        "evidence_merge_semantics_granted",
+        "evidence_arbitration_semantics_granted",
+        "evidence_precedence_semantics_granted",
         "override_semantics_granted",
         "evidence_override_semantics_granted",
         "approval_override_semantics_granted",
@@ -255,7 +287,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "execution-decision-negative-evidence-non-override-map",
+            "execution-decision-conflicting-evidence-isolation-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -265,10 +297,10 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert payload == {}
     assert stderr == ""
     assert stdout.startswith(
-        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+        "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n"
     )
     assert "## Status Report" in stdout
-    assert EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP_BOUNDARY in stdout
+    assert EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP_BOUNDARY in stdout
     for phrase in BOUNDARY_PHRASE_LINES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -277,7 +309,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "execution-decision-negative-evidence-non-override-map",
+        "execution-decision-conflicting-evidence-isolation-map",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -294,7 +326,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_stdout.startswith(
-        "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n"
+        "# P4-M2.14 Execution Decision Conflicting Evidence Isolation Map\n"
     )
     assert not (tmp_path / ".local").exists()
 
@@ -311,7 +343,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "execution-decision-negative-evidence-non-override-map",
+            "execution-decision-conflicting-evidence-isolation-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -319,7 +351,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "execution-decision-negative-evidence-non-override-map",
+            "execution-decision-conflicting-evidence-isolation-map",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -329,7 +361,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M2.13")
+    assert markdown_stdout.startswith("# P4-M2.14")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 17
@@ -340,7 +372,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "execution-decision-negative-evidence-non-override-map",
+            "execution-decision-conflicting-evidence-isolation-map",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -348,7 +380,11 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "execution_decision_negative_evidence_non_override_map.jsonl",
+        "execution_decision_conflicting_evidence_isolation_map.jsonl",
+        "conflict_resolution.jsonl",
+        "evidence_resolution.jsonl",
+        "evidence_merge.jsonl",
+        "evidence_arbitration.jsonl",
         "evidence_overrides.jsonl",
         "approval_overrides.jsonl",
         "consent.jsonl",
@@ -381,16 +417,16 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     assert not (tmp_path / ".local").exists()
 
 
-def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_12_commands():
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_p4_m2_13_commands():
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "execution-decision-negative-evidence-non-override-map" in commands
-    assert "execution-decision-silence-non-consent-map" in commands
+    assert "execution-decision-conflicting-evidence-isolation-map" in commands
+    assert PREVIOUS_P4_M2_13_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m2_12_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m2_13_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -415,6 +451,7 @@ def test_existing_p4_m1_0_through_p4_m2_12_memory_loop_commands_still_work(tmp_p
         "execution-decision-recommendation-prohibition-map": "# P4-M2.10 Execution Decision Recommendation Prohibition Map\n",
         "execution-decision-default-denial-boundary-map": "# P4-M2.11 Execution Decision Default Denial Boundary Map\n",
         "execution-decision-silence-non-consent-map": "# P4-M2.12 Execution Decision Silence Non-Consent Map\n",
+        "execution-decision-negative-evidence-non-override-map": "# P4-M2.13 Execution Decision Negative Evidence Non-Override Map\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -430,7 +467,7 @@ def test_existing_p4_m1_0_through_p4_m2_12_memory_loop_commands_still_work(tmp_p
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M2_13_EXECUTION_DECISION_NEGATIVE_EVIDENCE_NON_OVERRIDE_MAP.md"
+        "docs/CIVILIZATION_CORE_P4_M2_14_EXECUTION_DECISION_CONFLICTING_EVIDENCE_ISOLATION_MAP.md"
     ).read_text()
 
     for phrase in BOUNDARY_PHRASE_LINES:
@@ -448,8 +485,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m2_execution_decision_negative_evidence_non_override_map" not in entry_points
-    assert "execution-decision-negative-evidence-non-override-map" not in entry_points
+    assert "p4_m2_execution_decision_conflicting_evidence_isolation_map" not in entry_points
+    assert "execution-decision-conflicting-evidence-isolation-map" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -457,20 +494,21 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = ExecutionDecisionNegativeEvidenceNonOverrideMapField(
+    field = ExecutionDecisionConflictingEvidenceIsolationMapField(
         field_order=1,
-        field_id="custom-execution-decision-negative-evidence-non-override-map",
-        field_name="Custom Execution Decision Negative Evidence Non-Override Map Field",
+        field_id="custom-execution-decision-conflicting-evidence-isolation-map",
+        field_name="Custom Execution Decision Conflicting Evidence Isolation Map Field",
         field_purpose="Custom inspection-only purpose.",
-        negative_evidence_non_override_boundary_category=(
-            "custom-negative-evidence-non-override-boundary"
+        conflict_isolation_boundary_category=(
+            "custom-conflicting-evidence-isolation-boundary"
         ),
-        override_semantics_disabled="Custom override semantics are disabled.",
+        conflict_context_isolated="Custom conflict context remains isolated.",
+        isolation_semantics_disabled="Custom conflict resolution semantics are disabled.",
     )
 
-    markdown = render_execution_decision_negative_evidence_non_override_map_markdown([field])
+    markdown = render_execution_decision_conflicting_evidence_isolation_map_markdown([field])
 
-    assert "custom-execution-decision-negative-evidence-non-override-map" in markdown
+    assert "custom-execution-decision-conflicting-evidence-isolation-map" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 

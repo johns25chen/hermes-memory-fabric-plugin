@@ -455,6 +455,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
     "execution-decision-default-denial-boundary-map",
     "execution-decision-silence-non-consent-map",
     "execution-decision-negative-evidence-non-override-map",
+    "execution-decision-conflicting-evidence-isolation-map",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
