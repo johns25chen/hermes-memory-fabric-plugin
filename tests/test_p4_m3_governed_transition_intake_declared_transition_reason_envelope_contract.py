@@ -90,6 +90,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
         "governed-transition-intake-declared-transition-dependency-envelope-contract",
     "governed-transition-intake-declared-transition-impact-envelope-contract",
     "governed-transition-intake-declared-transition-risk-envelope-contract",
+    "governed-transition-intake-declared-transition-assumption-envelope-contract",
 }
 
 PREVIOUS_P4_M3_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
