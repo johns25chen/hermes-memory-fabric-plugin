@@ -99,6 +99,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-final-phase-handoff-summary",
     "entry-gate-design-boundary-contract",
     "entry-gate-design-request-envelope-contract",
+    "evidence-reference-envelope-contract",
 }
 
 PREVIOUS_P4_M3_10_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
