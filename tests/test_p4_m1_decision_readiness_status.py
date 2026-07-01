@@ -106,6 +106,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-declared-transition-risk-envelope-contract",
     "governed-transition-intake-declared-transition-assumption-envelope-contract",
     "governed-transition-intake-declared-transition-safeguard-envelope-contract",
+    "governed-transition-intake-package-assembly-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

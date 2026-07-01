@@ -409,6 +409,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands
     "governed-transition-intake-declared-transition-risk-envelope-contract",
     "governed-transition-intake-declared-transition-assumption-envelope-contract",
     "governed-transition-intake-declared-transition-safeguard-envelope-contract",
+    "governed-transition-intake-package-assembly-envelope-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
