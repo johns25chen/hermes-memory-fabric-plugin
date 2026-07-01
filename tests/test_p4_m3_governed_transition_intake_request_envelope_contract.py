@@ -94,6 +94,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-final-non-validation-boundary-audit",
     "governed-transition-intake-closure-handoff-contract",
     "governed-transition-intake-phase-closure-review",
+    "governed-transition-intake-final-phase-handoff-summary",
 }
 
 PREVIOUS_P4_M3_0_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
