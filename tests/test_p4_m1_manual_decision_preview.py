@@ -110,6 +110,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-declared-transition-assumption-envelope-contract",
     "governed-transition-intake-declared-transition-safeguard-envelope-contract",
     "governed-transition-intake-package-assembly-envelope-contract",
+    "governed-transition-intake-final-non-validation-boundary-audit",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

@@ -7,22 +7,23 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m3_governed_transition_intake_package_assembly_envelope_contract import (
+from hermes_memory_fabric.p4_m3_governed_transition_intake_final_non_validation_boundary_audit import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT_BOUNDARY,
+    GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    GovernedTransitionIntakePackageAssemblyEnvelopeContractField,
-    governed_transition_intake_package_assembly_envelope_contract_as_dicts,
-    governed_transition_intake_package_assembly_envelope_contract_field_ids,
-    governed_transition_intake_package_assembly_envelope_contract_report,
-    list_governed_transition_intake_package_assembly_envelope_contract_fields,
-    render_governed_transition_intake_package_assembly_envelope_contract_markdown,
+    GovernedTransitionIntakeFinalNonValidationBoundaryAuditField,
+    governed_transition_intake_final_non_validation_boundary_audit_as_dicts,
+    governed_transition_intake_final_non_validation_boundary_audit_field_ids,
+    governed_transition_intake_final_non_validation_boundary_audit_report,
+    list_governed_transition_intake_final_non_validation_boundary_audit_fields,
+    render_governed_transition_intake_final_non_validation_boundary_audit_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m3-governed-transition-intake-package-assembly-envelope-contract-id",
+    "p4-m3-governed-transition-intake-final-non-validation-boundary-audit-id",
+    "p4-m3-governed-transition-intake-package-assembly-envelope-contract-reference",
     "p4-m3-governed-transition-intake-declared-transition-safeguard-envelope-contract-reference",
     "p4-m3-governed-transition-intake-declared-transition-assumption-envelope-contract-reference",
     "p4-m3-governed-transition-intake-declared-transition-risk-envelope-contract-reference",
@@ -37,9 +38,8 @@ FIELD_IDS = (
     "p4-m3-governed-transition-intake-boundary-contract-reference",
     "p4-m2-closure-handoff-contract-reference",
     "p4-m2-final-non-execution-boundary-audit-reference",
-    "p4-m3-transition-intake-package-assembly-envelope-scope",
-    "p4-m3-transition-intake-package-assembly-envelope-reference-grouping-field",
-    "p4-m3-transition-intake-package-assembly-envelope-semantics-disabled",
+    "p4-m3-final-non-validation-boundary-audit-scope",
+    "p4-m3-final-non-validation-boundary-audit-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -47,17 +47,18 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m3_transition_intake_package_assembly_envelope_contract_category",
-    "p4_m3_transition_intake_package_assembly_envelope_semantics_disabled",
+    "p4_m3_final_non_validation_boundary_audit_category",
+    "p4_m3_final_non_validation_boundary_audit_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = (
-    "P4-M3.12",
-    "Governed Transition Intake Package Assembly Envelope Contract",
+    "P4-M3.13",
+    "Governed Transition Intake Final Non-Validation Boundary Audit",
     "read-only",
     "definition-only",
     "inspection-only",
-    "P4-M3.12 transition intake package assembly envelope definition only",
+    "P4-M3.13 final non-validation boundary audit definition only",
+    "P4-M3.12 Governed Transition Intake Package Assembly Envelope Contract remains the source package assembly envelope boundary",
     "P4-M3.11 Governed Transition Intake Declared Transition Safeguard Envelope Contract remains the source declared transition safeguard envelope boundary",
     "P4-M3.10 Governed Transition Intake Declared Transition Assumption Envelope Contract remains the source declared transition assumption envelope boundary",
     "P4-M3.9 Governed Transition Intake Declared Transition Risk Envelope Contract remains the source declared transition risk envelope boundary",
@@ -70,74 +71,76 @@ REQUIRED_BOUNDARY_PHRASES = (
     "P4-M3.2 Governed Transition Intake Evidence Reference Envelope Contract remains the source evidence reference envelope boundary",
     "P4-M3.1 Governed Transition Intake Request Envelope Contract remains the source request envelope boundary",
     "P4-M3.0 Governed Transition Intake Boundary Contract remains the source intake boundary",
-    "P4-M3.12 is not transition intake package validation",
-    "P4-M3.12 is not package correctness validation",
-    "P4-M3.12 is not package completeness validation",
-    "P4-M3.12 is not package consistency validation",
-    "P4-M3.12 is not package integrity validation",
-    "P4-M3.12 is not package readiness validation",
-    "P4-M3.12 is not package readiness verdict",
-    "P4-M3.12 is not package validation verdict",
-    "P4-M3.12 is not reference resolution",
-    "P4-M3.12 is not reference integrity validation",
-    "P4-M3.12 is not reference completeness validation",
-    "P4-M3.12 is not package assembly execution",
-    "P4-M3.12 is not package persistence",
-    "P4-M3.12 is not package storage",
-    "P4-M3.12 is not package mutation",
-    "P4-M3.12 is not transition intake package record creation",
-    "P4-M3.12 is not transition safeguard validation",
-    "P4-M3.12 is not transition assumption validation",
-    "P4-M3.12 is not transition risk validation",
-    "P4-M3.12 is not transition impact validation",
-    "P4-M3.12 is not transition dependency validation",
-    "P4-M3.12 is not transition constraint validation",
-    "P4-M3.12 is not transition reason validation",
-    "P4-M3.12 is not target phase validation",
-    "P4-M3.12 is not target phase selection",
-    "P4-M3.12 is not transition readiness validation",
-    "P4-M3.12 is not readiness verdict",
-    "P4-M3.12 is not validation verdict",
-    "P4-M3.12 is not approval",
-    "P4-M3.12 is not authorization",
-    "P4-M3.12 is not confirmation",
-    "P4-M3.12 is not recommendation",
-    "P4-M3.12 is not ranking",
-    "P4-M3.12 is not next action generation",
-    "P4-M3.12 is not transition execution",
-    "P4-M3.12 is not request validation",
-    "P4-M3.12 is not evidence validation",
-    "P4-M3.12 is not human context validation",
-    "P4-M3.12 is not source validation",
-    "P4-M3.12 is not citation validation",
-    "P4-M3.12 is not transition record creation",
-    "P4-M3.12 is not request record creation",
-    "P4-M3.12 is not target-phase record creation",
-    "P4-M3.12 is not transition-reason record creation",
-    "P4-M3.12 is not transition-constraint record creation",
-    "P4-M3.12 is not transition-dependency record creation",
-    "P4-M3.12 is not transition-impact record creation",
-    "P4-M3.12 is not transition-risk record creation",
-    "P4-M3.12 is not transition-assumption record creation",
-    "P4-M3.12 is not transition-safeguard record creation",
-    "P4-M3.12 is not memory mutation",
-    "P4-M3.12 is not roadmap mutation",
-    "P4-M3.12 is not lifecycle mutation",
-    "P4-M3.12 is not proposal mutation",
-    "P4-M3.12 is not evidence mutation",
-    "P4-M3.12 is not human context mutation",
-    "P4-M3.12 is not target phase mutation",
-    "P4-M3.12 is not transition reason mutation",
-    "P4-M3.12 is not transition constraint mutation",
-    "P4-M3.12 is not transition dependency mutation",
-    "P4-M3.12 is not transition impact mutation",
-    "P4-M3.12 is not transition risk mutation",
-    "P4-M3.12 is not transition assumption mutation",
-    "P4-M3.12 is not transition safeguard mutation",
-    "P4-M3.12 is not source fetching",
-    "P4-M3.12 is not provenance writing",
-    "P4-M3.12 is not citation mutation",
-    "no transition intake package validation",
+    "P4-M3.13 is not live validation",
+    "P4-M3.13 is not transition intake validation",
+    "P4-M3.13 is not package validation",
+    "P4-M3.13 is not package correctness validation",
+    "P4-M3.13 is not package completeness validation",
+    "P4-M3.13 is not package consistency validation",
+    "P4-M3.13 is not package integrity validation",
+    "P4-M3.13 is not package readiness validation",
+    "P4-M3.13 is not package readiness verdict",
+    "P4-M3.13 is not package validation verdict",
+    "P4-M3.13 is not reference resolution",
+    "P4-M3.13 is not reference integrity validation",
+    "P4-M3.13 is not reference completeness validation",
+    "P4-M3.13 is not transition safeguard validation",
+    "P4-M3.13 is not transition assumption validation",
+    "P4-M3.13 is not transition risk validation",
+    "P4-M3.13 is not transition impact validation",
+    "P4-M3.13 is not transition dependency validation",
+    "P4-M3.13 is not transition constraint validation",
+    "P4-M3.13 is not transition reason validation",
+    "P4-M3.13 is not target phase validation",
+    "P4-M3.13 is not target phase selection",
+    "P4-M3.13 is not transition readiness validation",
+    "P4-M3.13 is not readiness verdict",
+    "P4-M3.13 is not validation verdict",
+    "P4-M3.13 is not boundary certification",
+    "P4-M3.13 is not approval",
+    "P4-M3.13 is not authorization",
+    "P4-M3.13 is not confirmation",
+    "P4-M3.13 is not recommendation",
+    "P4-M3.13 is not ranking",
+    "P4-M3.13 is not next action generation",
+    "P4-M3.13 is not transition execution",
+    "P4-M3.13 is not request validation",
+    "P4-M3.13 is not evidence validation",
+    "P4-M3.13 is not human context validation",
+    "P4-M3.13 is not source validation",
+    "P4-M3.13 is not citation validation",
+    "P4-M3.13 is not transition record creation",
+    "P4-M3.13 is not request record creation",
+    "P4-M3.13 is not package record creation",
+    "P4-M3.13 is not target-phase record creation",
+    "P4-M3.13 is not transition-reason record creation",
+    "P4-M3.13 is not transition-constraint record creation",
+    "P4-M3.13 is not transition-dependency record creation",
+    "P4-M3.13 is not transition-impact record creation",
+    "P4-M3.13 is not transition-risk record creation",
+    "P4-M3.13 is not transition-assumption record creation",
+    "P4-M3.13 is not transition-safeguard record creation",
+    "P4-M3.13 is not memory mutation",
+    "P4-M3.13 is not roadmap mutation",
+    "P4-M3.13 is not lifecycle mutation",
+    "P4-M3.13 is not proposal mutation",
+    "P4-M3.13 is not evidence mutation",
+    "P4-M3.13 is not human context mutation",
+    "P4-M3.13 is not target phase mutation",
+    "P4-M3.13 is not transition reason mutation",
+    "P4-M3.13 is not transition constraint mutation",
+    "P4-M3.13 is not transition dependency mutation",
+    "P4-M3.13 is not transition impact mutation",
+    "P4-M3.13 is not transition risk mutation",
+    "P4-M3.13 is not transition assumption mutation",
+    "P4-M3.13 is not transition safeguard mutation",
+    "P4-M3.13 is not package mutation",
+    "P4-M3.13 is not source fetching",
+    "P4-M3.13 is not provenance writing",
+    "P4-M3.13 is not citation mutation",
+    "no live validation",
+    "no transition intake validation",
+    "no package validation",
     "no package correctness validation",
     "no package completeness validation",
     "no package consistency validation",
@@ -148,13 +151,6 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no reference resolution",
     "no reference integrity validation",
     "no reference completeness validation",
-    "no package assembly execution",
-    "no package persistence",
-    "no package storage",
-    "no package mutation",
-    "no transition intake package record creation",
-    "no transition intake package record update",
-    "no transition intake package record deletion",
     "no transition safeguard validation",
     "no transition assumption validation",
     "no transition risk validation",
@@ -167,6 +163,7 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no readiness validation",
     "no readiness verdict",
     "no validation verdict",
+    "no boundary certification",
     "no approval",
     "no authorization",
     "no confirmation",
@@ -178,10 +175,10 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no evidence validation",
     "no memory mutation",
     "no roadmap mutation",
-    "no P4-M3.13",
-    "no P4-M3.13 command",
-    "no P4-M3.13 activation",
-    "no P4-M3.13 implementation",
+    "no P4-M3.14",
+    "no P4-M3.14 command",
+    "no P4-M3.14 activation",
+    "no P4-M3.14 implementation",
     "no P4-M4",
     "no P4-M5",
     "no v7",
@@ -198,9 +195,10 @@ REQUIRED_BOUNDARY_PHRASES = (
 EXPECTED_TRUE_STATUS_FLAGS = (
     "definition_only",
     "inspection_only",
-    "p4_m3_transition_intake_package_assembly_envelope_definition_started",
-    "p4_m3_12_governed_transition_intake_package_assembly_envelope_contract_started",
-    "p4_m3_12_definition_only",
+    "p4_m3_final_non_validation_boundary_audit_definition_started",
+    "p4_m3_13_governed_transition_intake_final_non_validation_boundary_audit_started",
+    "p4_m3_13_definition_only",
+    "p4_m3_12_package_assembly_envelope_contract_reference_defined",
     "p4_m3_11_declared_transition_safeguard_envelope_contract_reference_defined",
     "p4_m3_10_declared_transition_assumption_envelope_contract_reference_defined",
     "p4_m3_9_declared_transition_risk_envelope_contract_reference_defined",
@@ -215,10 +213,12 @@ EXPECTED_TRUE_STATUS_FLAGS = (
     "p4_m3_0_intake_boundary_contract_reference_defined",
     "p4_m2_17_closure_handoff_contract_reference_defined",
     "p4_m2_final_non_execution_boundary_reference_defined",
-    "p4_m3_transition_intake_package_assembly_envelope_contract_defined",
-    "p4_m3_transition_intake_package_assembly_envelope_scope_defined",
-    "p4_m3_transition_intake_package_assembly_envelope_field_shape_defined",
-    "p4_m3_transition_intake_package_reference_grouping_defined",
+    "p4_m3_final_non_validation_boundary_audit_defined",
+    "p4_m3_final_non_validation_boundary_audit_scope_defined",
+    "p4_m3_final_non_validation_boundary_audit_field_shape_defined",
+    "p4_m3_final_non_validation_reference_surface_defined",
+    "p4_m3_live_validation_semantics_prohibited",
+    "p4_m3_transition_intake_validation_semantics_prohibited",
     "p4_m3_transition_intake_package_validation_semantics_prohibited",
     "p4_m3_package_correctness_validation_semantics_prohibited",
     "p4_m3_package_completeness_validation_semantics_prohibited",
@@ -230,9 +230,7 @@ EXPECTED_TRUE_STATUS_FLAGS = (
     "p4_m3_reference_resolution_semantics_prohibited",
     "p4_m3_reference_integrity_validation_semantics_prohibited",
     "p4_m3_reference_completeness_validation_semantics_prohibited",
-    "p4_m3_package_assembly_execution_semantics_prohibited",
-    "p4_m3_package_record_semantics_prohibited",
-    "p4_m3_package_mutation_semantics_prohibited",
+    "p4_m3_boundary_certification_semantics_prohibited",
     "p4_m3_transition_safeguard_validation_semantics_prohibited",
     "p4_m3_transition_assumption_validation_semantics_prohibited",
     "p4_m3_transition_risk_validation_semantics_prohibited",
@@ -256,10 +254,13 @@ EXPECTED_TRUE_STATUS_FLAGS = (
     "p4_m3_evidence_validation_semantics_prohibited",
     "p4_m3_human_context_validation_semantics_prohibited",
     "p4_m3_transition_mutation_semantics_prohibited",
-    "p4_m3_13_start_deferred",
+    "p4_m3_14_start_deferred",
 )
 
 EXPECTED_FALSE_STATUS_FLAGS = (
+    "live_validation_enabled",
+    "boundary_validation_enabled",
+    "transition_intake_validation_enabled",
     "transition_intake_package_validation_enabled",
     "package_correctness_validation_enabled",
     "package_completeness_validation_enabled",
@@ -271,6 +272,7 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "reference_resolution_enabled",
     "reference_integrity_validation_enabled",
     "reference_completeness_validation_enabled",
+    "boundary_certification_enabled",
     "package_assembly_execution_enabled",
     "package_persistence_enabled",
     "package_storage_enabled",
@@ -279,63 +281,14 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "transition_intake_package_record_update_enabled",
     "transition_intake_package_record_deletion_enabled",
     "transition_safeguard_validation_enabled",
-    "safeguard_correctness_validation_enabled",
-    "safeguard_verification_enabled",
-    "safeguard_sufficiency_validation_enabled",
-    "safeguard_completeness_validation_enabled",
-    "safeguard_consistency_validation_enabled",
-    "safeguard_enforcement_enabled",
-    "safeguard_policy_enforcement_enabled",
-    "safeguard_activation_enabled",
-    "safeguard_execution_enabled",
-    "safeguard_acceptance_enabled",
-    "safeguard_rejection_enabled",
-    "safeguard_scoring_enabled",
-    "safeguard_ranking_enabled",
-    "safeguard_mitigation_execution_enabled",
-    "risk_mitigation_execution_enabled",
-    "transition_safeguard_persistence_enabled",
-    "transition_safeguard_storage_enabled",
-    "transition_safeguard_mutation_enabled",
-    "transition_safeguard_record_creation_enabled",
-    "transition_safeguard_record_update_enabled",
-    "transition_safeguard_record_deletion_enabled",
     "transition_assumption_validation_enabled",
-    "assumption_correctness_validation_enabled",
-    "assumption_verification_enabled",
-    "assumption_truth_evaluation_enabled",
-    "transition_assumption_mutation_enabled",
-    "transition_assumption_record_creation_enabled",
     "transition_risk_validation_enabled",
-    "risk_correctness_validation_enabled",
-    "risk_assessment_enabled",
-    "risk_scoring_enabled",
-    "risk_ranking_enabled",
-    "risk_acceptance_enabled",
-    "risk_waiver_enabled",
-    "risk_acknowledgement_enabled",
-    "risk_surface_validation_enabled",
-    "transition_risk_mutation_enabled",
-    "transition_risk_record_creation_enabled",
     "transition_impact_validation_enabled",
-    "impact_correctness_validation_enabled",
-    "impact_assessment_enabled",
-    "affected_surface_validation_enabled",
-    "transition_impact_mutation_enabled",
-    "transition_impact_record_creation_enabled",
     "transition_dependency_validation_enabled",
-    "dependency_correctness_validation_enabled",
-    "dependency_satisfaction_validation_enabled",
-    "prerequisite_validation_enabled",
     "transition_constraint_validation_enabled",
-    "constraint_correctness_validation_enabled",
-    "constraint_feasibility_validation_enabled",
     "transition_reason_validation_enabled",
-    "reason_correctness_validation_enabled",
     "target_phase_validation_enabled",
     "target_phase_selection_enabled",
-    "phase_eligibility_validation_enabled",
-    "phase_compatibility_validation_enabled",
     "transition_readiness_validation_enabled",
     "live_transition_readiness_validation_enabled",
     "readiness_verdict_enabled",
@@ -359,6 +312,8 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "suggested_next_action_enabled",
     "next_action_generation_enabled",
     "transition_record_creation_enabled",
+    "request_record_creation_enabled",
+    "package_record_creation_enabled",
     "transition_readiness_record_creation_enabled",
     "transition_validation_record_creation_enabled",
     "transition_approval_record_creation_enabled",
@@ -379,7 +334,6 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "request_persistence_enabled",
     "request_storage_enabled",
     "request_mutation_enabled",
-    "request_record_creation_enabled",
     "request_record_update_enabled",
     "request_record_deletion_enabled",
     "evidence_validation_enabled",
@@ -418,10 +372,10 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "connector_enabled",
     "agent_call_enabled",
     "codex_hermes_chatgpt_product_code_auto_call_enabled",
-    "p4_m3_13_started",
-    "p4_m3_13_command_enabled",
-    "p4_m3_13_activation_enabled",
-    "p4_m3_13_implementation_enabled",
+    "p4_m3_14_started",
+    "p4_m3_14_command_enabled",
+    "p4_m3_14_activation_enabled",
+    "p4_m3_14_implementation_enabled",
     "p4_m4_started",
     "p4_m5_started",
     "v7_started",
@@ -480,12 +434,13 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-final-non-validation-boundary-audit",
 }
 
-PREVIOUS_P4_M3_11_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "governed-transition-intake-package-assembly-envelope-contract"
+PREVIOUS_P4_M3_12_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "governed-transition-intake-final-non-validation-boundary-audit"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "validate-transition-intake-package",
+    "validate-transition-intake",
+    "validate-package",
     "validate-package-correctness",
     "validate-package-completeness",
     "validate-package-consistency",
@@ -496,13 +451,6 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "resolve-references",
     "validate-reference-integrity",
     "validate-reference-completeness",
-    "execute-package-assembly",
-    "persist-package",
-    "store-package",
-    "mutate-package",
-    "create-transition-intake-package-record",
-    "update-transition-intake-package-record",
-    "delete-transition-intake-package-record",
     "validate-transition-safeguard",
     "validate-transition-assumption",
     "validate-transition-risk",
@@ -515,6 +463,7 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "validate-transition-readiness",
     "readiness-verdict",
     "validation-verdict",
+    "certify-boundaries",
     "execute-transition",
     "authorize-transition",
     "approve-transition",
@@ -524,6 +473,7 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "suggest-next-action",
     "create-transition-record",
     "create-request-record",
+    "create-package-record",
     "validate-request",
     "validate-evidence",
     "validate-human-context",
@@ -531,7 +481,8 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "write-provenance",
     "mutate-citation",
     "write-memory",
-    "start-p4-m3-13",
+    "governed-transition-intake-p4-m3-14",
+    "start-p4-m3-14",
     "start-p4-m4",
     "start-p4-m5",
     "start-v7",
@@ -542,20 +493,20 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_package_assembly_envelope_field_order_count_and_ids_are_stable():
-    fields = list_governed_transition_intake_package_assembly_envelope_contract_fields()
+def test_final_non_validation_boundary_audit_field_order_count_and_ids_are_stable():
+    fields = list_governed_transition_intake_final_non_validation_boundary_audit_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 19))
     assert len(fields) == 18
-    assert governed_transition_intake_package_assembly_envelope_contract_field_ids() == FIELD_IDS
+    assert governed_transition_intake_final_non_validation_boundary_audit_field_ids() == FIELD_IDS
 
 
-def test_every_package_assembly_envelope_field_has_required_values():
-    for field in list_governed_transition_intake_package_assembly_envelope_contract_fields():
+def test_every_final_non_validation_boundary_audit_field_has_required_values():
+    for field in list_governed_transition_intake_final_non_validation_boundary_audit_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.p4_m3_transition_intake_package_assembly_envelope_contract_category.strip()
-        assert field.p4_m3_transition_intake_package_assembly_envelope_semantics_disabled.strip()
+        assert field.p4_m3_final_non_validation_boundary_audit_category.strip()
+        assert field.p4_m3_final_non_validation_boundary_audit_semantics_disabled.strip()
 
 
 def test_required_boundary_phrase_contract_is_literal_and_complete():
@@ -568,14 +519,14 @@ def test_required_status_flag_contract_is_literal_and_complete():
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_governed_transition_intake_package_assembly_envelope_contract_markdown()
-    second = render_governed_transition_intake_package_assembly_envelope_contract_markdown()
+    first = render_governed_transition_intake_final_non_validation_boundary_audit_markdown()
+    second = render_governed_transition_intake_final_non_validation_boundary_audit_markdown()
 
     assert first == second
     assert first.startswith(
-        "# P4-M3.12 Governed Transition Intake Package Assembly Envelope Contract\n"
+        "# P4-M3.13 Governed Transition Intake Final Non-Validation Boundary Audit\n"
     )
-    assert GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT_BOUNDARY in first
+    assert GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -585,7 +536,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "governed-transition-intake-package-assembly-envelope-contract",
+        "governed-transition-intake-final-non-validation-boundary-audit",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -602,18 +553,18 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert first_payload == second_payload
     assert (
         first_payload["boundary"]
-        == GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT_BOUNDARY
+        == GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY
     )
     assert first_payload["count"] == 18
-    assert first_payload["status"]["phase"] == "P4-M3.12"
+    assert first_payload["status"]["phase"] == "P4-M3.13"
     assert (
         first_payload["status"]["feature"]
-        == "Governed Transition Intake Package Assembly Envelope Contract"
+        == "Governed Transition Intake Final Non-Validation Boundary Audit"
     )
     assert first_payload["status"]["mode"] == "read-only"
     assert (
         first_payload["status"]
-        == governed_transition_intake_package_assembly_envelope_contract_report()
+        == governed_transition_intake_final_non_validation_boundary_audit_report()
     )
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
@@ -623,34 +574,34 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = governed_transition_intake_package_assembly_envelope_contract_as_dicts()
-    second_fields = governed_transition_intake_package_assembly_envelope_contract_as_dicts()
-    first_status = governed_transition_intake_package_assembly_envelope_contract_report()
-    second_status = governed_transition_intake_package_assembly_envelope_contract_report()
+    first_fields = governed_transition_intake_final_non_validation_boundary_audit_as_dicts()
+    second_fields = governed_transition_intake_final_non_validation_boundary_audit_as_dicts()
+    first_status = governed_transition_intake_final_non_validation_boundary_audit_report()
+    second_status = governed_transition_intake_final_non_validation_boundary_audit_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M3.12"
+    assert first_status["phase"] == "P4-M3.13"
     assert (
         first_status["feature"]
-        == "Governed Transition Intake Package Assembly Envelope Contract"
+        == "Governed Transition Intake Final Non-Validation Boundary Audit"
     )
     assert first_status["mode"] == "read-only"
     assert (
         first_status[
-            "governed_transition_intake_package_assembly_envelope_contract_field_count"
+            "governed_transition_intake_final_non_validation_boundary_audit_field_count"
         ]
         == 18
     )
     assert (
         first_status["boundary"]
-        == GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT_BOUNDARY
+        == GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY
     )
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = governed_transition_intake_package_assembly_envelope_contract_report()
+    status = governed_transition_intake_final_non_validation_boundary_audit_report()
 
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -662,7 +613,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-package-assembly-envelope-contract",
+            "governed-transition-intake-final-non-validation-boundary-audit",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -672,10 +623,10 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert payload == {}
     assert stderr == ""
     assert stdout.startswith(
-        "# P4-M3.12 Governed Transition Intake Package Assembly Envelope Contract\n"
+        "# P4-M3.13 Governed Transition Intake Final Non-Validation Boundary Audit\n"
     )
     assert "## Status Report" in stdout
-    assert GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT_BOUNDARY in stdout
+    assert GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -684,7 +635,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "governed-transition-intake-package-assembly-envelope-contract",
+        "governed-transition-intake-final-non-validation-boundary-audit",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -700,7 +651,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M3.12")
+    assert first_stdout.startswith("# P4-M3.13")
     assert not (tmp_path / ".local").exists()
 
 
@@ -716,7 +667,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-package-assembly-envelope-contract",
+            "governed-transition-intake-final-non-validation-boundary-audit",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -724,7 +675,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-package-assembly-envelope-contract",
+            "governed-transition-intake-final-non-validation-boundary-audit",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -734,7 +685,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M3.12")
+    assert markdown_stdout.startswith("# P4-M3.13")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 18
@@ -745,7 +696,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "governed-transition-intake-package-assembly-envelope-contract",
+            "governed-transition-intake-final-non-validation-boundary-audit",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -753,7 +704,10 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "transition_intake_package_assembly_envelope_contract.jsonl",
+        "transition_intake_final_non_validation_boundary_audit.jsonl",
+        "final_non_validation_boundary_audit.jsonl",
+        "transition_intake_validation.jsonl",
+        "transition_intake_package_validation.jsonl",
         "transition_intake_package_records.jsonl",
         "transition_intake_packages.jsonl",
         "transition_package_records.jsonl",
@@ -783,6 +737,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
         "target_phase_records.jsonl",
         "target_phases.jsonl",
         "request_records.jsonl",
+        "package_records.jsonl",
         "transition_records.jsonl",
         "transition_readiness_records.jsonl",
         "transition_validation_records.jsonl",
@@ -822,12 +777,12 @@ def test_read_only_allowlist_includes_new_command_and_preserves_previous_command
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "governed-transition-intake-package-assembly-envelope-contract" in commands
-    assert PREVIOUS_P4_M3_11_READ_ONLY_COMMANDS.issubset(commands)
+    assert "governed-transition-intake-final-non-validation-boundary-audit" in commands
+    assert PREVIOUS_P4_M3_12_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
-def test_existing_p4_m1_0_through_p4_m3_11_memory_loop_commands_still_work(tmp_path):
+def test_existing_p4_m1_0_through_p4_m3_12_memory_loop_commands_still_work(tmp_path):
     expected_prefixes = {
         "checklist": "# P4-M1.0 Human-Gated Memory Loop Checklist\n",
         "review-status": "# P4-M1.1 Human-Gated Proposal Review Status\n",
@@ -869,6 +824,7 @@ def test_existing_p4_m1_0_through_p4_m3_11_memory_loop_commands_still_work(tmp_p
         "governed-transition-intake-declared-transition-risk-envelope-contract": "# P4-M3.9 Governed Transition Intake Declared Transition Risk Envelope Contract\n",
         "governed-transition-intake-declared-transition-assumption-envelope-contract": "# P4-M3.10 Governed Transition Intake Declared Transition Assumption Envelope Contract\n",
         "governed-transition-intake-declared-transition-safeguard-envelope-contract": "# P4-M3.11 Governed Transition Intake Declared Transition Safeguard Envelope Contract\n",
+        "governed-transition-intake-package-assembly-envelope-contract": "# P4-M3.12 Governed Transition Intake Package Assembly Envelope Contract\n",
     }
 
     for command, expected_prefix in expected_prefixes.items():
@@ -884,7 +840,7 @@ def test_existing_p4_m1_0_through_p4_m3_11_memory_loop_commands_still_work(tmp_p
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M3_12_GOVERNED_TRANSITION_INTAKE_PACKAGE_ASSEMBLY_ENVELOPE_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M3_13_GOVERNED_TRANSITION_INTAKE_FINAL_NON_VALIDATION_BOUNDARY_AUDIT.md"
     ).read_text()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -903,11 +859,11 @@ def test_package_version_lock_and_no_entry_point():
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
     assert (
-        "p4_m3_governed_transition_intake_package_assembly_envelope_contract"
+        "p4_m3_governed_transition_intake_final_non_validation_boundary_audit"
         not in entry_points
     )
     assert (
-        "governed-transition-intake-package-assembly-envelope-contract"
+        "governed-transition-intake-final-non-validation-boundary-audit"
         not in entry_points
     )
 
@@ -917,24 +873,24 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = GovernedTransitionIntakePackageAssemblyEnvelopeContractField(
+    field = GovernedTransitionIntakeFinalNonValidationBoundaryAuditField(
         field_order=1,
-        field_id="custom-governed-transition-intake-package-assembly-envelope-contract",
-        field_name="Custom Governed Transition Intake Package Assembly Envelope Contract Field",
+        field_id="custom-governed-transition-intake-final-non-validation-boundary-audit",
+        field_name="Custom Governed Transition Intake Final Non-Validation Boundary Audit Field",
         field_purpose="Custom inspection-only purpose.",
-        p4_m3_transition_intake_package_assembly_envelope_contract_category=(
-            "custom-governed-transition-intake-package-assembly-envelope-contract-category"
+        p4_m3_final_non_validation_boundary_audit_category=(
+            "custom-governed-transition-intake-final-non-validation-boundary-audit-category"
         ),
-        p4_m3_transition_intake_package_assembly_envelope_semantics_disabled=(
-            "Custom governed transition intake package assembly envelope semantics are disabled."
+        p4_m3_final_non_validation_boundary_audit_semantics_disabled=(
+            "Custom governed transition intake final non-validation boundary audit semantics are disabled."
         ),
     )
 
-    markdown = render_governed_transition_intake_package_assembly_envelope_contract_markdown(
+    markdown = render_governed_transition_intake_final_non_validation_boundary_audit_markdown(
         [field]
     )
 
-    assert "custom-governed-transition-intake-package-assembly-envelope-contract" in markdown
+    assert "custom-governed-transition-intake-final-non-validation-boundary-audit" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
