@@ -443,6 +443,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-boundary-contract",
     "entry-gate-design-request-envelope-contract",
     "evidence-reference-envelope-contract",
+    "declared-human-context-envelope-contract",
 }
 
 PREVIOUS_P4_M4_1_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
