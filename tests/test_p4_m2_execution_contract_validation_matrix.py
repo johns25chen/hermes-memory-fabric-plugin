@@ -98,6 +98,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-closure-handoff-contract",
     "governed-transition-intake-phase-closure-review",
     "governed-transition-intake-final-phase-handoff-summary",
+    "entry-gate-design-boundary-contract",
 }
 
 TRUE_STATUS_FLAGS = (

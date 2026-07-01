@@ -273,6 +273,12 @@ from .p4_m3_governed_transition_intake_final_phase_handoff_summary import (
     governed_transition_intake_final_phase_handoff_summary_report,
     render_governed_transition_intake_final_phase_handoff_summary_markdown,
 )
+from .p4_m4_entry_gate_design_boundary_contract import (
+    ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY,
+    entry_gate_design_boundary_contract_as_dicts,
+    entry_gate_design_boundary_contract_report,
+    render_entry_gate_design_boundary_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -896,6 +902,18 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_governed_transition_intake_final_phase_handoff_summary
     )
     memory_loop_governed_transition_intake_final_phase_handoff_summary.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_entry_gate_design_boundary_contract = (
+        memory_loop_subparsers.add_parser(
+            "entry-gate-design-boundary-contract"
+        )
+    )
+    _add_workspace_root(memory_loop_entry_gate_design_boundary_contract)
+    memory_loop_entry_gate_design_boundary_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -1959,6 +1977,22 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_governed_transition_intake_final_phase_"
                 f"handoff_summary_format:{args.format}"
+            )
+
+        if args.memory_loop_command == "entry-gate-design-boundary-contract":
+            if args.format == "markdown":
+                return render_entry_gate_design_boundary_contract_markdown()
+            if args.format == "json":
+                fields = entry_gate_design_boundary_contract_as_dicts()
+                return {
+                    "boundary": ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": entry_gate_design_boundary_contract_report(),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_entry_gate_design_boundary_contract_"
+                f"format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
