@@ -7,33 +7,35 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m4_entry_gate_design_boundary_contract import (
+from hermes_memory_fabric.p4_m4_entry_gate_design_request_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
-    ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY,
+    ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT_BOUNDARY,
     FALSE_STATUS_FLAGS,
     TRUE_STATUS_FLAGS,
-    EntryGateDesignBoundaryContractField,
-    entry_gate_design_boundary_contract_as_dicts,
-    entry_gate_design_boundary_contract_field_ids,
-    entry_gate_design_boundary_contract_report,
-    list_entry_gate_design_boundary_contract_fields,
-    render_entry_gate_design_boundary_contract_markdown,
+    EntryGateDesignRequestEnvelopeContractField,
+    entry_gate_design_request_envelope_contract_as_dicts,
+    entry_gate_design_request_envelope_contract_field_ids,
+    entry_gate_design_request_envelope_contract_report,
+    list_entry_gate_design_request_envelope_contract_fields,
+    render_entry_gate_design_request_envelope_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m4-entry-gate-design-boundary-contract-id",
-    "p4-m4-entry-gate-design-boundary-contract-phase",
-    "p4-m4-entry-gate-design-boundary-contract-mode",
-    "p4-m4-entry-gate-design-boundary-contract-prior-handoff-reference",
-    "p4-m4-entry-gate-design-boundary-contract-scope",
-    "p4-m4-entry-gate-design-boundary-contract-design-boundary-only",
-    "p4-m4-entry-gate-design-boundary-contract-entry-gate-non-implementation",
-    "p4-m4-entry-gate-design-boundary-contract-validation-semantics-disabled",
-    "p4-m4-entry-gate-design-boundary-contract-verdict-semantics-disabled",
-    "p4-m4-entry-gate-design-boundary-contract-execution-semantics-disabled",
-    "p4-m4-entry-gate-design-boundary-contract-mutation-semantics-disabled",
-    "p4-m4-entry-gate-design-boundary-contract-p4-m5-v7-productization-ui-deferred",
+    "p4-m4-entry-gate-design-request-envelope-contract-id",
+    "p4-m4-entry-gate-design-request-envelope-contract-phase",
+    "p4-m4-entry-gate-design-request-envelope-contract-mode",
+    "p4-m4-entry-gate-design-request-envelope-contract-direct-prior-boundary-reference",
+    "p4-m4-entry-gate-design-request-envelope-contract-inherited-prior-handoff-reference",
+    "p4-m4-entry-gate-design-request-envelope-contract-scope",
+    "p4-m4-entry-gate-design-request-envelope-contract-request-envelope-design-only",
+    "p4-m4-entry-gate-design-request-envelope-contract-request-shape-definition",
+    "p4-m4-entry-gate-design-request-envelope-contract-request-intake-non-implementation",
+    "p4-m4-entry-gate-design-request-envelope-contract-request-validation-semantics-disabled",
+    "p4-m4-entry-gate-design-request-envelope-contract-verdict-semantics-disabled",
+    "p4-m4-entry-gate-design-request-envelope-contract-execution-semantics-disabled",
+    "p4-m4-entry-gate-design-request-envelope-contract-mutation-semantics-disabled",
+    "p4-m4-entry-gate-design-request-envelope-contract-p4-m5-v7-productization-ui-deferred",
 )
 
 DATACLASS_FIELDS = {
@@ -41,22 +43,32 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m4_entry_gate_design_boundary_contract_category",
-    "p4_m4_entry_gate_design_boundary_contract_semantics_disabled",
+    "p4_m4_entry_gate_design_request_envelope_contract_category",
+    "p4_m4_entry_gate_design_request_envelope_contract_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = (
-    "P4-M4.0",
-    "Entry Gate Design Boundary Contract",
+    "P4-M4.1",
+    "Entry Gate Design Request Envelope Contract",
     "read-only",
     "definition-only",
-    "design-boundary-only",
+    "request-envelope-design-only",
     "inspection-only",
-    "P4-M4.0 Entry Gate Design Boundary Contract is definition only",
-    "P4-M4.0 is design-boundary-only",
-    "P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the source prior phase handoff summary reference",
+    "P4-M4.1 Entry Gate Design Request Envelope Contract is definition only",
+    "P4-M4.1 is request-envelope-design-only",
+    "P4-M4.0 Entry Gate Design Boundary Contract remains the direct prior design boundary reference",
+    "P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference",
     "P4-M3 static definition chain remains closed",
-    "P4-M4 design layer starts only as a boundary definition",
+    "P4-M4 design layer remains design-boundary-only",
+    "P4-M4 request envelope design starts only as a static envelope definition",
+    "P4-M4 live request intake remains not implemented",
+    "P4-M4 request parsing remains not implemented",
+    "P4-M4 request validation remains not implemented",
+    "P4-M4 request acceptance remains not implemented",
+    "P4-M4 request rejection remains not implemented",
+    "P4-M4 request routing remains not implemented",
+    "P4-M4 request execution remains not implemented",
+    "P4-M4 request record creation remains not implemented",
     "P4-M4 execution remains not implemented",
     "P4-M4 entry gate remains not implemented",
     "P4-M4 entry gate validation remains not implemented",
@@ -71,66 +83,81 @@ REQUIRED_BOUNDARY_PHRASES = (
     "productization remains not started",
     "UI remains not started",
     "Operator Console remains not started",
-    "P4-M4.0 is not live validation",
-    "P4-M4.0 is not boundary validation",
-    "P4-M4.0 is not phase validation",
-    "P4-M4.0 is not entry gate validation",
-    "P4-M4.0 is not readiness validation",
-    "P4-M4.0 is not transition validation",
-    "P4-M4.0 is not package validation",
-    "P4-M4.0 is not closure validation",
-    "P4-M4.0 is not handoff validation",
-    "P4-M4.0 is not final phase handoff validation",
-    "P4-M4.0 is not a working entry gate",
-    "P4-M4.0 is not gate activation",
-    "P4-M4.0 is not gate execution",
-    "P4-M4.0 is not transition execution",
-    "P4-M4.0 is not command execution",
-    "P4-M4.0 is not readiness verdict",
-    "P4-M4.0 is not validation verdict",
-    "P4-M4.0 is not entry verdict",
-    "P4-M4.0 is not gate verdict",
-    "P4-M4.0 is not transition verdict",
-    "P4-M4.0 is not approval",
-    "P4-M4.0 is not authorization",
-    "P4-M4.0 is not confirmation",
-    "P4-M4.0 is not recommendation",
-    "P4-M4.0 is not ranking",
-    "P4-M4.0 is not next action generation",
-    "P4-M4.0 is not request intake",
-    "P4-M4.0 is not evidence intake",
-    "P4-M4.0 is not human context intake",
-    "P4-M4.0 is not request validation",
-    "P4-M4.0 is not evidence validation",
-    "P4-M4.0 is not human context validation",
-    "P4-M4.0 is not source validation",
-    "P4-M4.0 is not citation validation",
-    "P4-M4.0 is not reference resolution",
-    "P4-M4.0 is not reference validation",
-    "P4-M4.0 is not package completeness validation",
-    "P4-M4.0 is not package consistency validation",
-    "P4-M4.0 is not package integrity validation",
-    "P4-M4.0 is not package readiness validation",
-    "P4-M4.0 is not record creation",
-    "P4-M4.0 is not entry record creation",
-    "P4-M4.0 is not gate record creation",
-    "P4-M4.0 is not readiness record creation",
-    "P4-M4.0 is not validation record creation",
-    "P4-M4.0 is not transition record creation",
-    "P4-M4.0 is not approval record creation",
-    "P4-M4.0 is not authorization record creation",
-    "P4-M4.0 is not confirmation record creation",
-    "P4-M4.0 is not recommendation record creation",
-    "P4-M4.0 is not ranking record creation",
-    "P4-M4.0 is not next action record creation",
-    "P4-M4.0 is not memory mutation",
-    "P4-M4.0 is not roadmap mutation",
-    "P4-M4.0 is not lifecycle mutation",
-    "P4-M4.0 is not proposal mutation",
-    "P4-M4.0 is not source fetching",
-    "P4-M4.0 is not provenance writing",
-    "P4-M4.0 is not citation mutation",
+    "P4-M4.1 is not live validation",
+    "P4-M4.1 is not request intake",
+    "P4-M4.1 is not live request parsing",
+    "P4-M4.1 is not request validation",
+    "P4-M4.1 is not request acceptance",
+    "P4-M4.1 is not request rejection",
+    "P4-M4.1 is not request routing",
+    "P4-M4.1 is not request execution",
+    "P4-M4.1 is not request record creation",
+    "P4-M4.1 is not boundary validation",
+    "P4-M4.1 is not phase validation",
+    "P4-M4.1 is not entry gate validation",
+    "P4-M4.1 is not readiness validation",
+    "P4-M4.1 is not transition validation",
+    "P4-M4.1 is not package validation",
+    "P4-M4.1 is not closure validation",
+    "P4-M4.1 is not handoff validation",
+    "P4-M4.1 is not final phase handoff validation",
+    "P4-M4.1 is not a working entry gate",
+    "P4-M4.1 is not gate activation",
+    "P4-M4.1 is not gate execution",
+    "P4-M4.1 is not transition execution",
+    "P4-M4.1 is not command execution",
+    "P4-M4.1 is not readiness verdict",
+    "P4-M4.1 is not validation verdict",
+    "P4-M4.1 is not entry verdict",
+    "P4-M4.1 is not gate verdict",
+    "P4-M4.1 is not transition verdict",
+    "P4-M4.1 is not approval",
+    "P4-M4.1 is not authorization",
+    "P4-M4.1 is not confirmation",
+    "P4-M4.1 is not recommendation",
+    "P4-M4.1 is not ranking",
+    "P4-M4.1 is not next action generation",
+    "P4-M4.1 is not evidence intake",
+    "P4-M4.1 is not human context intake",
+    "P4-M4.1 is not evidence validation",
+    "P4-M4.1 is not human context validation",
+    "P4-M4.1 is not source validation",
+    "P4-M4.1 is not citation validation",
+    "P4-M4.1 is not reference resolution",
+    "P4-M4.1 is not reference validation",
+    "P4-M4.1 is not package completeness validation",
+    "P4-M4.1 is not package consistency validation",
+    "P4-M4.1 is not package integrity validation",
+    "P4-M4.1 is not package readiness validation",
+    "P4-M4.1 is not record creation",
+    "P4-M4.1 is not request envelope record creation",
+    "P4-M4.1 is not entry record creation",
+    "P4-M4.1 is not gate record creation",
+    "P4-M4.1 is not readiness record creation",
+    "P4-M4.1 is not validation record creation",
+    "P4-M4.1 is not transition record creation",
+    "P4-M4.1 is not approval record creation",
+    "P4-M4.1 is not authorization record creation",
+    "P4-M4.1 is not confirmation record creation",
+    "P4-M4.1 is not recommendation record creation",
+    "P4-M4.1 is not ranking record creation",
+    "P4-M4.1 is not next action record creation",
+    "P4-M4.1 is not memory mutation",
+    "P4-M4.1 is not roadmap mutation",
+    "P4-M4.1 is not lifecycle mutation",
+    "P4-M4.1 is not proposal mutation",
+    "P4-M4.1 is not source fetching",
+    "P4-M4.1 is not provenance writing",
+    "P4-M4.1 is not citation mutation",
     "no live validation",
+    "no request intake",
+    "no live request parsing",
+    "no request validation",
+    "no request acceptance",
+    "no request rejection",
+    "no request routing",
+    "no request execution",
+    "no request record creation",
     "no boundary validation",
     "no phase validation",
     "no entry gate validation",
@@ -156,10 +183,8 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no recommendation",
     "no ranking",
     "no next action generation",
-    "no request intake",
     "no evidence intake",
     "no human context intake",
-    "no request validation",
     "no evidence validation",
     "no human context validation",
     "no source validation",
@@ -203,18 +228,19 @@ REQUIRED_BOUNDARY_PHRASES = (
 
 EXPECTED_TRUE_STATUS_FLAGS = (
     "definition_only",
-    "design_boundary_only",
+    "request_envelope_design_only",
     "inspection_only",
-    "p4_m4_0_entry_gate_design_boundary_contract_started",
-    "p4_m4_0_definition_only",
-    "p4_m4_0_design_boundary_only",
+    "p4_m4_1_entry_gate_design_request_envelope_contract_started",
+    "p4_m4_1_definition_only",
+    "p4_m4_1_request_envelope_design_only",
+    "p4_m4_0_entry_gate_design_boundary_contract_reference_defined",
     "p4_m3_16_final_phase_handoff_summary_reference_defined",
     "p4_m3_static_definition_chain_closed_reference_defined",
-    "p4_m4_design_boundary_defined",
-    "p4_m4_entry_gate_design_boundary_contract_defined",
-    "p4_m4_entry_gate_design_scope_defined",
-    "p4_m4_entry_gate_design_field_shape_defined",
-    "p4_m4_entry_gate_non_implementation_boundary_defined",
+    "p4_m4_design_boundary_reference_defined",
+    "p4_m4_request_envelope_design_defined",
+    "p4_m4_request_shape_defined",
+    "p4_m4_request_intake_non_implementation_boundary_defined",
+    "p4_m4_request_validation_semantics_prohibited",
     "p4_m4_validation_semantics_prohibited",
     "p4_m4_verdict_semantics_prohibited",
     "p4_m4_execution_semantics_prohibited",
@@ -229,6 +255,14 @@ EXPECTED_TRUE_STATUS_FLAGS = (
 
 EXPECTED_FALSE_STATUS_FLAGS = (
     "live_validation_enabled",
+    "request_intake_enabled",
+    "live_request_parsing_enabled",
+    "request_validation_enabled",
+    "request_acceptance_enabled",
+    "request_rejection_enabled",
+    "request_routing_enabled",
+    "request_execution_enabled",
+    "request_record_creation_enabled",
     "boundary_validation_enabled",
     "phase_validation_enabled",
     "entry_gate_validation_enabled",
@@ -266,15 +300,14 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "next_action_generation_enabled",
     "transition_execution_enabled",
     "command_execution_enabled",
-    "request_intake_enabled",
     "evidence_intake_enabled",
     "human_context_intake_enabled",
-    "request_validation_enabled",
     "evidence_validation_enabled",
     "human_context_validation_enabled",
     "source_validation_enabled",
     "citation_validation_enabled",
     "record_creation_enabled",
+    "request_envelope_record_creation_enabled",
     "entry_record_creation_enabled",
     "gate_record_creation_enabled",
     "readiness_record_creation_enabled",
@@ -363,11 +396,19 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-request-envelope-contract",
 }
 
-PREVIOUS_P4_M3_16_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "entry-gate-design-boundary-contract"
+PREVIOUS_P4_M4_0_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "entry-gate-design-request-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "request-intake",
+    "parse-request",
+    "validate-request",
+    "accept-request",
+    "reject-request",
+    "route-request",
+    "execute-request",
+    "create-request-record",
     "validate-entry-gate",
     "validate-entry-readiness",
     "validate-readiness",
@@ -396,6 +437,7 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "rank",
     "next-action",
     "execute-transition",
+    "create-request-envelope-record",
     "create-entry-record",
     "create-gate-record",
     "create-readiness-record",
@@ -417,20 +459,22 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_entry_gate_design_boundary_contract_field_order_count_and_ids_are_stable():
-    fields = list_entry_gate_design_boundary_contract_fields()
+def test_entry_gate_design_request_envelope_contract_field_order_count_and_ids_are_stable():
+    fields = list_entry_gate_design_request_envelope_contract_fields()
 
-    assert [field.field_order for field in fields] == list(range(1, 13))
-    assert len(fields) == 12
-    assert entry_gate_design_boundary_contract_field_ids() == FIELD_IDS
+    assert [field.field_order for field in fields] == list(range(1, 15))
+    assert len(fields) == 14
+    assert entry_gate_design_request_envelope_contract_field_ids() == FIELD_IDS
 
 
-def test_every_entry_gate_design_boundary_contract_field_has_required_values():
-    for field in list_entry_gate_design_boundary_contract_fields():
+def test_every_entry_gate_design_request_envelope_contract_field_has_required_values():
+    for field in list_entry_gate_design_request_envelope_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.p4_m4_entry_gate_design_boundary_contract_category.strip()
-        assert field.p4_m4_entry_gate_design_boundary_contract_semantics_disabled.strip()
+        assert field.p4_m4_entry_gate_design_request_envelope_contract_category.strip()
+        assert (
+            field.p4_m4_entry_gate_design_request_envelope_contract_semantics_disabled.strip()
+        )
 
 
 def test_required_boundary_phrase_contract_contains_all_required_phrases():
@@ -444,12 +488,12 @@ def test_required_status_flag_contract_is_literal_and_complete():
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_entry_gate_design_boundary_contract_markdown()
-    second = render_entry_gate_design_boundary_contract_markdown()
+    first = render_entry_gate_design_request_envelope_contract_markdown()
+    second = render_entry_gate_design_request_envelope_contract_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M4.0 Entry Gate Design Boundary Contract\n")
-    assert ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY in first
+    assert first.startswith("# P4-M4.1 Entry Gate Design Request Envelope Contract\n")
+    assert ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -459,7 +503,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "entry-gate-design-boundary-contract",
+        "entry-gate-design-request-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -474,12 +518,15 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY
-    assert first_payload["count"] == 12
-    assert first_payload["status"]["phase"] == "P4-M4.0"
-    assert first_payload["status"]["feature"] == "Entry Gate Design Boundary Contract"
+    assert first_payload["boundary"] == ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT_BOUNDARY
+    assert first_payload["count"] == 14
+    assert first_payload["status"]["phase"] == "P4-M4.1"
+    assert (
+        first_payload["status"]["feature"]
+        == "Entry Gate Design Request Envelope Contract"
+    )
     assert first_payload["status"]["mode"] == "read-only"
-    assert first_payload["status"] == entry_gate_design_boundary_contract_report()
+    assert first_payload["status"] == entry_gate_design_request_envelope_contract_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
@@ -492,23 +539,27 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = entry_gate_design_boundary_contract_as_dicts()
-    second_fields = entry_gate_design_boundary_contract_as_dicts()
-    first_status = entry_gate_design_boundary_contract_report()
-    second_status = entry_gate_design_boundary_contract_report()
+    first_fields = entry_gate_design_request_envelope_contract_as_dicts()
+    second_fields = entry_gate_design_request_envelope_contract_as_dicts()
+    first_status = entry_gate_design_request_envelope_contract_report()
+    second_status = entry_gate_design_request_envelope_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M4.0"
-    assert first_status["feature"] == "Entry Gate Design Boundary Contract"
+    assert first_status["phase"] == "P4-M4.1"
+    assert first_status["feature"] == "Entry Gate Design Request Envelope Contract"
     assert first_status["mode"] == "read-only"
-    assert first_status["entry_gate_design_boundary_contract_field_count"] == 12
-    assert first_status["boundary"] == ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY
+    assert first_status["entry_gate_design_request_envelope_contract_field_count"] == 14
+    assert (
+        first_status["referenced_p4_m4_0_entry_gate_design_boundary_contract_field_count"]
+        == 12
+    )
+    assert first_status["boundary"] == ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = entry_gate_design_boundary_contract_report()
+    status = entry_gate_design_request_envelope_contract_report()
 
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -520,7 +571,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-boundary-contract",
+            "entry-gate-design-request-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -529,9 +580,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M4.0 Entry Gate Design Boundary Contract\n")
+    assert stdout.startswith("# P4-M4.1 Entry Gate Design Request Envelope Contract\n")
     assert "## Status Report" in stdout
-    assert ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT_BOUNDARY in stdout
+    assert ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT_BOUNDARY in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -540,7 +591,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "entry-gate-design-boundary-contract",
+        "entry-gate-design-request-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -556,7 +607,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M4.0")
+    assert first_stdout.startswith("# P4-M4.1")
     assert not (tmp_path / ".local").exists()
 
 
@@ -572,7 +623,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-boundary-contract",
+            "entry-gate-design-request-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -580,7 +631,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-boundary-contract",
+            "entry-gate-design-request-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -590,10 +641,10 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M4.0")
+    assert markdown_stdout.startswith("# P4-M4.1")
     assert json_code == 0
     assert json_stderr == ""
-    assert json_payload["count"] == 12
+    assert json_payload["count"] == 14
     assert not (tmp_path / ".local").exists()
 
 
@@ -601,7 +652,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-boundary-contract",
+            "entry-gate-design-request-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -609,6 +660,17 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
+        "entry_gate_design_request_envelope_contract.jsonl",
+        "request_envelope_records.jsonl",
+        "request_envelope_validation.jsonl",
+        "request_intake.jsonl",
+        "request_parsing.jsonl",
+        "request_validation.jsonl",
+        "request_acceptance.jsonl",
+        "request_rejection.jsonl",
+        "request_routing.jsonl",
+        "request_execution.jsonl",
+        "request_records.jsonl",
         "entry_gate_design_boundary_contract.jsonl",
         "entry_gate_records.jsonl",
         "gate_records.jsonl",
@@ -627,7 +689,6 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
         "package_validation.jsonl",
         "reference_resolution.jsonl",
         "reference_validation.jsonl",
-        "request_intake.jsonl",
         "evidence_intake.jsonl",
         "human_context_intake.jsonl",
         "execution.jsonl",
@@ -657,14 +718,14 @@ def test_read_only_allowlist_includes_new_command_and_preserves_previous_command
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "entry-gate-design-boundary-contract" in commands
-    assert PREVIOUS_P4_M3_16_READ_ONLY_COMMANDS.issubset(commands)
+    assert "entry-gate-design-request-envelope-contract" in commands
+    assert PREVIOUS_P4_M4_0_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M4_0_ENTRY_GATE_DESIGN_BOUNDARY_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M4_1_ENTRY_GATE_DESIGN_REQUEST_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -682,8 +743,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m4_entry_gate_design_boundary_contract" not in entry_points
-    assert "entry-gate-design-boundary-contract" not in entry_points
+    assert "p4_m4_entry_gate_design_request_envelope_contract" not in entry_points
+    assert "entry-gate-design-request-envelope-contract" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -691,22 +752,22 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = EntryGateDesignBoundaryContractField(
+    field = EntryGateDesignRequestEnvelopeContractField(
         field_order=1,
-        field_id="custom-entry-gate-design-boundary-contract",
-        field_name="Custom Entry Gate Design Boundary Contract Field",
+        field_id="custom-entry-gate-design-request-envelope-contract",
+        field_name="Custom Entry Gate Design Request Envelope Contract Field",
         field_purpose="Custom inspection-only purpose.",
-        p4_m4_entry_gate_design_boundary_contract_category=(
-            "custom-entry-gate-design-boundary-contract-category"
+        p4_m4_entry_gate_design_request_envelope_contract_category=(
+            "custom-entry-gate-design-request-envelope-contract-category"
         ),
-        p4_m4_entry_gate_design_boundary_contract_semantics_disabled=(
-            "Custom entry gate design boundary contract semantics are disabled."
+        p4_m4_entry_gate_design_request_envelope_contract_semantics_disabled=(
+            "Custom entry gate design request envelope contract semantics are disabled."
         ),
     )
 
-    markdown = render_entry_gate_design_boundary_contract_markdown([field])
+    markdown = render_entry_gate_design_request_envelope_contract_markdown([field])
 
-    assert "custom-entry-gate-design-boundary-contract" in markdown
+    assert "custom-entry-gate-design-request-envelope-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
