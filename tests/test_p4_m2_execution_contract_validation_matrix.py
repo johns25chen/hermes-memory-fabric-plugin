@@ -92,6 +92,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-declared-transition-impact-envelope-contract",
     "governed-transition-intake-declared-transition-risk-envelope-contract",
     "governed-transition-intake-declared-transition-assumption-envelope-contract",
+    "governed-transition-intake-declared-transition-safeguard-envelope-contract",
 }
 
 TRUE_STATUS_FLAGS = (
