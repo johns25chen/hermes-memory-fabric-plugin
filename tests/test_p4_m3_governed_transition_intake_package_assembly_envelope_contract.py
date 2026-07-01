@@ -479,6 +479,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "governed-transition-intake-package-assembly-envelope-contract",
     "governed-transition-intake-final-non-validation-boundary-audit",
     "governed-transition-intake-closure-handoff-contract",
+    "governed-transition-intake-phase-closure-review",
 }
 
 PREVIOUS_P4_M3_11_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
