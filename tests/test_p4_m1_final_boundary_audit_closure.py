@@ -122,6 +122,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-request-envelope-contract",
     "evidence-reference-envelope-contract",
     "declared-human-context-envelope-contract",
+    "target-phase-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

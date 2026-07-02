@@ -7,36 +7,38 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m4_evidence_reference_envelope_contract import (
+from hermes_memory_fabric.p4_m4_target_phase_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
-    EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY,
     FALSE_STATUS_FLAGS,
+    TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    EvidenceReferenceEnvelopeContractField,
-    evidence_reference_envelope_contract_as_dicts,
-    evidence_reference_envelope_contract_field_ids,
-    evidence_reference_envelope_contract_report,
-    list_evidence_reference_envelope_contract_fields,
-    render_evidence_reference_envelope_contract_markdown,
+    TargetPhaseEnvelopeContractField,
+    list_target_phase_envelope_contract_fields,
+    render_target_phase_envelope_contract_markdown,
+    target_phase_envelope_contract_as_dicts,
+    target_phase_envelope_contract_field_ids,
+    target_phase_envelope_contract_report,
 )
 
 
 FIELD_IDS = (
-    "p4-m4-evidence-reference-envelope-contract-id",
-    "p4-m4-evidence-reference-envelope-contract-phase",
-    "p4-m4-evidence-reference-envelope-contract-mode",
-    "p4-m4-evidence-reference-envelope-contract-direct-prior-request-envelope-reference",
-    "p4-m4-evidence-reference-envelope-contract-inherited-prior-boundary-reference",
-    "p4-m4-evidence-reference-envelope-contract-inherited-prior-handoff-reference",
-    "p4-m4-evidence-reference-envelope-contract-scope",
-    "p4-m4-evidence-reference-envelope-contract-evidence-reference-envelope-design-only",
-    "p4-m4-evidence-reference-envelope-contract-evidence-reference-shape-definition",
-    "p4-m4-evidence-reference-envelope-contract-evidence-intake-non-implementation",
-    "p4-m4-evidence-reference-envelope-contract-reference-resolution-semantics-disabled",
-    "p4-m4-evidence-reference-envelope-contract-evidence-validation-semantics-disabled",
-    "p4-m4-evidence-reference-envelope-contract-citation-provenance-semantics-disabled",
-    "p4-m4-evidence-reference-envelope-contract-verdict-execution-mutation-semantics-disabled",
-    "p4-m4-evidence-reference-envelope-contract-p4-m5-v7-productization-ui-deferred",
+    "p4-m4-target-phase-envelope-contract-id",
+    "p4-m4-target-phase-envelope-contract-phase",
+    "p4-m4-target-phase-envelope-contract-mode",
+    "p4-m4-target-phase-envelope-contract-direct-prior-declared-human-context-envelope-reference",
+    "p4-m4-target-phase-envelope-contract-inherited-prior-evidence-reference-envelope-reference",
+    "p4-m4-target-phase-envelope-contract-inherited-prior-request-envelope-reference",
+    "p4-m4-target-phase-envelope-contract-inherited-prior-boundary-reference",
+    "p4-m4-target-phase-envelope-contract-inherited-prior-handoff-reference",
+    "p4-m4-target-phase-envelope-contract-scope",
+    "p4-m4-target-phase-envelope-contract-target-phase-envelope-design-only",
+    "p4-m4-target-phase-envelope-contract-target-phase-projection-surface-definition",
+    "p4-m4-target-phase-envelope-contract-target-phase-constraint-field-definition",
+    "p4-m4-target-phase-envelope-contract-converging-layer-semantics-definition",
+    "p4-m4-target-phase-envelope-contract-human-context-weak-prior-semantics-definition",
+    "p4-m4-target-phase-envelope-contract-target-phase-validation-semantics-disabled",
+    "p4-m4-target-phase-envelope-contract-routing-planning-execution-scoring-graph-semantics-disabled",
+    "p4-m4-target-phase-envelope-contract-p4-m5-v7-productization-ui-deferred",
 )
 
 DATACLASS_FIELDS = {
@@ -44,37 +46,64 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m4_evidence_reference_envelope_contract_category",
-    "p4_m4_evidence_reference_envelope_contract_semantics_disabled",
+    "p4_m4_target_phase_envelope_contract_category",
+    "p4_m4_target_phase_envelope_contract_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = (
-    "P4-M4.2",
-    "Evidence Reference Envelope Contract",
+    "P4-M4.4",
+    "Target Phase Envelope Contract",
     "read-only",
     "definition-only",
-    "evidence-reference-envelope-design-only",
+    "target-phase-envelope-design-only",
+    "projection-surface-only",
+    "constraint-field-only",
+    "converging-layer-only",
     "inspection-only",
-    "P4-M4.2 Evidence Reference Envelope Contract is definition only",
-    "P4-M4.2 is evidence-reference-envelope-design-only",
-    "P4-M4.1 Entry Gate Design Request Envelope Contract remains the direct prior request envelope reference",
+    "P4-M4.4 Target Phase Envelope Contract is definition only",
+    "P4-M4.4 is target-phase-envelope-design-only",
+    "P4-M4.4 is projection-surface-only",
+    "P4-M4.4 is constraint-field-only",
+    "P4-M4.4 is converging-layer-only",
+    "P4-M4.3 Declared Human Context Envelope Contract remains the direct prior declared human context envelope reference",
+    "P4-M4.3 declared human context remains only an inherited weak prior reference",
+    "P4-M4.2 Evidence Reference Envelope Contract remains the inherited prior evidence reference envelope reference",
+    "P4-M4.1 Entry Gate Design Request Envelope Contract remains the inherited prior request envelope reference",
     "P4-M4.0 Entry Gate Design Boundary Contract remains the inherited prior design boundary reference",
     "P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference",
     "P4-M3 static definition chain remains closed",
     "P4-M4 design layer remains design-boundary-only",
-    "P4-M4 evidence reference envelope design starts only as a static envelope definition",
-    "P4-M4 evidence intake remains not implemented",
-    "P4-M4 evidence parsing remains not implemented",
+    "P4-M4 target phase envelope design starts only as a static future-state projection surface",
+    "P4-M4 target phase constraint field remains static definition only",
+    "P4-M4 target phase intake remains not implemented",
+    "P4-M4 target phase parsing remains not implemented",
+    "P4-M4 target phase validation remains not implemented",
+    "P4-M4 phase transition validation remains not implemented",
+    "P4-M4 target phase readiness validation remains not implemented",
+    "P4-M4 readiness scoring remains not implemented",
+    "P4-M4 target phase routing remains not implemented",
+    "P4-M4 transition planning remains not implemented",
+    "P4-M4 path planning remains not implemented",
+    "P4-M4 target phase generation remains not implemented",
+    "P4-M4 target phase recommendation remains not implemented",
+    "P4-M4 target phase ranking remains not implemented",
+    "P4-M4 target phase execution remains not implemented",
+    "P4-M4 state-space graph remains not implemented",
+    "P4-M4 transition graph remains not implemented",
+    "P4-M4 constraint graph remains not implemented",
+    "P4-M4 human context to target phase mapping remains not implemented",
+    "P4-M4 target phase record creation remains not implemented",
+    "P4-M4 phase record creation remains not implemented",
+    "P4-M4 transition record creation remains not implemented",
+    "P4-M4 readiness record creation remains not implemented",
+    "P4-M4 scoring record creation remains not implemented",
+    "P4-M4 graph record creation remains not implemented",
     "P4-M4 evidence validation remains not implemented",
     "P4-M4 reference resolution remains not implemented",
     "P4-M4 reference validation remains not implemented",
     "P4-M4 citation validation remains not implemented",
     "P4-M4 source fetching remains not implemented",
     "P4-M4 provenance writing remains not implemented",
-    "P4-M4 evidence record creation remains not implemented",
-    "P4-M4 reference record creation remains not implemented",
-    "P4-M4 citation record creation remains not implemented",
-    "P4-M4 provenance record creation remains not implemented",
     "P4-M4 request intake remains not implemented",
     "P4-M4 request validation remains not implemented",
     "P4-M4 execution remains not implemented",
@@ -91,124 +120,99 @@ REQUIRED_BOUNDARY_PHRASES = (
     "productization remains not started",
     "UI remains not started",
     "Operator Console remains not started",
-    "P4-M4.2 is not live validation",
-    "P4-M4.2 is not evidence intake",
-    "P4-M4.2 is not live evidence parsing",
-    "P4-M4.2 is not evidence validation",
-    "P4-M4.2 is not evidence acceptance",
-    "P4-M4.2 is not evidence rejection",
-    "P4-M4.2 is not evidence routing",
-    "P4-M4.2 is not evidence execution",
-    "P4-M4.2 is not evidence record creation",
-    "P4-M4.2 is not reference resolution",
-    "P4-M4.2 is not reference validation",
-    "P4-M4.2 is not reference integrity validation",
-    "P4-M4.2 is not citation validation",
-    "P4-M4.2 is not citation mutation",
-    "P4-M4.2 is not source validation",
-    "P4-M4.2 is not source fetching",
-    "P4-M4.2 is not provenance writing",
-    "P4-M4.2 is not provenance mutation",
-    "P4-M4.2 is not request intake",
-    "P4-M4.2 is not request validation",
-    "P4-M4.2 is not boundary validation",
-    "P4-M4.2 is not phase validation",
-    "P4-M4.2 is not entry gate validation",
-    "P4-M4.2 is not readiness validation",
-    "P4-M4.2 is not transition validation",
-    "P4-M4.2 is not package validation",
-    "P4-M4.2 is not closure validation",
-    "P4-M4.2 is not handoff validation",
-    "P4-M4.2 is not final phase handoff validation",
-    "P4-M4.2 is not a working entry gate",
-    "P4-M4.2 is not gate activation",
-    "P4-M4.2 is not gate execution",
-    "P4-M4.2 is not transition execution",
-    "P4-M4.2 is not command execution",
-    "P4-M4.2 is not readiness verdict",
-    "P4-M4.2 is not validation verdict",
-    "P4-M4.2 is not evidence verdict",
-    "P4-M4.2 is not reference verdict",
-    "P4-M4.2 is not citation verdict",
-    "P4-M4.2 is not entry verdict",
-    "P4-M4.2 is not gate verdict",
-    "P4-M4.2 is not transition verdict",
-    "P4-M4.2 is not approval",
-    "P4-M4.2 is not authorization",
-    "P4-M4.2 is not confirmation",
-    "P4-M4.2 is not recommendation",
-    "P4-M4.2 is not ranking",
-    "P4-M4.2 is not next action generation",
-    "P4-M4.2 is not human context intake",
-    "P4-M4.2 is not human context validation",
-    "P4-M4.2 is not package completeness validation",
-    "P4-M4.2 is not package consistency validation",
-    "P4-M4.2 is not package integrity validation",
-    "P4-M4.2 is not package readiness validation",
-    "P4-M4.2 is not record creation",
-    "P4-M4.2 is not evidence record creation",
-    "P4-M4.2 is not reference record creation",
-    "P4-M4.2 is not citation record creation",
-    "P4-M4.2 is not provenance record creation",
-    "P4-M4.2 is not request envelope record creation",
-    "P4-M4.2 is not entry record creation",
-    "P4-M4.2 is not gate record creation",
-    "P4-M4.2 is not readiness record creation",
-    "P4-M4.2 is not validation record creation",
-    "P4-M4.2 is not transition record creation",
-    "P4-M4.2 is not approval record creation",
-    "P4-M4.2 is not authorization record creation",
-    "P4-M4.2 is not confirmation record creation",
-    "P4-M4.2 is not recommendation record creation",
-    "P4-M4.2 is not ranking record creation",
-    "P4-M4.2 is not next action record creation",
-    "P4-M4.2 is not memory mutation",
-    "P4-M4.2 is not roadmap mutation",
-    "P4-M4.2 is not lifecycle mutation",
-    "P4-M4.2 is not proposal mutation",
-    "P4-M4.2 is not evidence mutation",
-    "P4-M4.2 is not human context mutation",
-    "no live validation",
-    "no evidence intake",
-    "no live evidence parsing",
+    "P4-M4.4 is not target phase intake",
+    "P4-M4.4 is not live target phase parsing",
+    "P4-M4.4 is not target phase validation",
+    "P4-M4.4 is not phase transition validation",
+    "P4-M4.4 is not target phase readiness validation",
+    "P4-M4.4 is not readiness scoring",
+    "P4-M4.4 is not target phase scoring",
+    "P4-M4.4 is not target phase routing",
+    "P4-M4.4 is not transition planning",
+    "P4-M4.4 is not path planning",
+    "P4-M4.4 is not target phase generation",
+    "P4-M4.4 is not target phase recommendation",
+    "P4-M4.4 is not target phase ranking",
+    "P4-M4.4 is not target phase execution",
+    "P4-M4.4 is not state-space graph",
+    "P4-M4.4 is not transition graph",
+    "P4-M4.4 is not constraint graph",
+    "P4-M4.4 is not human context to target phase mapping",
+    "P4-M4.4 is not target phase record creation",
+    "P4-M4.4 is not phase record creation",
+    "P4-M4.4 is not transition record creation",
+    "P4-M4.4 is not readiness record creation",
+    "P4-M4.4 is not scoring record creation",
+    "P4-M4.4 is not graph record creation",
+    "P4-M4.4 is not evidence validation",
+    "P4-M4.4 is not reference resolution",
+    "P4-M4.4 is not reference validation",
+    "P4-M4.4 is not citation validation",
+    "P4-M4.4 is not source fetching",
+    "P4-M4.4 is not provenance writing",
+    "P4-M4.4 is not request intake",
+    "P4-M4.4 is not request validation",
+    "P4-M4.4 is not entry gate validation",
+    "P4-M4.4 is not readiness validation",
+    "P4-M4.4 is not a working entry gate",
+    "P4-M4.4 is not gate activation",
+    "P4-M4.4 is not gate execution",
+    "P4-M4.4 is not readiness verdict",
+    "P4-M4.4 is not validation verdict",
+    "P4-M4.4 is not target phase verdict",
+    "P4-M4.4 is not phase verdict",
+    "P4-M4.4 is not transition verdict",
+    "P4-M4.4 is not approval",
+    "P4-M4.4 is not authorization",
+    "P4-M4.4 is not confirmation",
+    "P4-M4.4 is not recommendation",
+    "P4-M4.4 is not ranking",
+    "P4-M4.4 is not next action generation",
+    "P4-M4.4 is not transition execution",
+    "P4-M4.4 is not record creation",
+    "P4-M4.4 is not memory mutation",
+    "P4-M4.4 is not roadmap mutation",
+    "no target phase intake",
+    "no live target phase parsing",
+    "no target phase validation",
+    "no phase transition validation",
+    "no target phase readiness validation",
+    "no readiness scoring",
+    "no target phase scoring",
+    "no target phase routing",
+    "no transition planning",
+    "no path planning",
+    "no target phase generation",
+    "no target phase recommendation",
+    "no target phase ranking",
+    "no target phase execution",
+    "no state-space graph",
+    "no transition graph",
+    "no constraint graph",
+    "no human context to target phase mapping",
+    "no target phase record creation",
+    "no phase record creation",
+    "no transition record creation",
+    "no readiness record creation",
+    "no scoring record creation",
+    "no graph record creation",
     "no evidence validation",
-    "no evidence acceptance",
-    "no evidence rejection",
-    "no evidence routing",
-    "no evidence execution",
-    "no evidence record creation",
     "no reference resolution",
     "no reference validation",
-    "no reference integrity validation",
     "no citation validation",
-    "no citation mutation",
-    "no source validation",
     "no source fetching",
     "no provenance writing",
-    "no provenance mutation",
     "no request intake",
     "no request validation",
-    "no boundary validation",
-    "no phase validation",
     "no entry gate validation",
     "no readiness validation",
-    "no transition validation",
-    "no package validation",
-    "no closure validation",
-    "no handoff validation",
-    "no final phase handoff validation",
     "no working entry gate",
     "no gate activation",
     "no gate execution",
-    "no transition execution",
-    "no command execution",
     "no readiness verdict",
     "no validation verdict",
-    "no evidence verdict",
-    "no reference verdict",
-    "no citation verdict",
-    "no entry verdict",
-    "no gate verdict",
+    "no target phase verdict",
+    "no phase verdict",
     "no transition verdict",
     "no approval",
     "no authorization",
@@ -216,33 +220,10 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no recommendation",
     "no ranking",
     "no next action generation",
-    "no human context intake",
-    "no human context validation",
-    "no package completeness validation",
-    "no package consistency validation",
-    "no package integrity validation",
-    "no package readiness validation",
+    "no transition execution",
     "no record creation",
-    "no evidence record creation",
-    "no reference record creation",
-    "no citation record creation",
-    "no provenance record creation",
-    "no entry record creation",
-    "no gate record creation",
-    "no readiness record creation",
-    "no validation record creation",
-    "no transition record creation",
-    "no approval record creation",
-    "no authorization record creation",
-    "no confirmation record creation",
-    "no recommendation record creation",
-    "no ranking record creation",
-    "no next action record creation",
     "no memory mutation",
     "no roadmap mutation",
-    "no lifecycle mutation",
-    "no proposal mutation",
-    "no evidence mutation",
     "no P4-M5",
     "no v7",
     "no productization",
@@ -257,26 +238,40 @@ REQUIRED_BOUNDARY_PHRASES = (
 
 EXPECTED_TRUE_STATUS_FLAGS = (
     "definition_only",
-    "evidence_reference_envelope_design_only",
+    "target_phase_envelope_design_only",
+    "projection_surface_only",
+    "constraint_field_only",
+    "converging_layer_only",
     "inspection_only",
-    "p4_m4_2_evidence_reference_envelope_contract_started",
-    "p4_m4_2_definition_only",
-    "p4_m4_2_evidence_reference_envelope_design_only",
+    "p4_m4_4_target_phase_envelope_contract_started",
+    "p4_m4_4_definition_only",
+    "p4_m4_4_target_phase_envelope_design_only",
+    "p4_m4_4_projection_surface_only",
+    "p4_m4_4_constraint_field_only",
+    "p4_m4_4_converging_layer_only",
+    "p4_m4_3_declared_human_context_envelope_contract_reference_defined",
+    "p4_m4_3_declared_human_context_weak_prior_reference_defined",
+    "p4_m4_2_evidence_reference_envelope_contract_reference_defined",
     "p4_m4_1_entry_gate_design_request_envelope_contract_reference_defined",
     "p4_m4_0_entry_gate_design_boundary_contract_reference_defined",
     "p4_m3_16_final_phase_handoff_summary_reference_defined",
     "p4_m3_static_definition_chain_closed_reference_defined",
     "p4_m4_design_boundary_reference_defined",
-    "p4_m4_evidence_reference_envelope_design_defined",
-    "p4_m4_evidence_reference_shape_defined",
-    "p4_m4_evidence_intake_non_implementation_boundary_defined",
-    "p4_m4_reference_resolution_semantics_prohibited",
-    "p4_m4_reference_validation_semantics_prohibited",
-    "p4_m4_evidence_validation_semantics_prohibited",
-    "p4_m4_citation_validation_semantics_prohibited",
-    "p4_m4_source_fetching_semantics_prohibited",
-    "p4_m4_provenance_writing_semantics_prohibited",
-    "p4_m4_validation_semantics_prohibited",
+    "p4_m4_target_phase_envelope_design_defined",
+    "p4_m4_target_phase_projection_surface_defined",
+    "p4_m4_target_phase_constraint_field_defined",
+    "p4_m4_target_phase_non_validation_boundary_defined",
+    "p4_m4_target_phase_non_routing_boundary_defined",
+    "p4_m4_target_phase_non_planning_boundary_defined",
+    "p4_m4_target_phase_non_scoring_boundary_defined",
+    "p4_m4_target_phase_non_execution_boundary_defined",
+    "p4_m4_target_phase_non_graph_boundary_defined",
+    "p4_m4_target_phase_validation_semantics_prohibited",
+    "p4_m4_phase_transition_validation_semantics_prohibited",
+    "p4_m4_readiness_scoring_semantics_prohibited",
+    "p4_m4_routing_semantics_prohibited",
+    "p4_m4_planning_semantics_prohibited",
+    "p4_m4_graph_semantics_prohibited",
     "p4_m4_verdict_semantics_prohibited",
     "p4_m4_execution_semantics_prohibited",
     "p4_m4_record_creation_semantics_prohibited",
@@ -290,13 +285,56 @@ EXPECTED_TRUE_STATUS_FLAGS = (
 
 EXPECTED_FALSE_STATUS_FLAGS = (
     "live_validation_enabled",
+    "target_phase_intake_enabled",
+    "live_target_phase_parsing_enabled",
+    "target_phase_validation_enabled",
+    "target_phase_acceptance_enabled",
+    "target_phase_rejection_enabled",
+    "target_phase_routing_enabled",
+    "target_phase_execution_enabled",
+    "target_phase_record_creation_enabled",
+    "phase_transition_validation_enabled",
+    "phase_readiness_validation_enabled",
+    "target_phase_readiness_validation_enabled",
+    "readiness_scoring_enabled",
+    "target_phase_scoring_enabled",
+    "target_phase_recommendation_enabled",
+    "target_phase_ranking_enabled",
+    "target_phase_generation_enabled",
+    "transition_planning_enabled",
+    "path_planning_enabled",
+    "state_space_graph_enabled",
+    "transition_graph_enabled",
+    "constraint_graph_enabled",
+    "semantic_target_field_graph_enabled",
+    "human_context_to_target_phase_mapping_enabled",
+    "phase_record_creation_enabled",
+    "transition_record_creation_enabled",
+    "scoring_record_creation_enabled",
+    "routing_record_creation_enabled",
+    "planning_record_creation_enabled",
+    "graph_record_creation_enabled",
+    "state_graph_record_creation_enabled",
+    "transition_graph_record_creation_enabled",
+    "human_context_intake_enabled",
+    "live_human_context_parsing_enabled",
+    "human_context_validation_enabled",
+    "identity_validation_enabled",
+    "actor_validation_enabled",
+    "user_validation_enabled",
+    "operator_validation_enabled",
+    "consent_validation_enabled",
+    "authority_validation_enabled",
+    "approval_validation_enabled",
+    "authorization_validation_enabled",
+    "confirmation_validation_enabled",
+    "human_context_record_creation_enabled",
+    "identity_record_creation_enabled",
+    "actor_record_creation_enabled",
+    "consent_record_creation_enabled",
     "evidence_intake_enabled",
     "live_evidence_parsing_enabled",
     "evidence_validation_enabled",
-    "evidence_acceptance_enabled",
-    "evidence_rejection_enabled",
-    "evidence_routing_enabled",
-    "evidence_execution_enabled",
     "evidence_record_creation_enabled",
     "reference_resolution_enabled",
     "reference_validation_enabled",
@@ -338,12 +376,19 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "operational_behavior_enabled",
     "readiness_verdict_enabled",
     "validation_verdict_enabled",
+    "target_phase_verdict_enabled",
+    "phase_verdict_enabled",
+    "transition_verdict_enabled",
+    "human_context_verdict_enabled",
+    "identity_verdict_enabled",
+    "approval_verdict_enabled",
+    "authorization_verdict_enabled",
+    "confirmation_verdict_enabled",
     "evidence_verdict_enabled",
     "reference_verdict_enabled",
     "citation_verdict_enabled",
     "entry_verdict_enabled",
     "gate_verdict_enabled",
-    "transition_verdict_enabled",
     "approval_enabled",
     "authorization_enabled",
     "confirmation_enabled",
@@ -352,8 +397,6 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "next_action_generation_enabled",
     "transition_execution_enabled",
     "command_execution_enabled",
-    "human_context_intake_enabled",
-    "human_context_validation_enabled",
     "record_creation_enabled",
     "reference_record_creation_enabled",
     "citation_record_creation_enabled",
@@ -363,7 +406,6 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "gate_record_creation_enabled",
     "readiness_record_creation_enabled",
     "validation_record_creation_enabled",
-    "transition_record_creation_enabled",
     "approval_record_creation_enabled",
     "authorization_record_creation_enabled",
     "confirmation_record_creation_enabled",
@@ -376,8 +418,11 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "roadmap_mutation_enabled",
     "lifecycle_mutation_enabled",
     "proposal_mutation_enabled",
-    "evidence_mutation_enabled",
+    "target_phase_mutation_enabled",
+    "phase_mutation_enabled",
+    "transition_mutation_enabled",
     "human_context_mutation_enabled",
+    "evidence_mutation_enabled",
     "api_enabled",
     "mcp_enabled",
     "connector_enabled",
@@ -447,19 +492,34 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "target-phase-envelope-contract",
 }
 
-PREVIOUS_P4_M4_1_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "evidence-reference-envelope-contract"
+PREVIOUS_P4_M4_3_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "target-phase-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "evidence-intake",
-    "parse-evidence",
+    "target-phase-intake",
+    "parse-target-phase",
+    "parse-phase",
+    "validate-target-phase",
+    "validate-phase-transition",
+    "validate-target-phase-readiness",
+    "validate-phase-readiness",
+    "score-readiness",
+    "score-target-phase",
+    "route-target-phase",
+    "plan-transition",
+    "plan-path",
+    "generate-target-phase",
+    "recommend-target-phase",
+    "rank-target-phase",
+    "execute-target-phase",
+    "execute-transition",
+    "state-space-graph",
+    "transition-graph",
+    "constraint-graph",
+    "semantic-target-field-graph",
+    "map-human-context-to-target-phase",
     "validate-evidence",
-    "accept-evidence",
-    "reject-evidence",
-    "route-evidence",
-    "execute-evidence",
-    "create-evidence-record",
     "resolve-references",
     "validate-references",
     "validate-citations",
@@ -470,24 +530,14 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "validate-entry-gate",
     "validate-entry-readiness",
     "validate-readiness",
-    "validate-transition-readiness",
-    "validate-transition",
-    "validate-package",
-    "validate-package-completeness",
-    "validate-package-consistency",
-    "validate-package-integrity",
-    "validate-package-readiness",
     "working-entry-gate",
     "activate-gate",
     "execute-gate",
     "execute-p4-m4",
     "readiness-verdict",
     "validation-verdict",
-    "evidence-verdict",
-    "reference-verdict",
-    "citation-verdict",
-    "entry-verdict",
-    "gate-verdict",
+    "target-phase-verdict",
+    "phase-verdict",
     "transition-verdict",
     "approve",
     "authorize",
@@ -495,45 +545,41 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "recommend",
     "rank",
     "next-action",
-    "execute-transition",
-    "create-reference-record",
-    "create-citation-record",
-    "create-provenance-record",
-    "create-entry-record",
-    "create-gate-record",
+    "create-record",
+    "create-target-phase-record",
+    "create-phase-record",
+    "create-transition-record",
     "create-readiness-record",
     "create-validation-record",
-    "create-transition-record",
-    "create-approval-record",
-    "create-authorization-record",
-    "create-confirmation-record",
-    "create-recommendation-record",
-    "create-ranking-record",
-    "create-next-action-record",
+    "create-scoring-record",
+    "create-routing-record",
+    "create-planning-record",
+    "create-graph-record",
     "write-memory",
     "start-p4-m5",
     "start-v7",
     "productize",
     "operator-console",
     "ui",
+    "mvp",
     "deploy",
 }
 
 
-def test_evidence_reference_envelope_contract_field_order_count_and_ids_are_stable():
-    fields = list_evidence_reference_envelope_contract_fields()
+def test_target_phase_envelope_contract_field_order_count_and_ids_are_stable():
+    fields = list_target_phase_envelope_contract_fields()
 
-    assert [field.field_order for field in fields] == list(range(1, 16))
-    assert len(fields) == 15
-    assert evidence_reference_envelope_contract_field_ids() == FIELD_IDS
+    assert [field.field_order for field in fields] == list(range(1, 18))
+    assert len(fields) == 17
+    assert target_phase_envelope_contract_field_ids() == FIELD_IDS
 
 
-def test_every_evidence_reference_envelope_contract_field_has_required_values():
-    for field in list_evidence_reference_envelope_contract_fields():
+def test_every_target_phase_envelope_contract_field_has_required_values():
+    for field in list_target_phase_envelope_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.p4_m4_evidence_reference_envelope_contract_category.strip()
-        assert field.p4_m4_evidence_reference_envelope_contract_semantics_disabled.strip()
+        assert field.p4_m4_target_phase_envelope_contract_category.strip()
+        assert field.p4_m4_target_phase_envelope_contract_semantics_disabled.strip()
 
 
 def test_required_boundary_phrase_contract_contains_all_required_phrases():
@@ -547,12 +593,12 @@ def test_required_status_flag_contract_is_literal_and_complete():
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_evidence_reference_envelope_contract_markdown()
-    second = render_evidence_reference_envelope_contract_markdown()
+    first = render_target_phase_envelope_contract_markdown()
+    second = render_target_phase_envelope_contract_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M4.2 Evidence Reference Envelope Contract\n")
-    assert EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY in first
+    assert first.startswith("# P4-M4.4 Target Phase Envelope Contract\n")
+    assert TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -562,7 +608,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "evidence-reference-envelope-contract",
+        "target-phase-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -577,12 +623,12 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY
-    assert first_payload["count"] == 15
-    assert first_payload["status"]["phase"] == "P4-M4.2"
-    assert first_payload["status"]["feature"] == "Evidence Reference Envelope Contract"
+    assert first_payload["boundary"] == TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY
+    assert first_payload["count"] == 17
+    assert first_payload["status"]["phase"] == "P4-M4.4"
+    assert first_payload["status"]["feature"] == "Target Phase Envelope Contract"
     assert first_payload["status"]["mode"] == "read-only"
-    assert first_payload["status"] == evidence_reference_envelope_contract_report()
+    assert first_payload["status"] == target_phase_envelope_contract_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
@@ -595,29 +641,29 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = evidence_reference_envelope_contract_as_dicts()
-    second_fields = evidence_reference_envelope_contract_as_dicts()
-    first_status = evidence_reference_envelope_contract_report()
-    second_status = evidence_reference_envelope_contract_report()
+    first_fields = target_phase_envelope_contract_as_dicts()
+    second_fields = target_phase_envelope_contract_as_dicts()
+    first_status = target_phase_envelope_contract_report()
+    second_status = target_phase_envelope_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M4.2"
-    assert first_status["feature"] == "Evidence Reference Envelope Contract"
+    assert first_status["phase"] == "P4-M4.4"
+    assert first_status["feature"] == "Target Phase Envelope Contract"
     assert first_status["mode"] == "read-only"
-    assert first_status["evidence_reference_envelope_contract_field_count"] == 15
+    assert first_status["target_phase_envelope_contract_field_count"] == 17
     assert (
         first_status[
-            "referenced_p4_m4_1_entry_gate_design_request_envelope_contract_field_count"
+            "referenced_p4_m4_3_declared_human_context_envelope_contract_field_count"
         ]
-        == 14
+        == 16
     )
-    assert first_status["boundary"] == EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY
+    assert first_status["boundary"] == TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = evidence_reference_envelope_contract_report()
+    status = target_phase_envelope_contract_report()
 
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -629,7 +675,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "evidence-reference-envelope-contract",
+            "target-phase-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -638,9 +684,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M4.2 Evidence Reference Envelope Contract\n")
+    assert stdout.startswith("# P4-M4.4 Target Phase Envelope Contract\n")
     assert "## Status Report" in stdout
-    assert EVIDENCE_REFERENCE_ENVELOPE_CONTRACT_BOUNDARY in stdout
+    assert TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -649,7 +695,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "evidence-reference-envelope-contract",
+        "target-phase-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -665,7 +711,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M4.2")
+    assert first_stdout.startswith("# P4-M4.4")
     assert not (tmp_path / ".local").exists()
 
 
@@ -681,7 +727,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "evidence-reference-envelope-contract",
+            "target-phase-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -689,7 +735,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "evidence-reference-envelope-contract",
+            "target-phase-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -699,10 +745,10 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M4.2")
+    assert markdown_stdout.startswith("# P4-M4.4")
     assert json_code == 0
     assert json_stderr == ""
-    assert json_payload["count"] == 15
+    assert json_payload["count"] == 17
     assert not (tmp_path / ".local").exists()
 
 
@@ -710,7 +756,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "evidence-reference-envelope-contract",
+            "target-phase-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -718,65 +764,53 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "evidence_reference_envelope_contract.jsonl",
-        "evidence_reference_envelope_records.jsonl",
-        "evidence_reference_records.jsonl",
-        "evidence_intake.jsonl",
-        "evidence_parsing.jsonl",
+        "target_phase_envelope_contract.jsonl",
+        "target_phase_intake.jsonl",
+        "target_phase_parsing.jsonl",
+        "target_phase_validation.jsonl",
+        "target_phase_acceptance.jsonl",
+        "target_phase_rejection.jsonl",
+        "target_phase_routing.jsonl",
+        "target_phase_execution.jsonl",
+        "target_phase_records.jsonl",
+        "phase_transition_validation.jsonl",
+        "phase_readiness_validation.jsonl",
+        "target_phase_readiness_validation.jsonl",
+        "readiness_scoring.jsonl",
+        "target_phase_scoring.jsonl",
+        "transition_planning.jsonl",
+        "path_planning.jsonl",
+        "target_phase_generation.jsonl",
+        "target_phase_recommendation.jsonl",
+        "target_phase_ranking.jsonl",
+        "state_space_graph.jsonl",
+        "transition_graph.jsonl",
+        "constraint_graph.jsonl",
+        "semantic_target_field_graph.jsonl",
+        "human_context_to_target_phase_mapping.jsonl",
+        "phase_records.jsonl",
+        "transition_records.jsonl",
+        "readiness_records.jsonl",
+        "scoring_records.jsonl",
+        "routing_records.jsonl",
+        "planning_records.jsonl",
+        "graph_records.jsonl",
+        "state_graph_records.jsonl",
+        "transition_graph_records.jsonl",
         "evidence_validation.jsonl",
-        "evidence_acceptance.jsonl",
-        "evidence_rejection.jsonl",
-        "evidence_routing.jsonl",
-        "evidence_execution.jsonl",
-        "evidence_records.jsonl",
         "reference_resolution.jsonl",
         "reference_validation.jsonl",
-        "reference_integrity_validation.jsonl",
-        "reference_records.jsonl",
         "citation_validation.jsonl",
-        "citation_mutation.jsonl",
-        "citation_records.jsonl",
-        "source_validation.jsonl",
         "source_fetching.jsonl",
         "provenance_writing.jsonl",
-        "provenance_mutation.jsonl",
-        "provenance_records.jsonl",
         "request_intake.jsonl",
-        "request_parsing.jsonl",
         "request_validation.jsonl",
-        "request_records.jsonl",
-        "request_envelope_records.jsonl",
-        "entry_gate_records.jsonl",
-        "gate_records.jsonl",
-        "readiness_records.jsonl",
-        "validation_records.jsonl",
-        "transition_records.jsonl",
-        "approval_records.jsonl",
-        "authorization_records.jsonl",
-        "confirmation_records.jsonl",
-        "recommendation_records.jsonl",
-        "ranking_records.jsonl",
-        "next_action_records.jsonl",
         "entry_gate_validation.jsonl",
         "readiness_validation.jsonl",
-        "transition_readiness_validation.jsonl",
-        "package_validation.jsonl",
-        "execution.jsonl",
-        "authorization.jsonl",
-        "confirmation.jsonl",
-        "approvals.jsonl",
-        "recommendations.jsonl",
-        "rankings.jsonl",
-        "next_actions.jsonl",
         "validation.jsonl",
-        "readiness.jsonl",
         "memories.jsonl",
         "proposals.jsonl",
         "lifecycle.jsonl",
-        "sources.jsonl",
-        "provenance.jsonl",
-        "evidence.jsonl",
-        "citations.jsonl",
         "roadmap.jsonl",
         "audit.jsonl",
     ):
@@ -788,14 +822,14 @@ def test_read_only_allowlist_includes_new_command_and_preserves_previous_command
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "evidence-reference-envelope-contract" in commands
-    assert PREVIOUS_P4_M4_1_READ_ONLY_COMMANDS.issubset(commands)
+    assert "target-phase-envelope-contract" in commands
+    assert PREVIOUS_P4_M4_3_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M4_2_EVIDENCE_REFERENCE_ENVELOPE_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M4_4_TARGET_PHASE_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -813,8 +847,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m4_evidence_reference_envelope_contract" not in entry_points
-    assert "evidence-reference-envelope-contract" not in entry_points
+    assert "p4_m4_target_phase_envelope_contract" not in entry_points
+    assert "target-phase-envelope-contract" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -822,22 +856,22 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = EvidenceReferenceEnvelopeContractField(
+    field = TargetPhaseEnvelopeContractField(
         field_order=1,
-        field_id="custom-evidence-reference-envelope-contract",
-        field_name="Custom Evidence Reference Envelope Contract Field",
+        field_id="custom-target-phase-envelope-contract",
+        field_name="Custom Target Phase Envelope Contract Field",
         field_purpose="Custom inspection-only purpose.",
-        p4_m4_evidence_reference_envelope_contract_category=(
-            "custom-evidence-reference-envelope-contract-category"
+        p4_m4_target_phase_envelope_contract_category=(
+            "custom-target-phase-envelope-contract-category"
         ),
-        p4_m4_evidence_reference_envelope_contract_semantics_disabled=(
-            "Custom evidence reference envelope contract semantics are disabled."
+        p4_m4_target_phase_envelope_contract_semantics_disabled=(
+            "Custom target phase envelope contract semantics are disabled."
         ),
     )
 
-    markdown = render_evidence_reference_envelope_contract_markdown([field])
+    markdown = render_target_phase_envelope_contract_markdown([field])
 
-    assert "custom-evidence-reference-envelope-contract" in markdown
+    assert "custom-target-phase-envelope-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 
