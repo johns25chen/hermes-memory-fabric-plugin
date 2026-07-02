@@ -101,6 +101,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-human-context-envelope-contract",
     "target-phase-envelope-contract",
     "declared-transition-reason-envelope-contract",
+    "declared-transition-constraint-envelope-contract",
 }
 
 TRUE_STATUS_FLAGS = (
