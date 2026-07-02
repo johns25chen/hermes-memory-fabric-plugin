@@ -1,0 +1,1059 @@
+from __future__ import annotations
+
+import argparse
+import io
+import json
+import tomllib
+from pathlib import Path
+
+from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
+from hermes_memory_fabric.p4_m4_declared_transition_dependency_envelope_contract import (
+    BOUNDARY_PHRASE_LINES,
+    DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY,
+    FALSE_STATUS_FLAGS,
+    TRUE_STATUS_FLAGS,
+    DeclaredTransitionDependencyEnvelopeContractField,
+    declared_transition_dependency_envelope_contract_as_dicts,
+    declared_transition_dependency_envelope_contract_field_ids,
+    declared_transition_dependency_envelope_contract_report,
+    list_declared_transition_dependency_envelope_contract_fields,
+    render_declared_transition_dependency_envelope_contract_markdown,
+)
+
+
+FIELD_IDS = (
+    "p4-m4-declared-transition-dependency-envelope-contract-id",
+    "p4-m4-declared-transition-dependency-envelope-contract-phase",
+    "p4-m4-declared-transition-dependency-envelope-contract-mode",
+    "p4-m4-declared-transition-dependency-envelope-contract-direct-prior-declared-transition-constraint-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-declared-transition-reason-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-target-phase-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-declared-human-context-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-evidence-reference-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-request-envelope-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-boundary-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-inherited-prior-handoff-reference",
+    "p4-m4-declared-transition-dependency-envelope-contract-scope",
+    "p4-m4-declared-transition-dependency-envelope-contract-declared-transition-dependency-envelope-design-only",
+    "p4-m4-declared-transition-dependency-envelope-contract-declared-dependency-surface-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-dependency-non-validation-boundary-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-dependency-non-resolution-boundary-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-dependency-non-graph-boundary-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-declaration-only-semantics-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-declared-transition-constraint-static-reference-definition",
+    "p4-m4-declared-transition-dependency-envelope-contract-dependency-validation-resolution-graph-semantics-disabled",
+    "p4-m4-declared-transition-dependency-envelope-contract-routing-planning-execution-scoring-justification-semantics-disabled",
+    "p4-m4-declared-transition-dependency-envelope-contract-p4-m5-v7-productization-ui-deferred",
+)
+
+DATACLASS_FIELDS = {
+    "field_order",
+    "field_id",
+    "field_name",
+    "field_purpose",
+    "p4_m4_declared_transition_dependency_envelope_contract_category",
+    "p4_m4_declared_transition_dependency_envelope_contract_semantics_disabled",
+}
+
+REQUIRED_BOUNDARY_PHRASES = tuple(
+    line
+    for line in """
+P4-M4.7
+Declared Transition Dependency Envelope Contract
+read-only
+definition-only
+declared-transition-dependency-envelope-design-only
+declared-dependency-surface-only
+dependency-non-validation-boundary-only
+dependency-non-resolution-boundary-only
+dependency-non-graph-boundary-only
+declaration-only
+inspection-only
+P4-M4.7 Declared Transition Dependency Envelope Contract is definition only
+P4-M4.7 is declared-transition-dependency-envelope-design-only
+P4-M4.7 is declared-dependency-surface-only
+P4-M4.7 is dependency-non-validation-boundary-only
+P4-M4.7 is dependency-non-resolution-boundary-only
+P4-M4.7 is dependency-non-graph-boundary-only
+P4-M4.7 is declaration-only
+P4-M4.6 Declared Transition Constraint Envelope Contract remains the direct prior declared transition constraint envelope reference
+P4-M4.6 declared transition constraint remains only an inherited static declared constraint surface reference
+P4-M4.5 Declared Transition Reason Envelope Contract remains the inherited prior declared transition reason envelope reference
+P4-M4.5 declared transition reason remains only an inherited static declared reason surface reference
+P4-M4.4 Target Phase Envelope Contract remains the inherited prior target phase envelope reference
+P4-M4.3 Declared Human Context Envelope Contract remains the inherited prior declared human context envelope reference
+P4-M4.2 Evidence Reference Envelope Contract remains the inherited prior evidence reference envelope reference
+P4-M4.1 Entry Gate Design Request Envelope Contract remains the inherited prior request envelope reference
+P4-M4.0 Entry Gate Design Boundary Contract remains the inherited prior design boundary reference
+P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference
+P4-M3 static definition chain remains closed
+P4-M4 design layer remains design-boundary-only
+P4-M4 declared transition dependency envelope design starts only as a static declared dependency description surface
+P4-M4 transition dependency validation remains not implemented
+P4-M4 transition dependency resolution remains not implemented
+P4-M4 transition dependency solving remains not implemented
+P4-M4 dependency graph construction remains not implemented
+P4-M4 dependency satisfaction validation remains not implemented
+P4-M4 dependency violation detection remains not implemented
+P4-M4 dependency sufficiency validation remains not implemented
+P4-M4 dependency consistency validation remains not implemented
+P4-M4 dependency integrity validation remains not implemented
+P4-M4 transition dependency acceptance remains not implemented
+P4-M4 transition dependency rejection remains not implemented
+P4-M4 transition dependency scoring remains not implemented
+P4-M4 transition dependency ranking remains not implemented
+P4-M4 transition dependency recommendation remains not implemented
+P4-M4 transition dependency generation remains not implemented
+P4-M4 transition dependency justification remains not implemented
+P4-M4 transition dependency routing remains not implemented
+P4-M4 transition dependency planning remains not implemented
+P4-M4 transition dependency execution remains not implemented
+P4-M4 transition dependency record creation remains not implemented
+P4-M4 dependency validation record creation remains not implemented
+P4-M4 dependency resolution record creation remains not implemented
+P4-M4 dependency graph record creation remains not implemented
+P4-M4 dependency solving record creation remains not implemented
+P4-M4 dependency scoring record creation remains not implemented
+P4-M4 dependency routing record creation remains not implemented
+P4-M4 dependency planning record creation remains not implemented
+P4-M4 dependency justification record creation remains not implemented
+P4-M4 transition constraint validation remains not implemented
+P4-M4 transition constraint enforcement remains not implemented
+P4-M4 transition constraint solving remains not implemented
+P4-M4 transition constraint routing remains not implemented
+P4-M4 transition constraint planning remains not implemented
+P4-M4 transition constraint execution remains not implemented
+P4-M4 transition reason validation remains not implemented
+P4-M4 transition reason routing remains not implemented
+P4-M4 transition reason planning remains not implemented
+P4-M4 transition reason execution remains not implemented
+P4-M4 target phase validation remains not implemented
+P4-M4 phase transition validation remains not implemented
+P4-M4 readiness scoring remains not implemented
+P4-M4 state-space graph remains not implemented
+P4-M4 transition graph remains not implemented
+P4-M4 constraint graph remains not implemented
+P4-M4 dependency graph remains not implemented
+P4-M4 transition constraint to transition dependency mapping remains not implemented
+P4-M4 transition reason to transition dependency mapping remains not implemented
+P4-M4 target phase to transition dependency mapping remains not implemented
+P4-M4 human context to transition dependency mapping remains not implemented
+P4-M4 evidence validation remains not implemented
+P4-M4 reference resolution remains not implemented
+P4-M4 reference validation remains not implemented
+P4-M4 citation validation remains not implemented
+P4-M4 source fetching remains not implemented
+P4-M4 provenance writing remains not implemented
+P4-M4 request intake remains not implemented
+P4-M4 request validation remains not implemented
+P4-M4 execution remains not implemented
+P4-M4 entry gate remains not implemented
+P4-M4 entry gate validation remains not implemented
+P4-M4 readiness validation remains not implemented
+P4-M4 verdict generation remains not implemented
+P4-M4 approval remains not implemented
+P4-M4 authorization remains not implemented
+P4-M4 confirmation remains not implemented
+P4-M4 transition execution remains not implemented
+P4-M5 remains not started
+v7 remains not started
+productization remains not started
+UI remains not started
+Operator Console remains not started
+P4-M4.7 is not transition dependency intake
+P4-M4.7 is not live transition dependency parsing
+P4-M4.7 is not transition dependency validation
+P4-M4.7 is not transition dependency resolution
+P4-M4.7 is not transition dependency solving
+P4-M4.7 is not dependency graph construction
+P4-M4.7 is not dependency satisfaction validation
+P4-M4.7 is not dependency violation detection
+P4-M4.7 is not dependency sufficiency validation
+P4-M4.7 is not dependency consistency validation
+P4-M4.7 is not dependency integrity validation
+P4-M4.7 is not transition dependency acceptance
+P4-M4.7 is not transition dependency rejection
+P4-M4.7 is not transition dependency scoring
+P4-M4.7 is not transition dependency ranking
+P4-M4.7 is not transition dependency recommendation
+P4-M4.7 is not transition dependency generation
+P4-M4.7 is not transition dependency justification
+P4-M4.7 is not transition dependency routing
+P4-M4.7 is not transition dependency planning
+P4-M4.7 is not transition dependency execution
+P4-M4.7 is not transition dependency record creation
+P4-M4.7 is not dependency validation record creation
+P4-M4.7 is not dependency resolution record creation
+P4-M4.7 is not dependency graph record creation
+P4-M4.7 is not dependency solving record creation
+P4-M4.7 is not dependency scoring record creation
+P4-M4.7 is not dependency routing record creation
+P4-M4.7 is not dependency planning record creation
+P4-M4.7 is not dependency justification record creation
+P4-M4.7 is not transition constraint validation
+P4-M4.7 is not transition constraint enforcement
+P4-M4.7 is not transition constraint solving
+P4-M4.7 is not transition constraint routing
+P4-M4.7 is not transition constraint planning
+P4-M4.7 is not transition constraint execution
+P4-M4.7 is not transition reason validation
+P4-M4.7 is not transition reason routing
+P4-M4.7 is not transition reason planning
+P4-M4.7 is not transition reason execution
+P4-M4.7 is not target phase validation
+P4-M4.7 is not phase transition validation
+P4-M4.7 is not readiness scoring
+P4-M4.7 is not target phase routing
+P4-M4.7 is not transition planning
+P4-M4.7 is not path planning
+P4-M4.7 is not state-space graph
+P4-M4.7 is not transition graph
+P4-M4.7 is not constraint graph
+P4-M4.7 is not dependency graph
+P4-M4.7 is not transition constraint to transition dependency mapping
+P4-M4.7 is not transition reason to transition dependency mapping
+P4-M4.7 is not target phase to transition dependency mapping
+P4-M4.7 is not human context to transition dependency mapping
+P4-M4.7 is not evidence validation
+P4-M4.7 is not reference resolution
+P4-M4.7 is not reference validation
+P4-M4.7 is not citation validation
+P4-M4.7 is not source fetching
+P4-M4.7 is not provenance writing
+P4-M4.7 is not request intake
+P4-M4.7 is not request validation
+P4-M4.7 is not entry gate validation
+P4-M4.7 is not readiness validation
+P4-M4.7 is not a working entry gate
+P4-M4.7 is not gate activation
+P4-M4.7 is not gate execution
+P4-M4.7 is not readiness verdict
+P4-M4.7 is not validation verdict
+P4-M4.7 is not transition dependency verdict
+P4-M4.7 is not transition verdict
+P4-M4.7 is not approval
+P4-M4.7 is not authorization
+P4-M4.7 is not confirmation
+P4-M4.7 is not recommendation
+P4-M4.7 is not ranking
+P4-M4.7 is not next action generation
+P4-M4.7 is not transition execution
+P4-M4.7 is not record creation
+P4-M4.7 is not memory mutation
+P4-M4.7 is not roadmap mutation
+no transition dependency intake
+no live transition dependency parsing
+no transition dependency validation
+no transition dependency resolution
+no transition dependency solving
+no dependency graph construction
+no dependency satisfaction validation
+no dependency violation detection
+no dependency sufficiency validation
+no dependency consistency validation
+no dependency integrity validation
+no transition dependency acceptance
+no transition dependency rejection
+no transition dependency scoring
+no transition dependency ranking
+no transition dependency recommendation
+no transition dependency generation
+no transition dependency justification
+no transition dependency routing
+no transition dependency planning
+no transition dependency execution
+no transition dependency record creation
+no dependency validation record creation
+no dependency resolution record creation
+no dependency graph record creation
+no dependency solving record creation
+no dependency scoring record creation
+no dependency routing record creation
+no dependency planning record creation
+no dependency justification record creation
+no transition constraint validation
+no transition constraint enforcement
+no transition constraint solving
+no transition constraint routing
+no transition constraint planning
+no transition constraint execution
+no transition reason validation
+no transition reason routing
+no transition reason planning
+no transition reason execution
+no target phase validation
+no phase transition validation
+no readiness scoring
+no target phase routing
+no transition planning
+no path planning
+no state-space graph
+no transition graph
+no constraint graph
+no dependency graph
+no transition constraint to transition dependency mapping
+no transition reason to transition dependency mapping
+no target phase to transition dependency mapping
+no human context to transition dependency mapping
+no evidence validation
+no reference resolution
+no reference validation
+no citation validation
+no source fetching
+no provenance writing
+no request intake
+no request validation
+no entry gate validation
+no readiness validation
+no working entry gate
+no gate activation
+no gate execution
+no readiness verdict
+no validation verdict
+no transition dependency verdict
+no transition verdict
+no approval
+no authorization
+no confirmation
+no recommendation
+no ranking
+no next action generation
+no transition execution
+no record creation
+no memory mutation
+no roadmap mutation
+no P4-M5
+no v7
+no productization
+no UI
+no Operator Console
+no MVP
+no deploy
+no full Memory Graph
+no version bump
+no tag
+""".splitlines()
+    if line
+)
+
+EXPECTED_TRUE_STATUS_FLAGS = tuple(
+    line
+    for line in """
+definition_only
+declared_transition_dependency_envelope_design_only
+declared_dependency_surface_only
+dependency_non_validation_boundary_only
+dependency_non_resolution_boundary_only
+dependency_non_graph_boundary_only
+declaration_only
+inspection_only
+p4_m4_7_declared_transition_dependency_envelope_contract_started
+p4_m4_7_definition_only
+p4_m4_7_declared_transition_dependency_envelope_design_only
+p4_m4_7_declared_dependency_surface_only
+p4_m4_7_dependency_non_validation_boundary_only
+p4_m4_7_dependency_non_resolution_boundary_only
+p4_m4_7_dependency_non_graph_boundary_only
+p4_m4_7_declaration_only
+p4_m4_6_declared_transition_constraint_envelope_contract_reference_defined
+p4_m4_6_declared_transition_constraint_static_reference_defined
+p4_m4_5_declared_transition_reason_envelope_contract_reference_defined
+p4_m4_5_declared_transition_reason_static_reference_defined
+p4_m4_4_target_phase_envelope_contract_reference_defined
+p4_m4_3_declared_human_context_envelope_contract_reference_defined
+p4_m4_2_evidence_reference_envelope_contract_reference_defined
+p4_m4_1_entry_gate_design_request_envelope_contract_reference_defined
+p4_m4_0_entry_gate_design_boundary_contract_reference_defined
+p4_m3_16_final_phase_handoff_summary_reference_defined
+p4_m3_static_definition_chain_closed_reference_defined
+p4_m4_design_boundary_reference_defined
+p4_m4_declared_transition_dependency_envelope_design_defined
+p4_m4_declared_dependency_surface_defined
+p4_m4_transition_dependency_non_validation_boundary_defined
+p4_m4_transition_dependency_non_resolution_boundary_defined
+p4_m4_transition_dependency_non_graph_boundary_defined
+p4_m4_transition_dependency_non_solving_boundary_defined
+p4_m4_transition_dependency_non_acceptance_boundary_defined
+p4_m4_transition_dependency_non_rejection_boundary_defined
+p4_m4_transition_dependency_non_scoring_boundary_defined
+p4_m4_transition_dependency_non_routing_boundary_defined
+p4_m4_transition_dependency_non_planning_boundary_defined
+p4_m4_transition_dependency_non_execution_boundary_defined
+p4_m4_transition_dependency_validation_semantics_prohibited
+p4_m4_dependency_resolution_semantics_prohibited
+p4_m4_dependency_graph_semantics_prohibited
+p4_m4_dependency_solving_semantics_prohibited
+p4_m4_dependency_satisfaction_validation_semantics_prohibited
+p4_m4_dependency_violation_detection_semantics_prohibited
+p4_m4_dependency_sufficiency_validation_semantics_prohibited
+p4_m4_dependency_consistency_validation_semantics_prohibited
+p4_m4_dependency_integrity_validation_semantics_prohibited
+p4_m4_dependency_justification_semantics_prohibited
+p4_m4_routing_semantics_prohibited
+p4_m4_planning_semantics_prohibited
+p4_m4_verdict_semantics_prohibited
+p4_m4_execution_semantics_prohibited
+p4_m4_record_creation_semantics_prohibited
+p4_m4_mutation_semantics_prohibited
+p4_m5_start_deferred
+v7_start_deferred
+productization_deferred
+ui_deferred
+operator_console_deferred
+""".splitlines()
+    if line
+)
+
+EXPECTED_FALSE_STATUS_FLAGS = tuple(
+    line
+    for line in """
+live_validation_enabled
+transition_dependency_intake_enabled
+live_transition_dependency_parsing_enabled
+transition_dependency_validation_enabled
+transition_dependency_resolution_enabled
+transition_dependency_solving_enabled
+dependency_graph_construction_enabled
+dependency_satisfaction_validation_enabled
+dependency_violation_detection_enabled
+dependency_sufficiency_validation_enabled
+dependency_consistency_validation_enabled
+dependency_integrity_validation_enabled
+transition_dependency_acceptance_enabled
+transition_dependency_rejection_enabled
+transition_dependency_scoring_enabled
+transition_dependency_ranking_enabled
+transition_dependency_recommendation_enabled
+transition_dependency_generation_enabled
+transition_dependency_justification_enabled
+transition_dependency_routing_enabled
+transition_dependency_planning_enabled
+transition_dependency_execution_enabled
+transition_dependency_record_creation_enabled
+dependency_validation_record_creation_enabled
+dependency_resolution_record_creation_enabled
+dependency_graph_record_creation_enabled
+dependency_solving_record_creation_enabled
+dependency_scoring_record_creation_enabled
+dependency_routing_record_creation_enabled
+dependency_planning_record_creation_enabled
+dependency_justification_record_creation_enabled
+transition_constraint_validation_enabled
+transition_constraint_enforcement_enabled
+transition_constraint_solving_enabled
+transition_constraint_routing_enabled
+transition_constraint_planning_enabled
+transition_constraint_execution_enabled
+transition_reason_validation_enabled
+transition_reason_routing_enabled
+transition_reason_planning_enabled
+transition_reason_execution_enabled
+target_phase_validation_enabled
+phase_transition_validation_enabled
+phase_readiness_validation_enabled
+target_phase_readiness_validation_enabled
+readiness_scoring_enabled
+target_phase_scoring_enabled
+target_phase_routing_enabled
+target_phase_execution_enabled
+transition_planning_enabled
+path_planning_enabled
+state_space_graph_enabled
+transition_graph_enabled
+constraint_graph_enabled
+dependency_graph_enabled
+semantic_target_field_graph_enabled
+transition_constraint_to_transition_dependency_mapping_enabled
+transition_reason_to_transition_dependency_mapping_enabled
+target_phase_to_transition_dependency_mapping_enabled
+human_context_to_transition_dependency_mapping_enabled
+human_context_intake_enabled
+live_human_context_parsing_enabled
+human_context_validation_enabled
+identity_validation_enabled
+actor_validation_enabled
+user_validation_enabled
+operator_validation_enabled
+consent_validation_enabled
+authority_validation_enabled
+approval_validation_enabled
+authorization_validation_enabled
+confirmation_validation_enabled
+human_context_record_creation_enabled
+evidence_intake_enabled
+live_evidence_parsing_enabled
+evidence_validation_enabled
+evidence_record_creation_enabled
+reference_resolution_enabled
+reference_validation_enabled
+reference_integrity_validation_enabled
+citation_validation_enabled
+source_fetching_enabled
+provenance_writing_enabled
+request_intake_enabled
+live_request_parsing_enabled
+request_validation_enabled
+request_acceptance_enabled
+request_rejection_enabled
+request_routing_enabled
+request_execution_enabled
+request_record_creation_enabled
+boundary_validation_enabled
+phase_validation_enabled
+entry_gate_validation_enabled
+entry_readiness_validation_enabled
+readiness_validation_enabled
+transition_readiness_validation_enabled
+transition_validation_enabled
+governed_transition_intake_validation_enabled
+package_validation_enabled
+closure_validation_enabled
+handoff_validation_enabled
+final_phase_handoff_validation_enabled
+working_entry_gate_enabled
+gate_activation_enabled
+gate_execution_enabled
+p4_m4_execution_enabled
+operational_behavior_enabled
+readiness_verdict_enabled
+validation_verdict_enabled
+transition_dependency_verdict_enabled
+transition_verdict_enabled
+human_context_verdict_enabled
+evidence_verdict_enabled
+reference_verdict_enabled
+citation_verdict_enabled
+entry_verdict_enabled
+gate_verdict_enabled
+approval_enabled
+authorization_enabled
+confirmation_enabled
+recommendation_enabled
+ranking_enabled
+next_action_generation_enabled
+transition_execution_enabled
+command_execution_enabled
+record_creation_enabled
+persistence_enabled
+storage_enabled
+memory_mutation_enabled
+roadmap_mutation_enabled
+lifecycle_mutation_enabled
+proposal_mutation_enabled
+transition_dependency_mutation_enabled
+transition_constraint_mutation_enabled
+transition_reason_mutation_enabled
+target_phase_mutation_enabled
+phase_mutation_enabled
+transition_mutation_enabled
+human_context_mutation_enabled
+evidence_mutation_enabled
+api_enabled
+mcp_enabled
+connector_enabled
+agent_call_enabled
+p4_m5_started
+v7_started
+productization_started
+ui_started
+operator_console_started
+mvp_started
+deploy_started
+full_memory_graph_started
+version_bump_enabled
+tag_creation_enabled
+""".splitlines()
+    if line
+)
+
+EXPECTED_MEMORY_LOOP_COMMANDS = {
+    "checklist",
+    "review-status",
+    "recall-verification-status",
+    "lifecycle-verification-status",
+    "do-not-retry-verification-status",
+    "source-provenance-verification-status",
+    "decision-readiness-status",
+    "manual-decision-preview",
+    "governance-pack-export",
+    "final-boundary-audit",
+    "manual-execution-hardening",
+    "execution-surface-contract",
+    "execution-contract-validation-matrix",
+    "manual-authorization-evidence-envelope",
+    "human-confirmation-snapshot-contract",
+    "execution-preconditions-snapshot-map",
+    "execution-risk-acknowledgement-map",
+    "execution-risk-acceptance-prohibition-map",
+    "execution-risk-waiver-prohibition-map",
+    "execution-decision-non-equivalence-map",
+    "execution-decision-recommendation-prohibition-map",
+    "execution-decision-default-denial-boundary-map",
+    "execution-decision-silence-non-consent-map",
+    "execution-decision-negative-evidence-non-override-map",
+    "execution-decision-conflicting-evidence-isolation-map",
+    "execution-decision-evidence-precedence-prohibition-map",
+    "final-non-execution-boundary-audit",
+    "p4-m2-closure-handoff-contract",
+    "governed-transition-intake-boundary-contract",
+    "governed-transition-intake-request-envelope-contract",
+    "governed-transition-intake-evidence-reference-envelope-contract",
+    "governed-transition-intake-declared-human-context-envelope-contract",
+    "governed-transition-intake-target-phase-envelope-contract",
+    "governed-transition-intake-declared-transition-reason-envelope-contract",
+    "governed-transition-intake-declared-transition-constraint-envelope-contract",
+    "governed-transition-intake-declared-transition-dependency-envelope-contract",
+    "governed-transition-intake-declared-transition-impact-envelope-contract",
+    "governed-transition-intake-declared-transition-risk-envelope-contract",
+    "governed-transition-intake-declared-transition-assumption-envelope-contract",
+    "governed-transition-intake-declared-transition-safeguard-envelope-contract",
+    "governed-transition-intake-package-assembly-envelope-contract",
+    "governed-transition-intake-final-non-validation-boundary-audit",
+    "governed-transition-intake-closure-handoff-contract",
+    "governed-transition-intake-phase-closure-review",
+    "governed-transition-intake-final-phase-handoff-summary",
+    "entry-gate-design-boundary-contract",
+    "entry-gate-design-request-envelope-contract",
+    "evidence-reference-envelope-contract",
+    "declared-human-context-envelope-contract",
+    "target-phase-envelope-contract",
+    "declared-transition-reason-envelope-contract",
+    "declared-transition-constraint-envelope-contract",
+    "declared-transition-dependency-envelope-contract",
+}
+
+PREVIOUS_P4_M4_6_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "declared-transition-dependency-envelope-contract"
+}
+
+PROHIBITED_MEMORY_LOOP_COMMANDS = {
+    "transition-dependency-intake",
+    "parse-transition-dependency",
+    "validate-transition-dependency",
+    "resolve-transition-dependency",
+    "solve-transition-dependency",
+    "build-dependency-graph",
+    "validate-dependency-satisfaction",
+    "detect-dependency-violation",
+    "accept-transition-dependency",
+    "reject-transition-dependency",
+    "score-transition-dependency",
+    "rank-transition-dependency",
+    "recommend-transition-dependency",
+    "generate-transition-dependency",
+    "justify-transition-dependency",
+    "route-transition-dependency",
+    "plan-transition-dependency",
+    "execute-transition-dependency",
+    "create-transition-dependency-record",
+    "create-dependency-validation-record",
+    "create-dependency-resolution-record",
+    "create-dependency-graph-record",
+    "create-dependency-solving-record",
+    "create-dependency-scoring-record",
+    "create-dependency-routing-record",
+    "create-dependency-planning-record",
+    "create-dependency-justification-record",
+    "map-transition-constraint-to-transition-dependency",
+    "map-transition-reason-to-transition-dependency",
+    "map-target-phase-to-transition-dependency",
+    "map-human-context-to-transition-dependency",
+    "validate-evidence",
+    "resolve-references",
+    "validate-references",
+    "validate-citations",
+    "fetch-sources",
+    "write-provenance",
+    "request-intake",
+    "validate-request",
+    "validate-entry-gate",
+    "validate-readiness",
+    "working-entry-gate",
+    "activate-gate",
+    "execute-gate",
+    "transition-dependency-verdict",
+    "approve",
+    "authorize",
+    "confirm",
+    "recommend",
+    "rank",
+    "next-action",
+    "execute-transition",
+    "create-record",
+    "write-memory",
+    "start-p4-m5",
+    "start-v7",
+    "productize",
+    "operator-console",
+    "ui",
+    "mvp",
+    "deploy",
+}
+
+
+def test_declared_transition_dependency_envelope_contract_field_order_count_and_ids_are_stable():
+    fields = list_declared_transition_dependency_envelope_contract_fields()
+
+    assert [field.field_order for field in fields] == list(range(1, 23))
+    assert len(fields) == 22
+    assert declared_transition_dependency_envelope_contract_field_ids() == FIELD_IDS
+
+
+def test_every_declared_transition_dependency_envelope_contract_field_has_required_values():
+    for field in list_declared_transition_dependency_envelope_contract_fields():
+        assert field.field_name.strip()
+        assert field.field_purpose.strip()
+        assert field.p4_m4_declared_transition_dependency_envelope_contract_category.strip()
+        assert (
+            field.p4_m4_declared_transition_dependency_envelope_contract_semantics_disabled.strip()
+        )
+
+
+def test_required_boundary_phrase_contract_contains_all_required_phrases():
+    for phrase in REQUIRED_BOUNDARY_PHRASES:
+        assert phrase in BOUNDARY_PHRASE_LINES
+
+
+def test_required_status_flag_contract_is_literal_and_complete():
+    assert TRUE_STATUS_FLAGS == EXPECTED_TRUE_STATUS_FLAGS
+    assert FALSE_STATUS_FLAGS == EXPECTED_FALSE_STATUS_FLAGS
+
+
+def test_markdown_output_is_stable_and_contains_required_boundaries():
+    first = render_declared_transition_dependency_envelope_contract_markdown()
+    second = render_declared_transition_dependency_envelope_contract_markdown()
+
+    assert first == second
+    assert first.startswith(
+        "# P4-M4.7 Declared Transition Dependency Envelope Contract\n"
+    )
+    assert DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY in first
+    for field_id in FIELD_IDS:
+        assert field_id in first
+    for phrase in REQUIRED_BOUNDARY_PHRASES:
+        assert phrase in first
+
+
+def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
+    args = [
+        "memory-loop",
+        "declared-transition-dependency-envelope-contract",
+        "--workspace-root",
+        str(tmp_path),
+        "--format",
+        "json",
+    ]
+    first_code, first_payload, first_stderr, first_stdout = _run_operator(args)
+    second_code, second_payload, second_stderr, second_stdout = _run_operator(args)
+
+    assert first_code == 0
+    assert second_code == 0
+    assert first_stderr == ""
+    assert second_stderr == ""
+    assert first_stdout == second_stdout
+    assert first_payload == second_payload
+    assert (
+        first_payload["boundary"]
+        == DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
+    )
+    assert first_payload["count"] == 22
+    assert first_payload["status"]["phase"] == "P4-M4.7"
+    assert (
+        first_payload["status"]["feature"]
+        == "Declared Transition Dependency Envelope Contract"
+    )
+    assert first_payload["status"]["mode"] == "read-only"
+    assert first_payload["status"] == declared_transition_dependency_envelope_contract_report()
+    assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
+    assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
+    for flag in EXPECTED_TRUE_STATUS_FLAGS:
+        assert first_payload["status"][flag] is True
+    for flag in EXPECTED_FALSE_STATUS_FLAGS:
+        assert first_payload["status"][flag] is False
+    for phrase in REQUIRED_BOUNDARY_PHRASES:
+        assert phrase in first_stdout
+    assert not (tmp_path / ".local").exists()
+
+
+def test_dict_conversion_and_status_report_are_deterministic():
+    first_fields = declared_transition_dependency_envelope_contract_as_dicts()
+    second_fields = declared_transition_dependency_envelope_contract_as_dicts()
+    first_status = declared_transition_dependency_envelope_contract_report()
+    second_status = declared_transition_dependency_envelope_contract_report()
+
+    assert first_fields == second_fields
+    assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
+    assert first_status == second_status
+    assert first_status["phase"] == "P4-M4.7"
+    assert first_status["feature"] == "Declared Transition Dependency Envelope Contract"
+    assert first_status["mode"] == "read-only"
+    assert first_status["declared_transition_dependency_envelope_contract_field_count"] == 22
+    assert (
+        first_status[
+            "referenced_p4_m4_6_declared_transition_constraint_envelope_contract_field_count"
+        ]
+        == 20
+    )
+    assert first_status["boundary"] == DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
+
+
+def test_status_report_locks_true_and_disabled_flags():
+    status = declared_transition_dependency_envelope_contract_report()
+
+    for flag in EXPECTED_TRUE_STATUS_FLAGS:
+        assert status[flag] is True
+    for flag in EXPECTED_FALSE_STATUS_FLAGS:
+        assert status[flag] is False
+
+
+def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp_path):
+    exit_code, payload, stderr, stdout = _run_operator(
+        [
+            "memory-loop",
+            "declared-transition-dependency-envelope-contract",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    assert exit_code == 0
+    assert payload == {}
+    assert stderr == ""
+    assert stdout.startswith("# P4-M4.7 Declared Transition Dependency Envelope Contract\n")
+    assert "## Status Report" in stdout
+    assert DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY in stdout
+    for phrase in REQUIRED_BOUNDARY_PHRASES:
+        assert phrase in stdout
+    assert not (tmp_path / ".local").exists()
+
+
+def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
+    args = [
+        "memory-loop",
+        "declared-transition-dependency-envelope-contract",
+        "--workspace-root",
+        str(tmp_path),
+        "--format",
+        "markdown",
+    ]
+    first_code, first_payload, first_stderr, first_stdout = _run_operator(args)
+    second_code, second_payload, second_stderr, second_stdout = _run_operator(args)
+
+    assert first_code == 0
+    assert second_code == 0
+    assert first_payload == {}
+    assert second_payload == {}
+    assert first_stderr == ""
+    assert second_stderr == ""
+    assert first_stdout == second_stdout
+    assert first_stdout.startswith("# P4-M4.7")
+    assert not (tmp_path / ".local").exists()
+
+
+def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
+    def fail_store_creation(*_args, **_kwargs):
+        raise AssertionError("writable store must not be instantiated")
+
+    monkeypatch.setattr(
+        "hermes_memory_fabric.p4_m0_subspace_operator.create_workspace_subspace_memory_store",
+        fail_store_creation,
+    )
+
+    markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
+        [
+            "memory-loop",
+            "declared-transition-dependency-envelope-contract",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+    json_code, json_payload, json_stderr, _ = _run_operator(
+        [
+            "memory-loop",
+            "declared-transition-dependency-envelope-contract",
+            "--workspace-root",
+            str(tmp_path),
+            "--format",
+            "json",
+        ]
+    )
+
+    assert markdown_code == 0
+    assert markdown_stderr == ""
+    assert markdown_stdout.startswith("# P4-M4.7")
+    assert json_code == 0
+    assert json_stderr == ""
+    assert json_payload["count"] == 22
+    assert not (tmp_path / ".local").exists()
+
+
+def test_command_creates_no_storage_files_or_state_changes(tmp_path):
+    _run_operator(
+        [
+            "memory-loop",
+            "declared-transition-dependency-envelope-contract",
+            "--workspace-root",
+            str(tmp_path),
+        ]
+    )
+
+    storage_root = tmp_path / ".local" / "subspace_memory"
+    for filename in (
+        "declared_transition_dependency_envelope_contract.jsonl",
+        "transition_dependency_intake.jsonl",
+        "transition_dependency_parsing.jsonl",
+        "transition_dependency_validation.jsonl",
+        "transition_dependency_resolution.jsonl",
+        "transition_dependency_solving.jsonl",
+        "dependency_graph_construction.jsonl",
+        "dependency_satisfaction_validation.jsonl",
+        "dependency_violation_detection.jsonl",
+        "dependency_sufficiency_validation.jsonl",
+        "dependency_consistency_validation.jsonl",
+        "dependency_integrity_validation.jsonl",
+        "transition_dependency_acceptance.jsonl",
+        "transition_dependency_rejection.jsonl",
+        "transition_dependency_scoring.jsonl",
+        "transition_dependency_ranking.jsonl",
+        "transition_dependency_recommendation.jsonl",
+        "transition_dependency_generation.jsonl",
+        "transition_dependency_justification.jsonl",
+        "transition_dependency_routing.jsonl",
+        "transition_dependency_planning.jsonl",
+        "transition_dependency_execution.jsonl",
+        "transition_dependency_records.jsonl",
+        "dependency_validation_records.jsonl",
+        "dependency_resolution_records.jsonl",
+        "dependency_graph_records.jsonl",
+        "dependency_solving_records.jsonl",
+        "dependency_scoring_records.jsonl",
+        "dependency_routing_records.jsonl",
+        "dependency_planning_records.jsonl",
+        "dependency_justification_records.jsonl",
+        "transition_constraint_validation.jsonl",
+        "transition_constraint_enforcement.jsonl",
+        "transition_constraint_solving.jsonl",
+        "transition_constraint_routing.jsonl",
+        "transition_constraint_planning.jsonl",
+        "transition_constraint_execution.jsonl",
+        "transition_reason_validation.jsonl",
+        "transition_reason_routing.jsonl",
+        "transition_reason_planning.jsonl",
+        "transition_reason_execution.jsonl",
+        "target_phase_validation.jsonl",
+        "phase_transition_validation.jsonl",
+        "readiness_scoring.jsonl",
+        "target_phase_routing.jsonl",
+        "transition_planning.jsonl",
+        "path_planning.jsonl",
+        "state_space_graph.jsonl",
+        "transition_graph.jsonl",
+        "constraint_graph.jsonl",
+        "dependency_graph.jsonl",
+        "semantic_target_field_graph.jsonl",
+        "transition_constraint_to_transition_dependency_mapping.jsonl",
+        "transition_reason_to_transition_dependency_mapping.jsonl",
+        "target_phase_to_transition_dependency_mapping.jsonl",
+        "human_context_to_transition_dependency_mapping.jsonl",
+        "evidence_validation.jsonl",
+        "reference_resolution.jsonl",
+        "reference_validation.jsonl",
+        "citation_validation.jsonl",
+        "source_fetching.jsonl",
+        "provenance_writing.jsonl",
+        "request_intake.jsonl",
+        "request_validation.jsonl",
+        "entry_gate_validation.jsonl",
+        "readiness_validation.jsonl",
+        "validation.jsonl",
+        "memories.jsonl",
+        "proposals.jsonl",
+        "lifecycle.jsonl",
+        "roadmap.jsonl",
+        "audit.jsonl",
+    ):
+        assert not (storage_root / filename).exists()
+    assert not (tmp_path / ".local").exists()
+
+
+def test_read_only_allowlist_includes_new_command_and_preserves_previous_commands():
+    commands = _memory_loop_commands()
+
+    assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
+    assert "declared-transition-dependency-envelope-contract" in commands
+    assert PREVIOUS_P4_M4_6_READ_ONLY_COMMANDS.issubset(commands)
+    assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
+
+
+def test_doc_contains_required_boundaries():
+    doc = Path(
+        "docs/CIVILIZATION_CORE_P4_M4_7_DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT.md"
+    ).read_text()
+
+    for phrase in REQUIRED_BOUNDARY_PHRASES:
+        assert phrase in doc
+    for field_id in FIELD_IDS:
+        assert field_id in doc
+
+
+def test_package_version_lock_and_no_entry_point():
+    with open("pyproject.toml", "rb") as handle:
+        pyproject = tomllib.load(handle)
+
+    assert pyproject["project"]["version"] == "6.16.0"
+    assert "scripts" not in pyproject["project"]
+    assert "gui-scripts" not in pyproject["project"]
+    assert "console_scripts" not in pyproject["project"].get("entry-points", {})
+    entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
+    assert "p4_m4_declared_transition_dependency_envelope_contract" not in entry_points
+    assert "declared-transition-dependency-envelope-contract" not in entry_points
+
+
+def test_no_uv_lock_is_created():
+    assert not Path("uv.lock").exists()
+
+
+def test_custom_markdown_render_accepts_read_only_fields():
+    field = DeclaredTransitionDependencyEnvelopeContractField(
+        field_order=1,
+        field_id="custom-declared-transition-dependency-envelope-contract",
+        field_name="Custom Declared Transition Dependency Envelope Contract Field",
+        field_purpose="Custom inspection-only purpose.",
+        p4_m4_declared_transition_dependency_envelope_contract_category=(
+            "custom-declared-transition-dependency-envelope-contract-category"
+        ),
+        p4_m4_declared_transition_dependency_envelope_contract_semantics_disabled=(
+            "Custom declared transition dependency envelope semantics are disabled."
+        ),
+    )
+
+    markdown = render_declared_transition_dependency_envelope_contract_markdown([field])
+
+    assert "custom-declared-transition-dependency-envelope-contract" in markdown
+    assert "Custom inspection-only purpose." in markdown
+
+
+def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+
+    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+
+    stdout_value = stdout.getvalue()
+    payload = json.loads(stdout_value) if stdout_value.startswith("{") else {}
+    return exit_code, payload, stderr.getvalue(), stdout_value
+
+
+def _memory_loop_commands() -> set[str]:
+    parser = build_parser()
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            memory_loop_parser = action.choices["memory-loop"]
+            break
+    else:
+        raise AssertionError("memory-loop parser not found")
+
+    for action in memory_loop_parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return set(action.choices)
+    raise AssertionError("memory-loop subcommands not found")
