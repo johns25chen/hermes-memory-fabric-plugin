@@ -137,6 +137,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-dependency-envelope-contract",
     "declared-transition-impact-envelope-contract",
     "declared-transition-risk-envelope-contract",
+    "declared-transition-assumption-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
