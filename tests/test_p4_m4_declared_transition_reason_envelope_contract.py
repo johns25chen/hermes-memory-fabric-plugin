@@ -7,38 +7,39 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m4_target_phase_envelope_contract import (
+from hermes_memory_fabric.p4_m4_declared_transition_reason_envelope_contract import (
     BOUNDARY_PHRASE_LINES,
+    DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT_BOUNDARY,
     FALSE_STATUS_FLAGS,
-    TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    TargetPhaseEnvelopeContractField,
-    list_target_phase_envelope_contract_fields,
-    render_target_phase_envelope_contract_markdown,
-    target_phase_envelope_contract_as_dicts,
-    target_phase_envelope_contract_field_ids,
-    target_phase_envelope_contract_report,
+    DeclaredTransitionReasonEnvelopeContractField,
+    declared_transition_reason_envelope_contract_as_dicts,
+    declared_transition_reason_envelope_contract_field_ids,
+    declared_transition_reason_envelope_contract_report,
+    list_declared_transition_reason_envelope_contract_fields,
+    render_declared_transition_reason_envelope_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m4-target-phase-envelope-contract-id",
-    "p4-m4-target-phase-envelope-contract-phase",
-    "p4-m4-target-phase-envelope-contract-mode",
-    "p4-m4-target-phase-envelope-contract-direct-prior-declared-human-context-envelope-reference",
-    "p4-m4-target-phase-envelope-contract-inherited-prior-evidence-reference-envelope-reference",
-    "p4-m4-target-phase-envelope-contract-inherited-prior-request-envelope-reference",
-    "p4-m4-target-phase-envelope-contract-inherited-prior-boundary-reference",
-    "p4-m4-target-phase-envelope-contract-inherited-prior-handoff-reference",
-    "p4-m4-target-phase-envelope-contract-scope",
-    "p4-m4-target-phase-envelope-contract-target-phase-envelope-design-only",
-    "p4-m4-target-phase-envelope-contract-target-phase-projection-surface-definition",
-    "p4-m4-target-phase-envelope-contract-target-phase-constraint-field-definition",
-    "p4-m4-target-phase-envelope-contract-converging-layer-semantics-definition",
-    "p4-m4-target-phase-envelope-contract-human-context-weak-prior-semantics-definition",
-    "p4-m4-target-phase-envelope-contract-target-phase-validation-semantics-disabled",
-    "p4-m4-target-phase-envelope-contract-routing-planning-execution-scoring-graph-semantics-disabled",
-    "p4-m4-target-phase-envelope-contract-p4-m5-v7-productization-ui-deferred",
+    "p4-m4-declared-transition-reason-envelope-contract-id",
+    "p4-m4-declared-transition-reason-envelope-contract-phase",
+    "p4-m4-declared-transition-reason-envelope-contract-mode",
+    "p4-m4-declared-transition-reason-envelope-contract-direct-prior-target-phase-envelope-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-inherited-prior-declared-human-context-envelope-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-inherited-prior-evidence-reference-envelope-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-inherited-prior-request-envelope-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-inherited-prior-boundary-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-inherited-prior-handoff-reference",
+    "p4-m4-declared-transition-reason-envelope-contract-scope",
+    "p4-m4-declared-transition-reason-envelope-contract-declared-transition-reason-envelope-design-only",
+    "p4-m4-declared-transition-reason-envelope-contract-declared-reason-surface-definition",
+    "p4-m4-declared-transition-reason-envelope-contract-reason-non-validation-boundary-definition",
+    "p4-m4-declared-transition-reason-envelope-contract-declaration-only-semantics-definition",
+    "p4-m4-declared-transition-reason-envelope-contract-target-phase-static-projection-reference-definition",
+    "p4-m4-declared-transition-reason-envelope-contract-transition-reason-validation-semantics-disabled",
+    "p4-m4-declared-transition-reason-envelope-contract-routing-planning-execution-scoring-justification-semantics-disabled",
+    "p4-m4-declared-transition-reason-envelope-contract-p4-m5-v7-productization-ui-deferred",
 )
 
 DATACLASS_FIELDS = {
@@ -46,58 +47,63 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m4_target_phase_envelope_contract_category",
-    "p4_m4_target_phase_envelope_contract_semantics_disabled",
+    "p4_m4_declared_transition_reason_envelope_contract_category",
+    "p4_m4_declared_transition_reason_envelope_contract_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = (
-    "P4-M4.4",
-    "Target Phase Envelope Contract",
+    "P4-M4.5",
+    "Declared Transition Reason Envelope Contract",
     "read-only",
     "definition-only",
-    "target-phase-envelope-design-only",
-    "projection-surface-only",
-    "constraint-field-only",
-    "converging-layer-only",
+    "declared-transition-reason-envelope-design-only",
+    "declared-reason-surface-only",
+    "reason-non-validation-boundary-only",
+    "declaration-only",
     "inspection-only",
-    "P4-M4.4 Target Phase Envelope Contract is definition only",
-    "P4-M4.4 is target-phase-envelope-design-only",
-    "P4-M4.4 is projection-surface-only",
-    "P4-M4.4 is constraint-field-only",
-    "P4-M4.4 is converging-layer-only",
-    "P4-M4.3 Declared Human Context Envelope Contract remains the direct prior declared human context envelope reference",
-    "P4-M4.3 declared human context remains only an inherited weak prior reference",
+    "P4-M4.5 Declared Transition Reason Envelope Contract is definition only",
+    "P4-M4.5 is declared-transition-reason-envelope-design-only",
+    "P4-M4.5 is declared-reason-surface-only",
+    "P4-M4.5 is reason-non-validation-boundary-only",
+    "P4-M4.5 is declaration-only",
+    "P4-M4.4 Target Phase Envelope Contract remains the direct prior target phase envelope reference",
+    "P4-M4.4 target phase remains only an inherited static target phase projection reference",
+    "P4-M4.3 Declared Human Context Envelope Contract remains the inherited prior declared human context envelope reference",
     "P4-M4.2 Evidence Reference Envelope Contract remains the inherited prior evidence reference envelope reference",
     "P4-M4.1 Entry Gate Design Request Envelope Contract remains the inherited prior request envelope reference",
     "P4-M4.0 Entry Gate Design Boundary Contract remains the inherited prior design boundary reference",
     "P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference",
     "P4-M3 static definition chain remains closed",
     "P4-M4 design layer remains design-boundary-only",
-    "P4-M4 target phase envelope design starts only as a static future-state projection surface",
-    "P4-M4 target phase constraint field remains static definition only",
-    "P4-M4 target phase intake remains not implemented",
-    "P4-M4 target phase parsing remains not implemented",
+    "P4-M4 declared transition reason envelope design starts only as a static declared reason description surface",
+    "P4-M4 transition reason validation remains not implemented",
+    "P4-M4 reason sufficiency validation remains not implemented",
+    "P4-M4 reason consistency validation remains not implemented",
+    "P4-M4 reason integrity validation remains not implemented",
+    "P4-M4 transition reason acceptance remains not implemented",
+    "P4-M4 transition reason rejection remains not implemented",
+    "P4-M4 transition reason scoring remains not implemented",
+    "P4-M4 transition reason ranking remains not implemented",
+    "P4-M4 transition reason recommendation remains not implemented",
+    "P4-M4 transition reason generation remains not implemented",
+    "P4-M4 transition reason justification remains not implemented",
+    "P4-M4 transition reason routing remains not implemented",
+    "P4-M4 transition reason planning remains not implemented",
+    "P4-M4 transition reason execution remains not implemented",
+    "P4-M4 transition reason record creation remains not implemented",
+    "P4-M4 reason validation record creation remains not implemented",
+    "P4-M4 reason scoring record creation remains not implemented",
+    "P4-M4 reason routing record creation remains not implemented",
+    "P4-M4 reason planning record creation remains not implemented",
+    "P4-M4 reason justification record creation remains not implemented",
     "P4-M4 target phase validation remains not implemented",
     "P4-M4 phase transition validation remains not implemented",
-    "P4-M4 target phase readiness validation remains not implemented",
     "P4-M4 readiness scoring remains not implemented",
-    "P4-M4 target phase routing remains not implemented",
-    "P4-M4 transition planning remains not implemented",
-    "P4-M4 path planning remains not implemented",
-    "P4-M4 target phase generation remains not implemented",
-    "P4-M4 target phase recommendation remains not implemented",
-    "P4-M4 target phase ranking remains not implemented",
-    "P4-M4 target phase execution remains not implemented",
     "P4-M4 state-space graph remains not implemented",
     "P4-M4 transition graph remains not implemented",
     "P4-M4 constraint graph remains not implemented",
-    "P4-M4 human context to target phase mapping remains not implemented",
-    "P4-M4 target phase record creation remains not implemented",
-    "P4-M4 phase record creation remains not implemented",
-    "P4-M4 transition record creation remains not implemented",
-    "P4-M4 readiness record creation remains not implemented",
-    "P4-M4 scoring record creation remains not implemented",
-    "P4-M4 graph record creation remains not implemented",
+    "P4-M4 target phase to transition reason mapping remains not implemented",
+    "P4-M4 human context to transition reason mapping remains not implemented",
     "P4-M4 evidence validation remains not implemented",
     "P4-M4 reference resolution remains not implemented",
     "P4-M4 reference validation remains not implemented",
@@ -120,82 +126,99 @@ REQUIRED_BOUNDARY_PHRASES = (
     "productization remains not started",
     "UI remains not started",
     "Operator Console remains not started",
-    "P4-M4.4 is not target phase intake",
-    "P4-M4.4 is not live target phase parsing",
-    "P4-M4.4 is not target phase validation",
-    "P4-M4.4 is not phase transition validation",
-    "P4-M4.4 is not target phase readiness validation",
-    "P4-M4.4 is not readiness scoring",
-    "P4-M4.4 is not target phase scoring",
-    "P4-M4.4 is not target phase routing",
-    "P4-M4.4 is not transition planning",
-    "P4-M4.4 is not path planning",
-    "P4-M4.4 is not target phase generation",
-    "P4-M4.4 is not target phase recommendation",
-    "P4-M4.4 is not target phase ranking",
-    "P4-M4.4 is not target phase execution",
-    "P4-M4.4 is not state-space graph",
-    "P4-M4.4 is not transition graph",
-    "P4-M4.4 is not constraint graph",
-    "P4-M4.4 is not human context to target phase mapping",
-    "P4-M4.4 is not target phase record creation",
-    "P4-M4.4 is not phase record creation",
-    "P4-M4.4 is not transition record creation",
-    "P4-M4.4 is not readiness record creation",
-    "P4-M4.4 is not scoring record creation",
-    "P4-M4.4 is not graph record creation",
-    "P4-M4.4 is not evidence validation",
-    "P4-M4.4 is not reference resolution",
-    "P4-M4.4 is not reference validation",
-    "P4-M4.4 is not citation validation",
-    "P4-M4.4 is not source fetching",
-    "P4-M4.4 is not provenance writing",
-    "P4-M4.4 is not request intake",
-    "P4-M4.4 is not request validation",
-    "P4-M4.4 is not entry gate validation",
-    "P4-M4.4 is not readiness validation",
-    "P4-M4.4 is not a working entry gate",
-    "P4-M4.4 is not gate activation",
-    "P4-M4.4 is not gate execution",
-    "P4-M4.4 is not readiness verdict",
-    "P4-M4.4 is not validation verdict",
-    "P4-M4.4 is not target phase verdict",
-    "P4-M4.4 is not phase verdict",
-    "P4-M4.4 is not transition verdict",
-    "P4-M4.4 is not approval",
-    "P4-M4.4 is not authorization",
-    "P4-M4.4 is not confirmation",
-    "P4-M4.4 is not recommendation",
-    "P4-M4.4 is not ranking",
-    "P4-M4.4 is not next action generation",
-    "P4-M4.4 is not transition execution",
-    "P4-M4.4 is not record creation",
-    "P4-M4.4 is not memory mutation",
-    "P4-M4.4 is not roadmap mutation",
-    "no target phase intake",
-    "no live target phase parsing",
+    "P4-M4.5 is not transition reason intake",
+    "P4-M4.5 is not live transition reason parsing",
+    "P4-M4.5 is not transition reason validation",
+    "P4-M4.5 is not reason sufficiency validation",
+    "P4-M4.5 is not reason consistency validation",
+    "P4-M4.5 is not reason integrity validation",
+    "P4-M4.5 is not transition reason acceptance",
+    "P4-M4.5 is not transition reason rejection",
+    "P4-M4.5 is not transition reason scoring",
+    "P4-M4.5 is not transition reason ranking",
+    "P4-M4.5 is not transition reason recommendation",
+    "P4-M4.5 is not transition reason generation",
+    "P4-M4.5 is not transition reason justification",
+    "P4-M4.5 is not transition reason routing",
+    "P4-M4.5 is not transition reason planning",
+    "P4-M4.5 is not transition reason execution",
+    "P4-M4.5 is not transition reason record creation",
+    "P4-M4.5 is not reason validation record creation",
+    "P4-M4.5 is not reason scoring record creation",
+    "P4-M4.5 is not reason routing record creation",
+    "P4-M4.5 is not reason planning record creation",
+    "P4-M4.5 is not reason justification record creation",
+    "P4-M4.5 is not target phase validation",
+    "P4-M4.5 is not phase transition validation",
+    "P4-M4.5 is not readiness scoring",
+    "P4-M4.5 is not target phase routing",
+    "P4-M4.5 is not transition planning",
+    "P4-M4.5 is not path planning",
+    "P4-M4.5 is not state-space graph",
+    "P4-M4.5 is not transition graph",
+    "P4-M4.5 is not constraint graph",
+    "P4-M4.5 is not target phase to transition reason mapping",
+    "P4-M4.5 is not human context to transition reason mapping",
+    "P4-M4.5 is not evidence validation",
+    "P4-M4.5 is not reference resolution",
+    "P4-M4.5 is not reference validation",
+    "P4-M4.5 is not citation validation",
+    "P4-M4.5 is not source fetching",
+    "P4-M4.5 is not provenance writing",
+    "P4-M4.5 is not request intake",
+    "P4-M4.5 is not request validation",
+    "P4-M4.5 is not entry gate validation",
+    "P4-M4.5 is not readiness validation",
+    "P4-M4.5 is not a working entry gate",
+    "P4-M4.5 is not gate activation",
+    "P4-M4.5 is not gate execution",
+    "P4-M4.5 is not readiness verdict",
+    "P4-M4.5 is not validation verdict",
+    "P4-M4.5 is not transition reason verdict",
+    "P4-M4.5 is not transition verdict",
+    "P4-M4.5 is not approval",
+    "P4-M4.5 is not authorization",
+    "P4-M4.5 is not confirmation",
+    "P4-M4.5 is not recommendation",
+    "P4-M4.5 is not ranking",
+    "P4-M4.5 is not next action generation",
+    "P4-M4.5 is not transition execution",
+    "P4-M4.5 is not record creation",
+    "P4-M4.5 is not memory mutation",
+    "P4-M4.5 is not roadmap mutation",
+    "no transition reason intake",
+    "no live transition reason parsing",
+    "no transition reason validation",
+    "no reason sufficiency validation",
+    "no reason consistency validation",
+    "no reason integrity validation",
+    "no transition reason acceptance",
+    "no transition reason rejection",
+    "no transition reason scoring",
+    "no transition reason ranking",
+    "no transition reason recommendation",
+    "no transition reason generation",
+    "no transition reason justification",
+    "no transition reason routing",
+    "no transition reason planning",
+    "no transition reason execution",
+    "no transition reason record creation",
+    "no reason validation record creation",
+    "no reason scoring record creation",
+    "no reason routing record creation",
+    "no reason planning record creation",
+    "no reason justification record creation",
     "no target phase validation",
     "no phase transition validation",
-    "no target phase readiness validation",
     "no readiness scoring",
-    "no target phase scoring",
     "no target phase routing",
     "no transition planning",
     "no path planning",
-    "no target phase generation",
-    "no target phase recommendation",
-    "no target phase ranking",
-    "no target phase execution",
     "no state-space graph",
     "no transition graph",
     "no constraint graph",
-    "no human context to target phase mapping",
-    "no target phase record creation",
-    "no phase record creation",
-    "no transition record creation",
-    "no readiness record creation",
-    "no scoring record creation",
-    "no graph record creation",
+    "no target phase to transition reason mapping",
+    "no human context to transition reason mapping",
     "no evidence validation",
     "no reference resolution",
     "no reference validation",
@@ -211,8 +234,7 @@ REQUIRED_BOUNDARY_PHRASES = (
     "no gate execution",
     "no readiness verdict",
     "no validation verdict",
-    "no target phase verdict",
-    "no phase verdict",
+    "no transition reason verdict",
     "no transition verdict",
     "no approval",
     "no authorization",
@@ -238,40 +260,42 @@ REQUIRED_BOUNDARY_PHRASES = (
 
 EXPECTED_TRUE_STATUS_FLAGS = (
     "definition_only",
-    "target_phase_envelope_design_only",
-    "projection_surface_only",
-    "constraint_field_only",
-    "converging_layer_only",
+    "declared_transition_reason_envelope_design_only",
+    "declared_reason_surface_only",
+    "reason_non_validation_boundary_only",
+    "declaration_only",
     "inspection_only",
-    "p4_m4_4_target_phase_envelope_contract_started",
-    "p4_m4_4_definition_only",
-    "p4_m4_4_target_phase_envelope_design_only",
-    "p4_m4_4_projection_surface_only",
-    "p4_m4_4_constraint_field_only",
-    "p4_m4_4_converging_layer_only",
+    "p4_m4_5_declared_transition_reason_envelope_contract_started",
+    "p4_m4_5_definition_only",
+    "p4_m4_5_declared_transition_reason_envelope_design_only",
+    "p4_m4_5_declared_reason_surface_only",
+    "p4_m4_5_reason_non_validation_boundary_only",
+    "p4_m4_5_declaration_only",
+    "p4_m4_4_target_phase_envelope_contract_reference_defined",
+    "p4_m4_4_target_phase_static_projection_reference_defined",
     "p4_m4_3_declared_human_context_envelope_contract_reference_defined",
-    "p4_m4_3_declared_human_context_weak_prior_reference_defined",
     "p4_m4_2_evidence_reference_envelope_contract_reference_defined",
     "p4_m4_1_entry_gate_design_request_envelope_contract_reference_defined",
     "p4_m4_0_entry_gate_design_boundary_contract_reference_defined",
     "p4_m3_16_final_phase_handoff_summary_reference_defined",
     "p4_m3_static_definition_chain_closed_reference_defined",
     "p4_m4_design_boundary_reference_defined",
-    "p4_m4_target_phase_envelope_design_defined",
-    "p4_m4_target_phase_projection_surface_defined",
-    "p4_m4_target_phase_constraint_field_defined",
-    "p4_m4_target_phase_non_validation_boundary_defined",
-    "p4_m4_target_phase_non_routing_boundary_defined",
-    "p4_m4_target_phase_non_planning_boundary_defined",
-    "p4_m4_target_phase_non_scoring_boundary_defined",
-    "p4_m4_target_phase_non_execution_boundary_defined",
-    "p4_m4_target_phase_non_graph_boundary_defined",
-    "p4_m4_target_phase_validation_semantics_prohibited",
-    "p4_m4_phase_transition_validation_semantics_prohibited",
-    "p4_m4_readiness_scoring_semantics_prohibited",
+    "p4_m4_declared_transition_reason_envelope_design_defined",
+    "p4_m4_declared_reason_surface_defined",
+    "p4_m4_transition_reason_non_validation_boundary_defined",
+    "p4_m4_transition_reason_non_acceptance_boundary_defined",
+    "p4_m4_transition_reason_non_rejection_boundary_defined",
+    "p4_m4_transition_reason_non_scoring_boundary_defined",
+    "p4_m4_transition_reason_non_routing_boundary_defined",
+    "p4_m4_transition_reason_non_planning_boundary_defined",
+    "p4_m4_transition_reason_non_execution_boundary_defined",
+    "p4_m4_transition_reason_validation_semantics_prohibited",
+    "p4_m4_reason_sufficiency_validation_semantics_prohibited",
+    "p4_m4_reason_consistency_validation_semantics_prohibited",
+    "p4_m4_reason_integrity_validation_semantics_prohibited",
+    "p4_m4_reason_justification_semantics_prohibited",
     "p4_m4_routing_semantics_prohibited",
     "p4_m4_planning_semantics_prohibited",
-    "p4_m4_graph_semantics_prohibited",
     "p4_m4_verdict_semantics_prohibited",
     "p4_m4_execution_semantics_prohibited",
     "p4_m4_record_creation_semantics_prohibited",
@@ -285,37 +309,44 @@ EXPECTED_TRUE_STATUS_FLAGS = (
 
 EXPECTED_FALSE_STATUS_FLAGS = (
     "live_validation_enabled",
-    "target_phase_intake_enabled",
-    "live_target_phase_parsing_enabled",
+    "transition_reason_intake_enabled",
+    "live_transition_reason_parsing_enabled",
+    "transition_reason_validation_enabled",
+    "reason_sufficiency_validation_enabled",
+    "reason_consistency_validation_enabled",
+    "reason_integrity_validation_enabled",
+    "transition_reason_acceptance_enabled",
+    "transition_reason_rejection_enabled",
+    "transition_reason_scoring_enabled",
+    "transition_reason_ranking_enabled",
+    "transition_reason_recommendation_enabled",
+    "transition_reason_generation_enabled",
+    "transition_reason_justification_enabled",
+    "transition_reason_routing_enabled",
+    "transition_reason_planning_enabled",
+    "transition_reason_execution_enabled",
+    "transition_reason_record_creation_enabled",
+    "reason_validation_record_creation_enabled",
+    "reason_scoring_record_creation_enabled",
+    "reason_routing_record_creation_enabled",
+    "reason_planning_record_creation_enabled",
+    "reason_justification_record_creation_enabled",
     "target_phase_validation_enabled",
-    "target_phase_acceptance_enabled",
-    "target_phase_rejection_enabled",
-    "target_phase_routing_enabled",
-    "target_phase_execution_enabled",
-    "target_phase_record_creation_enabled",
     "phase_transition_validation_enabled",
     "phase_readiness_validation_enabled",
     "target_phase_readiness_validation_enabled",
     "readiness_scoring_enabled",
     "target_phase_scoring_enabled",
-    "target_phase_recommendation_enabled",
-    "target_phase_ranking_enabled",
-    "target_phase_generation_enabled",
+    "target_phase_routing_enabled",
+    "target_phase_execution_enabled",
     "transition_planning_enabled",
     "path_planning_enabled",
     "state_space_graph_enabled",
     "transition_graph_enabled",
     "constraint_graph_enabled",
     "semantic_target_field_graph_enabled",
-    "human_context_to_target_phase_mapping_enabled",
-    "phase_record_creation_enabled",
-    "transition_record_creation_enabled",
-    "scoring_record_creation_enabled",
-    "routing_record_creation_enabled",
-    "planning_record_creation_enabled",
-    "graph_record_creation_enabled",
-    "state_graph_record_creation_enabled",
-    "transition_graph_record_creation_enabled",
+    "target_phase_to_transition_reason_mapping_enabled",
+    "human_context_to_transition_reason_mapping_enabled",
     "human_context_intake_enabled",
     "live_human_context_parsing_enabled",
     "human_context_validation_enabled",
@@ -329,9 +360,6 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "authorization_validation_enabled",
     "confirmation_validation_enabled",
     "human_context_record_creation_enabled",
-    "identity_record_creation_enabled",
-    "actor_record_creation_enabled",
-    "consent_record_creation_enabled",
     "evidence_intake_enabled",
     "live_evidence_parsing_enabled",
     "evidence_validation_enabled",
@@ -340,11 +368,8 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "reference_validation_enabled",
     "reference_integrity_validation_enabled",
     "citation_validation_enabled",
-    "citation_mutation_enabled",
-    "source_validation_enabled",
     "source_fetching_enabled",
     "provenance_writing_enabled",
-    "provenance_mutation_enabled",
     "request_intake_enabled",
     "live_request_parsing_enabled",
     "request_validation_enabled",
@@ -362,10 +387,6 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "transition_validation_enabled",
     "governed_transition_intake_validation_enabled",
     "package_validation_enabled",
-    "package_completeness_validation_enabled",
-    "package_consistency_validation_enabled",
-    "package_integrity_validation_enabled",
-    "package_readiness_validation_enabled",
     "closure_validation_enabled",
     "handoff_validation_enabled",
     "final_phase_handoff_validation_enabled",
@@ -376,14 +397,9 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "operational_behavior_enabled",
     "readiness_verdict_enabled",
     "validation_verdict_enabled",
-    "target_phase_verdict_enabled",
-    "phase_verdict_enabled",
+    "transition_reason_verdict_enabled",
     "transition_verdict_enabled",
     "human_context_verdict_enabled",
-    "identity_verdict_enabled",
-    "approval_verdict_enabled",
-    "authorization_verdict_enabled",
-    "confirmation_verdict_enabled",
     "evidence_verdict_enabled",
     "reference_verdict_enabled",
     "citation_verdict_enabled",
@@ -398,26 +414,13 @@ EXPECTED_FALSE_STATUS_FLAGS = (
     "transition_execution_enabled",
     "command_execution_enabled",
     "record_creation_enabled",
-    "reference_record_creation_enabled",
-    "citation_record_creation_enabled",
-    "provenance_record_creation_enabled",
-    "request_envelope_record_creation_enabled",
-    "entry_record_creation_enabled",
-    "gate_record_creation_enabled",
-    "readiness_record_creation_enabled",
-    "validation_record_creation_enabled",
-    "approval_record_creation_enabled",
-    "authorization_record_creation_enabled",
-    "confirmation_record_creation_enabled",
-    "recommendation_record_creation_enabled",
-    "ranking_record_creation_enabled",
-    "next_action_record_creation_enabled",
     "persistence_enabled",
     "storage_enabled",
     "memory_mutation_enabled",
     "roadmap_mutation_enabled",
     "lifecycle_mutation_enabled",
     "proposal_mutation_enabled",
+    "transition_reason_mutation_enabled",
     "target_phase_mutation_enabled",
     "phase_mutation_enabled",
     "transition_mutation_enabled",
@@ -493,33 +496,45 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-reason-envelope-contract",
 }
 
-PREVIOUS_P4_M4_3_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
-    "target-phase-envelope-contract"
+PREVIOUS_P4_M4_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
+    "declared-transition-reason-envelope-contract"
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
-    "target-phase-intake",
-    "parse-target-phase",
-    "parse-phase",
+    "transition-reason-intake",
+    "parse-transition-reason",
+    "validate-transition-reason",
+    "validate-reason-sufficiency",
+    "validate-reason-consistency",
+    "validate-reason-integrity",
+    "accept-transition-reason",
+    "reject-transition-reason",
+    "score-transition-reason",
+    "rank-transition-reason",
+    "recommend-transition-reason",
+    "generate-transition-reason",
+    "justify-transition-reason",
+    "route-transition-reason",
+    "plan-transition-reason",
+    "execute-transition-reason",
+    "create-transition-reason-record",
+    "create-reason-validation-record",
+    "create-reason-scoring-record",
+    "create-reason-routing-record",
+    "create-reason-planning-record",
+    "create-reason-justification-record",
     "validate-target-phase",
     "validate-phase-transition",
-    "validate-target-phase-readiness",
-    "validate-phase-readiness",
     "score-readiness",
-    "score-target-phase",
     "route-target-phase",
     "plan-transition",
     "plan-path",
-    "generate-target-phase",
-    "recommend-target-phase",
-    "rank-target-phase",
-    "execute-target-phase",
-    "execute-transition",
     "state-space-graph",
     "transition-graph",
     "constraint-graph",
     "semantic-target-field-graph",
-    "map-human-context-to-target-phase",
+    "map-target-phase-to-transition-reason",
+    "map-human-context-to-transition-reason",
     "validate-evidence",
     "resolve-references",
     "validate-references",
@@ -529,16 +544,13 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "request-intake",
     "validate-request",
     "validate-entry-gate",
-    "validate-entry-readiness",
     "validate-readiness",
     "working-entry-gate",
     "activate-gate",
     "execute-gate",
-    "execute-p4-m4",
     "readiness-verdict",
     "validation-verdict",
-    "target-phase-verdict",
-    "phase-verdict",
+    "transition-reason-verdict",
     "transition-verdict",
     "approve",
     "authorize",
@@ -546,16 +558,8 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "recommend",
     "rank",
     "next-action",
+    "execute-transition",
     "create-record",
-    "create-target-phase-record",
-    "create-phase-record",
-    "create-transition-record",
-    "create-readiness-record",
-    "create-validation-record",
-    "create-scoring-record",
-    "create-routing-record",
-    "create-planning-record",
-    "create-graph-record",
     "write-memory",
     "start-p4-m5",
     "start-v7",
@@ -567,20 +571,22 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
 }
 
 
-def test_target_phase_envelope_contract_field_order_count_and_ids_are_stable():
-    fields = list_target_phase_envelope_contract_fields()
+def test_declared_transition_reason_envelope_contract_field_order_count_and_ids_are_stable():
+    fields = list_declared_transition_reason_envelope_contract_fields()
 
-    assert [field.field_order for field in fields] == list(range(1, 18))
-    assert len(fields) == 17
-    assert target_phase_envelope_contract_field_ids() == FIELD_IDS
+    assert [field.field_order for field in fields] == list(range(1, 19))
+    assert len(fields) == 18
+    assert declared_transition_reason_envelope_contract_field_ids() == FIELD_IDS
 
 
-def test_every_target_phase_envelope_contract_field_has_required_values():
-    for field in list_target_phase_envelope_contract_fields():
+def test_every_declared_transition_reason_envelope_contract_field_has_required_values():
+    for field in list_declared_transition_reason_envelope_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
-        assert field.p4_m4_target_phase_envelope_contract_category.strip()
-        assert field.p4_m4_target_phase_envelope_contract_semantics_disabled.strip()
+        assert field.p4_m4_declared_transition_reason_envelope_contract_category.strip()
+        assert (
+            field.p4_m4_declared_transition_reason_envelope_contract_semantics_disabled.strip()
+        )
 
 
 def test_required_boundary_phrase_contract_contains_all_required_phrases():
@@ -594,12 +600,12 @@ def test_required_status_flag_contract_is_literal_and_complete():
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_target_phase_envelope_contract_markdown()
-    second = render_target_phase_envelope_contract_markdown()
+    first = render_declared_transition_reason_envelope_contract_markdown()
+    second = render_declared_transition_reason_envelope_contract_markdown()
 
     assert first == second
-    assert first.startswith("# P4-M4.4 Target Phase Envelope Contract\n")
-    assert TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY in first
+    assert first.startswith("# P4-M4.5 Declared Transition Reason Envelope Contract\n")
+    assert DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -609,7 +615,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "target-phase-envelope-contract",
+        "declared-transition-reason-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -624,12 +630,12 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert first_payload["boundary"] == TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY
-    assert first_payload["count"] == 17
-    assert first_payload["status"]["phase"] == "P4-M4.4"
-    assert first_payload["status"]["feature"] == "Target Phase Envelope Contract"
+    assert first_payload["boundary"] == DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT_BOUNDARY
+    assert first_payload["count"] == 18
+    assert first_payload["status"]["phase"] == "P4-M4.5"
+    assert first_payload["status"]["feature"] == "Declared Transition Reason Envelope Contract"
     assert first_payload["status"]["mode"] == "read-only"
-    assert first_payload["status"] == target_phase_envelope_contract_report()
+    assert first_payload["status"] == declared_transition_reason_envelope_contract_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
@@ -642,29 +648,24 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = target_phase_envelope_contract_as_dicts()
-    second_fields = target_phase_envelope_contract_as_dicts()
-    first_status = target_phase_envelope_contract_report()
-    second_status = target_phase_envelope_contract_report()
+    first_fields = declared_transition_reason_envelope_contract_as_dicts()
+    second_fields = declared_transition_reason_envelope_contract_as_dicts()
+    first_status = declared_transition_reason_envelope_contract_report()
+    second_status = declared_transition_reason_envelope_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M4.4"
-    assert first_status["feature"] == "Target Phase Envelope Contract"
+    assert first_status["phase"] == "P4-M4.5"
+    assert first_status["feature"] == "Declared Transition Reason Envelope Contract"
     assert first_status["mode"] == "read-only"
-    assert first_status["target_phase_envelope_contract_field_count"] == 17
-    assert (
-        first_status[
-            "referenced_p4_m4_3_declared_human_context_envelope_contract_field_count"
-        ]
-        == 16
-    )
-    assert first_status["boundary"] == TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY
+    assert first_status["declared_transition_reason_envelope_contract_field_count"] == 18
+    assert first_status["referenced_p4_m4_4_target_phase_envelope_contract_field_count"] == 17
+    assert first_status["boundary"] == DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT_BOUNDARY
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = target_phase_envelope_contract_report()
+    status = declared_transition_reason_envelope_contract_report()
 
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -676,7 +677,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "target-phase-envelope-contract",
+            "declared-transition-reason-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -685,9 +686,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M4.4 Target Phase Envelope Contract\n")
+    assert stdout.startswith("# P4-M4.5 Declared Transition Reason Envelope Contract\n")
     assert "## Status Report" in stdout
-    assert TARGET_PHASE_ENVELOPE_CONTRACT_BOUNDARY in stdout
+    assert DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT_BOUNDARY in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -696,7 +697,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "target-phase-envelope-contract",
+        "declared-transition-reason-envelope-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -712,7 +713,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M4.4")
+    assert first_stdout.startswith("# P4-M4.5")
     assert not (tmp_path / ".local").exists()
 
 
@@ -728,7 +729,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "target-phase-envelope-contract",
+            "declared-transition-reason-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -736,7 +737,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "target-phase-envelope-contract",
+            "declared-transition-reason-envelope-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -746,10 +747,10 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M4.4")
+    assert markdown_stdout.startswith("# P4-M4.5")
     assert json_code == 0
     assert json_stderr == ""
-    assert json_payload["count"] == 17
+    assert json_payload["count"] == 18
     assert not (tmp_path / ".local").exists()
 
 
@@ -757,7 +758,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "target-phase-envelope-contract",
+            "declared-transition-reason-envelope-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -765,39 +766,41 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "target_phase_envelope_contract.jsonl",
-        "target_phase_intake.jsonl",
-        "target_phase_parsing.jsonl",
+        "declared_transition_reason_envelope_contract.jsonl",
+        "transition_reason_intake.jsonl",
+        "transition_reason_parsing.jsonl",
+        "transition_reason_validation.jsonl",
+        "reason_sufficiency_validation.jsonl",
+        "reason_consistency_validation.jsonl",
+        "reason_integrity_validation.jsonl",
+        "transition_reason_acceptance.jsonl",
+        "transition_reason_rejection.jsonl",
+        "transition_reason_scoring.jsonl",
+        "transition_reason_ranking.jsonl",
+        "transition_reason_recommendation.jsonl",
+        "transition_reason_generation.jsonl",
+        "transition_reason_justification.jsonl",
+        "transition_reason_routing.jsonl",
+        "transition_reason_planning.jsonl",
+        "transition_reason_execution.jsonl",
+        "transition_reason_records.jsonl",
+        "reason_validation_records.jsonl",
+        "reason_scoring_records.jsonl",
+        "reason_routing_records.jsonl",
+        "reason_planning_records.jsonl",
+        "reason_justification_records.jsonl",
         "target_phase_validation.jsonl",
-        "target_phase_acceptance.jsonl",
-        "target_phase_rejection.jsonl",
-        "target_phase_routing.jsonl",
-        "target_phase_execution.jsonl",
-        "target_phase_records.jsonl",
         "phase_transition_validation.jsonl",
-        "phase_readiness_validation.jsonl",
-        "target_phase_readiness_validation.jsonl",
         "readiness_scoring.jsonl",
-        "target_phase_scoring.jsonl",
+        "target_phase_routing.jsonl",
         "transition_planning.jsonl",
         "path_planning.jsonl",
-        "target_phase_generation.jsonl",
-        "target_phase_recommendation.jsonl",
-        "target_phase_ranking.jsonl",
         "state_space_graph.jsonl",
         "transition_graph.jsonl",
         "constraint_graph.jsonl",
         "semantic_target_field_graph.jsonl",
-        "human_context_to_target_phase_mapping.jsonl",
-        "phase_records.jsonl",
-        "transition_records.jsonl",
-        "readiness_records.jsonl",
-        "scoring_records.jsonl",
-        "routing_records.jsonl",
-        "planning_records.jsonl",
-        "graph_records.jsonl",
-        "state_graph_records.jsonl",
-        "transition_graph_records.jsonl",
+        "target_phase_to_transition_reason_mapping.jsonl",
+        "human_context_to_transition_reason_mapping.jsonl",
         "evidence_validation.jsonl",
         "reference_resolution.jsonl",
         "reference_validation.jsonl",
@@ -823,14 +826,14 @@ def test_read_only_allowlist_includes_new_command_and_preserves_previous_command
     commands = _memory_loop_commands()
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "target-phase-envelope-contract" in commands
-    assert PREVIOUS_P4_M4_3_READ_ONLY_COMMANDS.issubset(commands)
+    assert "declared-transition-reason-envelope-contract" in commands
+    assert PREVIOUS_P4_M4_4_READ_ONLY_COMMANDS.issubset(commands)
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
 def test_doc_contains_required_boundaries():
     doc = Path(
-        "docs/CIVILIZATION_CORE_P4_M4_4_TARGET_PHASE_ENVELOPE_CONTRACT.md"
+        "docs/CIVILIZATION_CORE_P4_M4_5_DECLARED_TRANSITION_REASON_ENVELOPE_CONTRACT.md"
     ).read_text()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -848,8 +851,8 @@ def test_package_version_lock_and_no_entry_point():
     assert "gui-scripts" not in pyproject["project"]
     assert "console_scripts" not in pyproject["project"].get("entry-points", {})
     entry_points = json.dumps(pyproject["project"].get("entry-points", {}), sort_keys=True)
-    assert "p4_m4_target_phase_envelope_contract" not in entry_points
-    assert "target-phase-envelope-contract" not in entry_points
+    assert "p4_m4_declared_transition_reason_envelope_contract" not in entry_points
+    assert "declared-transition-reason-envelope-contract" not in entry_points
 
 
 def test_no_uv_lock_is_created():
@@ -857,22 +860,22 @@ def test_no_uv_lock_is_created():
 
 
 def test_custom_markdown_render_accepts_read_only_fields():
-    field = TargetPhaseEnvelopeContractField(
+    field = DeclaredTransitionReasonEnvelopeContractField(
         field_order=1,
-        field_id="custom-target-phase-envelope-contract",
-        field_name="Custom Target Phase Envelope Contract Field",
+        field_id="custom-declared-transition-reason-envelope-contract",
+        field_name="Custom Declared Transition Reason Envelope Contract Field",
         field_purpose="Custom inspection-only purpose.",
-        p4_m4_target_phase_envelope_contract_category=(
-            "custom-target-phase-envelope-contract-category"
+        p4_m4_declared_transition_reason_envelope_contract_category=(
+            "custom-declared-transition-reason-envelope-contract-category"
         ),
-        p4_m4_target_phase_envelope_contract_semantics_disabled=(
-            "Custom target phase envelope contract semantics are disabled."
+        p4_m4_declared_transition_reason_envelope_contract_semantics_disabled=(
+            "Custom declared transition reason envelope semantics are disabled."
         ),
     )
 
-    markdown = render_target_phase_envelope_contract_markdown([field])
+    markdown = render_declared_transition_reason_envelope_contract_markdown([field])
 
-    assert "custom-target-phase-envelope-contract" in markdown
+    assert "custom-declared-transition-reason-envelope-contract" in markdown
     assert "Custom inspection-only purpose." in markdown
 
 

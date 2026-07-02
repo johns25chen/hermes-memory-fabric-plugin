@@ -99,6 +99,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "evidence-reference-envelope-contract",
     "declared-human-context-envelope-contract",
     "target-phase-envelope-contract",
+    "declared-transition-reason-envelope-contract",
 }
 
 PREVIOUS_P4_M2_14_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {

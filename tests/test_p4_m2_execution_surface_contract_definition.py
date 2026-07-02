@@ -132,6 +132,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "evidence-reference-envelope-contract",
     "declared-human-context-envelope-contract",
     "target-phase-envelope-contract",
+    "declared-transition-reason-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
