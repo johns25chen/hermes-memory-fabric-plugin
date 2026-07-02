@@ -315,6 +315,12 @@ from .p4_m4_declared_transition_constraint_envelope_contract import (
     declared_transition_constraint_envelope_contract_report,
     render_declared_transition_constraint_envelope_contract_markdown,
 )
+from .p4_m4_declared_transition_dependency_envelope_contract import (
+    DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY,
+    declared_transition_dependency_envelope_contract_as_dicts,
+    declared_transition_dependency_envelope_contract_report,
+    render_declared_transition_dependency_envelope_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1022,6 +1028,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_declared_transition_constraint_envelope_contract)
     memory_loop_declared_transition_constraint_envelope_contract.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_declared_transition_dependency_envelope_contract = (
+        memory_loop_subparsers.add_parser(
+            "declared-transition-dependency-envelope-contract"
+        )
+    )
+    _add_workspace_root(memory_loop_declared_transition_dependency_envelope_contract)
+    memory_loop_declared_transition_dependency_envelope_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2215,6 +2233,29 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 "unsupported_memory_loop_declared_transition_constraint_envelope_"
+                f"contract_format:{args.format}"
+            )
+
+        if (
+            args.memory_loop_command
+            == "declared-transition-dependency-envelope-contract"
+        ):
+            if args.format == "markdown":
+                return render_declared_transition_dependency_envelope_contract_markdown()
+            if args.format == "json":
+                fields = declared_transition_dependency_envelope_contract_as_dicts()
+                return {
+                    "boundary": (
+                        DECLARED_TRANSITION_DEPENDENCY_ENVELOPE_CONTRACT_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        declared_transition_dependency_envelope_contract_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_declared_transition_dependency_envelope_"
                 f"contract_format:{args.format}"
             )
 
