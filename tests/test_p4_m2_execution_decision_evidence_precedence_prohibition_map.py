@@ -106,6 +106,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-risk-envelope-contract",
     "declared-transition-assumption-envelope-contract",
     "declared-transition-safeguard-envelope-contract",
+    "declared-transition-package-assembly-envelope-contract",
 }
 
 PREVIOUS_P4_M2_14_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
