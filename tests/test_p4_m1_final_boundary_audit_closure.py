@@ -124,6 +124,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-human-context-envelope-contract",
     "target-phase-envelope-contract",
     "declared-transition-reason-envelope-contract",
+    "declared-transition-constraint-envelope-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

@@ -482,6 +482,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
         "declared-human-context-envelope-contract",
         "target-phase-envelope-contract",
             "declared-transition-reason-envelope-contract",
+    "declared-transition-constraint-envelope-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
