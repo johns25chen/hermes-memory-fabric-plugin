@@ -485,6 +485,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_connector_source_p
     "declared-transition-constraint-envelope-contract",
     "declared-transition-dependency-envelope-contract",
     "declared-transition-impact-envelope-contract",
+    "declared-transition-risk-envelope-contract",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
