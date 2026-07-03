@@ -362,6 +362,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     "entry-gate-design-closure-handoff-contract",
     "entry-gate-design-phase-closure-review",
     "entry-gate-design-final-phase-handoff-summary",
+    "entry-gate-design-phase-terminal-closure-seal",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

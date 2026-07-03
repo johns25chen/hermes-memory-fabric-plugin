@@ -375,6 +375,12 @@ from .p4_m4_entry_gate_design_final_phase_handoff_summary import (
     entry_gate_design_final_phase_handoff_summary_report,
     render_entry_gate_design_final_phase_handoff_summary_markdown,
 )
+from .p4_m4_entry_gate_design_phase_terminal_closure_seal import (
+    ENTRY_GATE_DESIGN_PHASE_TERMINAL_CLOSURE_SEAL_BOUNDARY,
+    entry_gate_design_phase_terminal_closure_seal_as_dicts,
+    entry_gate_design_phase_terminal_closure_seal_report,
+    render_entry_gate_design_phase_terminal_closure_seal_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1206,6 +1212,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_entry_gate_design_final_phase_handoff_summary)
     memory_loop_entry_gate_design_final_phase_handoff_summary.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_entry_gate_design_phase_terminal_closure_seal = (
+        memory_loop_subparsers.add_parser(
+            "entry-gate-design-phase-terminal-closure-seal"
+        )
+    )
+    _add_workspace_root(memory_loop_entry_gate_design_phase_terminal_closure_seal)
+    memory_loop_entry_gate_design_phase_terminal_closure_seal.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2627,6 +2644,28 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_entry_gate_design_final_phase_handoff_"
                 f"summary_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "entry-gate-design-phase-terminal-closure-seal"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_entry_gate_design_phase_terminal_closure_seal_markdown()
+                )
+            if args.format == "json":
+                fields = entry_gate_design_phase_terminal_closure_seal_as_dicts()
+                return {
+                    "boundary": ENTRY_GATE_DESIGN_PHASE_TERMINAL_CLOSURE_SEAL_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        entry_gate_design_phase_terminal_closure_seal_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_entry_gate_design_phase_terminal_closure_"
+                f"seal_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
