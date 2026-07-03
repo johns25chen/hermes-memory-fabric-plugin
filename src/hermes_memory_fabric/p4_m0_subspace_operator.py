@@ -381,6 +381,12 @@ from .p4_m4_entry_gate_design_phase_terminal_closure_seal import (
     entry_gate_design_phase_terminal_closure_seal_report,
     render_entry_gate_design_phase_terminal_closure_seal_markdown,
 )
+from .p4_m4_final_closure_index_entry_planning_gate import (
+    P4_M4_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE_BOUNDARY,
+    p4_m4_final_closure_index_entry_planning_gate_as_dicts,
+    p4_m4_final_closure_index_entry_planning_gate_report,
+    render_p4_m4_final_closure_index_entry_planning_gate_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1223,6 +1229,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_entry_gate_design_phase_terminal_closure_seal)
     memory_loop_entry_gate_design_phase_terminal_closure_seal.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m4_final_closure_index_entry_planning_gate = (
+        memory_loop_subparsers.add_parser(
+            "p4-m4-final-closure-index-entry-planning-gate"
+        )
+    )
+    _add_workspace_root(memory_loop_p4_m4_final_closure_index_entry_planning_gate)
+    memory_loop_p4_m4_final_closure_index_entry_planning_gate.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2666,6 +2683,28 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_entry_gate_design_phase_terminal_closure_"
                 f"seal_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m4-final-closure-index-entry-planning-gate"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m4_final_closure_index_entry_planning_gate_markdown()
+                )
+            if args.format == "json":
+                fields = p4_m4_final_closure_index_entry_planning_gate_as_dicts()
+                return {
+                    "boundary": P4_M4_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m4_final_closure_index_entry_planning_gate_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m4_final_closure_index_entry_"
+                f"planning_gate_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
