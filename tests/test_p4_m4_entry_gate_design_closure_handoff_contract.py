@@ -7,44 +7,44 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
-from hermes_memory_fabric.p4_m4_entry_gate_design_final_non_validation_boundary_audit import (
+from hermes_memory_fabric.p4_m4_entry_gate_design_closure_handoff_contract import (
     BOUNDARY_PHRASE_LINES,
-    ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY,
+    ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY,
     FALSE_STATUS_FLAGS,
     TRUE_STATUS_FLAGS,
-    EntryGateDesignFinalNonValidationBoundaryAuditField,
-    entry_gate_design_final_non_validation_boundary_audit_as_dicts,
-    entry_gate_design_final_non_validation_boundary_audit_field_ids,
-    entry_gate_design_final_non_validation_boundary_audit_report,
-    list_entry_gate_design_final_non_validation_boundary_audit_fields,
-    render_entry_gate_design_final_non_validation_boundary_audit_markdown,
+    EntryGateDesignClosureHandoffContractField,
+    entry_gate_design_closure_handoff_contract_as_dicts,
+    entry_gate_design_closure_handoff_contract_field_ids,
+    entry_gate_design_closure_handoff_contract_report,
+    list_entry_gate_design_closure_handoff_contract_fields,
+    render_entry_gate_design_closure_handoff_contract_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-id",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-phase",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-mode",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-direct-prior-declared-transition-package-assembly-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-safeguard-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-assumption-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-risk-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-impact-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-dependency-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-constraint-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-transition-reason-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-target-phase-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-declared-human-context-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-evidence-reference-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-request-envelope-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-boundary-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-inherited-prior-handoff-reference",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-scope",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-design-only",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-static-audit-surface-definition",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-final-non-validation-verdict-execution-boundary-definition",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-declaration-only-semantics-definition",
-    "p4-m4-entry-gate-design-final-non-validation-boundary-audit-validation-verdict-execution-record-mutation-semantics-disabled",
+    "p4-m4-entry-gate-design-closure-handoff-contract-id",
+    "p4-m4-entry-gate-design-closure-handoff-contract-phase",
+    "p4-m4-entry-gate-design-closure-handoff-contract-mode",
+    "p4-m4-entry-gate-design-closure-handoff-contract-direct-prior-final-non-validation-boundary-audit-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-package-assembly-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-safeguard-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-assumption-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-risk-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-impact-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-dependency-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-constraint-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-transition-reason-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-target-phase-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-declared-human-context-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-evidence-reference-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-request-envelope-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-boundary-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-inherited-prior-handoff-reference",
+    "p4-m4-entry-gate-design-closure-handoff-contract-scope",
+    "p4-m4-entry-gate-design-closure-handoff-contract-design-only",
+    "p4-m4-entry-gate-design-closure-handoff-contract-static-handoff-surface-definition",
+    "p4-m4-entry-gate-design-closure-handoff-contract-declaration-only-semantics-definition",
+    "p4-m4-entry-gate-design-closure-handoff-contract-validation-execution-record-mutation-p4-m5-start-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -52,37 +52,38 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m4_entry_gate_design_final_non_validation_boundary_audit_category",
-    "p4_m4_entry_gate_design_final_non_validation_boundary_audit_semantics_disabled",
+    "p4_m4_entry_gate_design_closure_handoff_contract_category",
+    "p4_m4_entry_gate_design_closure_handoff_contract_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M4.13
-Entry Gate Design Final Non-Validation Boundary Audit
+P4-M4.14
+Entry Gate Design Closure Handoff Contract
 read-only
 definition-only
-entry-gate-design-final-non-validation-boundary-audit-only
-final-non-validation-audit-surface-only
-final-non-validation-boundary-only
-final-non-verdict-boundary-only
-final-non-execution-boundary-only
-final-non-record-boundary-only
-final-non-mutation-boundary-only
+entry-gate-design-closure-handoff-contract-only
+closure-handoff-surface-only
+closure-handoff-non-validation-boundary-only
+closure-handoff-non-execution-boundary-only
+closure-handoff-non-record-boundary-only
+closure-handoff-non-mutation-boundary-only
+p4-m5-non-start-boundary-only
 declaration-only
 inspection-only
-P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit is definition only
-P4-M4.13 is entry-gate-design-final-non-validation-boundary-audit-only
-P4-M4.13 is final-non-validation-audit-surface-only
-P4-M4.13 is final-non-validation-boundary-only
-P4-M4.13 is final-non-verdict-boundary-only
-P4-M4.13 is final-non-execution-boundary-only
-P4-M4.13 is final-non-record-boundary-only
-P4-M4.13 is final-non-mutation-boundary-only
-P4-M4.13 is declaration-only
-P4-M4.12 Declared Transition Package Assembly Envelope Contract remains the direct prior declared transition package assembly envelope reference
-P4-M4.12 declared transition package assembly remains only an inherited static declared package assembly surface reference
+P4-M4.14 Entry Gate Design Closure Handoff Contract is definition only
+P4-M4.14 is entry-gate-design-closure-handoff-contract-only
+P4-M4.14 is closure-handoff-surface-only
+P4-M4.14 is closure-handoff-non-validation-boundary-only
+P4-M4.14 is closure-handoff-non-execution-boundary-only
+P4-M4.14 is closure-handoff-non-record-boundary-only
+P4-M4.14 is closure-handoff-non-mutation-boundary-only
+P4-M4.14 is p4-m5-non-start-boundary-only
+P4-M4.14 is declaration-only
+P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit remains the direct prior final non-validation boundary audit reference
+P4-M4.13 final non-validation boundary audit remains only an inherited static final non-validation boundary audit surface reference
+P4-M4.12 Declared Transition Package Assembly Envelope Contract remains the inherited prior declared transition package assembly envelope reference
 P4-M4.11 Declared Transition Safeguard Envelope Contract remains the inherited prior declared transition safeguard envelope reference
 P4-M4.10 Declared Transition Assumption Envelope Contract remains the inherited prior declared transition assumption envelope reference
 P4-M4.9 Declared Transition Risk Envelope Contract remains the inherited prior declared transition risk envelope reference
@@ -98,44 +99,29 @@ P4-M4.0 Entry Gate Design Boundary Contract remains the inherited prior design b
 P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference
 P4-M3 static definition chain remains closed
 P4-M4 design layer remains design-boundary-only
-P4-M4 final non-validation boundary audit starts only as a static declared audit surface
+P4-M4 closure handoff starts only as a static declared handoff surface
+P4-M4 closure handoff validation remains not implemented
+P4-M4 closure handoff execution remains not implemented
+P4-M4 closure handoff record creation remains not implemented
+P4-M4 closure handoff storage remains not implemented
+P4-M4 closure handoff persistence remains not implemented
+P4-M4 closure handoff mutation remains not implemented
 P4-M4 entry gate validation remains not implemented
 P4-M4 readiness validation remains not implemented
 P4-M4 transition validation remains not implemented
 P4-M4 package validation remains not implemented
-P4-M4 transition package assembly validation remains not implemented
-P4-M4 transition package assembly composition remains not implemented
-P4-M4 transition package assembly execution remains not implemented
-P4-M4 transition package assembly scoring remains not implemented
-P4-M4 transition package assembly routing remains not implemented
-P4-M4 transition package assembly planning remains not implemented
-P4-M4 package assembly graph construction remains not implemented
-P4-M4 transition safeguard validation remains not implemented
-P4-M4 transition safeguard enforcement remains not implemented
-P4-M4 transition safeguard execution remains not implemented
-P4-M4 transition assumption validation remains not implemented
-P4-M4 transition risk validation remains not implemented
-P4-M4 transition impact validation remains not implemented
-P4-M4 transition dependency validation remains not implemented
-P4-M4 transition constraint validation remains not implemented
-P4-M4 transition reason validation remains not implemented
-P4-M4 target phase validation remains not implemented
-P4-M4 human context validation remains not implemented
-P4-M4 evidence validation remains not implemented
-P4-M4 reference validation remains not implemented
-P4-M4 citation validation remains not implemented
-P4-M4 reference resolution remains not implemented
-P4-M4 source fetching remains not implemented
-P4-M4 provenance writing remains not implemented
-P4-M4 request intake remains not implemented
-P4-M4 request validation remains not implemented
+P4-M4 package assembly validation remains not implemented
+P4-M4 final non-validation audit execution remains not implemented
+P4-M4 gate activation remains not implemented
 P4-M4 verdict generation remains not implemented
 P4-M4 approval remains not implemented
 P4-M4 authorization remains not implemented
 P4-M4 confirmation remains not implemented
 P4-M4 recommendation remains not implemented
 P4-M4 ranking remains not implemented
-P4-M4 transition execution remains not implemented
+P4-M4 routing remains not implemented
+P4-M4 planning remains not implemented
+P4-M4 execution remains not implemented
 P4-M4 record creation remains not implemented
 P4-M4 storage remains not implemented
 P4-M4 persistence remains not implemented
@@ -145,41 +131,28 @@ v7 remains not started
 productization remains not started
 UI remains not started
 Operator Console remains not started
+no closure handoff validation
+no closure handoff execution
+no closure handoff record creation
+no closure handoff storage
+no closure handoff persistence
+no closure handoff mutation
 no entry gate validation
 no readiness validation
 no transition validation
 no package validation
 no package assembly validation
-no package assembly composition
-no package assembly execution
-no package assembly scoring
-no package assembly routing
-no package assembly planning
-no package assembly graph construction
-no safeguard validation
-no assumption validation
-no risk validation
-no impact validation
-no dependency validation
-no constraint validation
-no reason validation
-no target phase validation
-no human context validation
-no evidence validation
-no reference validation
-no citation validation
-no reference resolution
-no source fetching
-no provenance writing
-no request intake
-no request validation
+no final audit execution
+no gate activation
 no verdict generation
 no approval
 no authorization
 no confirmation
 no recommendation
 no ranking
-no transition execution
+no routing
+no planning
+no execution
 no record creation
 no storage
 no persistence
@@ -196,42 +169,38 @@ no tag
 )
 
 OPERATOR_SMOKE_PHRASES = (
-    "P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit",
+    "P4-M4.14 Entry Gate Design Closure Handoff Contract",
     "read-only",
     "definition-only",
-    "entry-gate-design-final-non-validation-boundary-audit-only",
-    "final-non-validation-audit-surface-only",
-    "final-non-validation-boundary-only",
-    "final-non-verdict-boundary-only",
-    "final-non-execution-boundary-only",
-    "final-non-record-boundary-only",
-    "final-non-mutation-boundary-only",
+    "entry-gate-design-closure-handoff-contract-only",
+    "closure-handoff-surface-only",
+    "closure-handoff-non-validation-boundary-only",
+    "closure-handoff-non-execution-boundary-only",
+    "closure-handoff-non-record-boundary-only",
+    "closure-handoff-non-mutation-boundary-only",
+    "p4-m5-non-start-boundary-only",
     "declaration-only",
     "inspection-only",
-    "P4-M4.12 Declared Transition Package Assembly Envelope Contract remains the direct prior declared transition package assembly envelope reference",
-    "P4-M4.12 declared transition package assembly remains only an inherited static declared package assembly surface reference",
-    "P4-M4 final non-validation boundary audit starts only as a static declared audit surface",
-    "P4-M4 entry gate validation remains not implemented",
-    "P4-M4 readiness validation remains not implemented",
-    "P4-M4 transition validation remains not implemented",
-    "P4-M4 package validation remains not implemented",
-    "P4-M4 transition package assembly validation remains not implemented",
+    "P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit remains the direct prior final non-validation boundary audit reference",
+    "P4-M4.13 final non-validation boundary audit remains only an inherited static final non-validation boundary audit surface reference",
+    "P4-M4 closure handoff starts only as a static declared handoff surface",
+    "P4-M4 closure handoff validation remains not implemented",
+    "P4-M4 closure handoff execution remains not implemented",
+    "P4-M4 closure handoff record creation remains not implemented",
+    "P4-M4 gate activation remains not implemented",
     "P4-M4 verdict generation remains not implemented",
-    "P4-M4 approval remains not implemented",
-    "P4-M4 authorization remains not implemented",
-    "P4-M4 confirmation remains not implemented",
-    "P4-M4 transition execution remains not implemented",
-    "P4-M4 record creation remains not implemented",
-    "no entry gate validation",
-    "no readiness validation",
-    "no transition validation",
-    "no package validation",
-    "no package assembly validation",
+    "P4-M5 remains not started",
+    "no closure handoff validation",
+    "no closure handoff execution",
+    "no closure handoff record creation",
+    "no gate activation",
     "no verdict generation",
     "no approval",
     "no authorization",
     "no confirmation",
-    "no transition execution",
+    "no routing",
+    "no planning",
+    "no execution",
     "no record creation",
     "no storage",
     "no persistence",
@@ -314,12 +283,10 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "validate-transition",
     "validate-package",
     "validate-package-assembly",
-    "compose-package-assembly",
-    "execute-package-assembly",
-    "score-package-assembly",
-    "route-package-assembly",
-    "plan-package-assembly",
-    "build-package-assembly-graph",
+    "execute-handoff",
+    "activate-gate",
+    "start-p4-m5",
+    "start-v7",
     "final-audit-execution",
     "live-audit-evaluation",
     "generate-verdict",
@@ -328,58 +295,54 @@ PROHIBITED_MEMORY_LOOP_COMMANDS = {
     "confirm",
     "recommend",
     "rank",
+    "route",
+    "plan",
     "next-action",
     "execute-transition",
     "create-record",
     "write-memory",
-    "start-p4-m5",
-    "start-v7",
     "productize",
     "operator-console",
     "ui",
 }
 
 
-def test_entry_gate_design_final_non_validation_boundary_audit_field_order_count_and_ids_are_stable():
-    fields = list_entry_gate_design_final_non_validation_boundary_audit_fields()
+def test_entry_gate_design_closure_handoff_contract_field_order_count_and_ids_are_stable():
+    fields = list_entry_gate_design_closure_handoff_contract_fields()
 
     assert [field.field_order for field in fields] == list(range(1, 24))
     assert len(fields) == 23
-    assert entry_gate_design_final_non_validation_boundary_audit_field_ids() == FIELD_IDS
+    assert entry_gate_design_closure_handoff_contract_field_ids() == FIELD_IDS
 
 
-def test_every_entry_gate_design_final_non_validation_boundary_audit_field_has_required_values():
-    for field in list_entry_gate_design_final_non_validation_boundary_audit_fields():
+def test_every_entry_gate_design_closure_handoff_contract_field_has_required_values():
+    for field in list_entry_gate_design_closure_handoff_contract_fields():
         assert field.field_name.strip()
         assert field.field_purpose.strip()
+        assert field.p4_m4_entry_gate_design_closure_handoff_contract_category.strip()
         assert (
-            field.p4_m4_entry_gate_design_final_non_validation_boundary_audit_category.strip()
-        )
-        assert (
-            field.p4_m4_entry_gate_design_final_non_validation_boundary_audit_semantics_disabled.strip()
+            field.p4_m4_entry_gate_design_closure_handoff_contract_semantics_disabled.strip()
         )
 
 
 def test_required_boundary_phrase_contract_contains_all_required_phrases():
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in BOUNDARY_PHRASE_LINES
-        assert phrase in ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY
+        assert phrase in ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert (
             phrase in BOUNDARY_PHRASE_LINES
-            or phrase in ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY
+            or phrase in ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY
         )
 
 
 def test_markdown_output_is_stable_and_contains_required_boundaries():
-    first = render_entry_gate_design_final_non_validation_boundary_audit_markdown()
-    second = render_entry_gate_design_final_non_validation_boundary_audit_markdown()
+    first = render_entry_gate_design_closure_handoff_contract_markdown()
+    second = render_entry_gate_design_closure_handoff_contract_markdown()
 
     assert first == second
-    assert first.startswith(
-        "# P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit\n"
-    )
-    assert ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY in first
+    assert first.startswith("# P4-M4.14 Entry Gate Design Closure Handoff Contract\n")
+    assert ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY in first
     for field_id in FIELD_IDS:
         assert field_id in first
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -389,7 +352,7 @@ def test_markdown_output_is_stable_and_contains_required_boundaries():
 def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     args = [
         "memory-loop",
-        "entry-gate-design-final-non-validation-boundary-audit",
+        "entry-gate-design-closure-handoff-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -404,20 +367,12 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
     assert second_stderr == ""
     assert first_stdout == second_stdout
     assert first_payload == second_payload
-    assert (
-        first_payload["boundary"]
-        == ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY
-    )
+    assert first_payload["boundary"] == ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY
     assert first_payload["count"] == 23
-    assert first_payload["status"]["phase"] == "P4-M4.13"
-    assert (
-        first_payload["status"]["feature"]
-        == "Entry Gate Design Final Non-Validation Boundary Audit"
-    )
+    assert first_payload["status"]["phase"] == "P4-M4.14"
+    assert first_payload["status"]["feature"] == "Entry Gate Design Closure Handoff Contract"
     assert first_payload["status"]["mode"] == "read-only"
-    assert first_payload["status"] == (
-        entry_gate_design_final_non_validation_boundary_audit_report()
-    )
+    assert first_payload["status"] == entry_gate_design_closure_handoff_contract_report()
     assert [item["field_id"] for item in first_payload["fields"]] == list(FIELD_IDS)
     assert set(first_payload["fields"][0]) == DATACLASS_FIELDS
     for flag in TRUE_STATUS_FLAGS:
@@ -430,35 +385,28 @@ def test_json_output_is_stable_and_contains_required_boundaries(tmp_path):
 
 
 def test_dict_conversion_and_status_report_are_deterministic():
-    first_fields = entry_gate_design_final_non_validation_boundary_audit_as_dicts()
-    second_fields = entry_gate_design_final_non_validation_boundary_audit_as_dicts()
-    first_status = entry_gate_design_final_non_validation_boundary_audit_report()
-    second_status = entry_gate_design_final_non_validation_boundary_audit_report()
+    first_fields = entry_gate_design_closure_handoff_contract_as_dicts()
+    second_fields = entry_gate_design_closure_handoff_contract_as_dicts()
+    first_status = entry_gate_design_closure_handoff_contract_report()
+    second_status = entry_gate_design_closure_handoff_contract_report()
 
     assert first_fields == second_fields
     assert [field["field_id"] for field in first_fields] == list(FIELD_IDS)
     assert first_status == second_status
-    assert first_status["phase"] == "P4-M4.13"
-    assert first_status["feature"] == (
-        "Entry Gate Design Final Non-Validation Boundary Audit"
-    )
+    assert first_status["phase"] == "P4-M4.14"
+    assert first_status["feature"] == "Entry Gate Design Closure Handoff Contract"
     assert first_status["mode"] == "read-only"
+    assert first_status["entry_gate_design_closure_handoff_contract_field_count"] == 23
     assert (
         first_status[
-            "entry_gate_design_final_non_validation_boundary_audit_field_count"
-        ]
-        == 23
-    )
-    assert (
-        first_status[
-            "referenced_p4_m4_12_declared_transition_package_assembly_envelope_contract_field_count"
+            "referenced_p4_m4_13_entry_gate_design_final_non_validation_boundary_audit_field_count"
         ]
         == 23
     )
 
 
 def test_status_report_locks_true_and_disabled_flags():
-    status = entry_gate_design_final_non_validation_boundary_audit_report()
+    status = entry_gate_design_closure_handoff_contract_report()
 
     for flag in TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -470,7 +418,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     exit_code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-final-non-validation-boundary-audit",
+            "entry-gate-design-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -479,11 +427,9 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
     assert exit_code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith(
-        "# P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit\n"
-    )
+    assert stdout.startswith("# P4-M4.14 Entry Gate Design Closure Handoff Contract\n")
     assert "## Status Report" in stdout
-    assert ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY in stdout
+    assert ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY in stdout
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local").exists()
@@ -492,7 +438,7 @@ def test_operator_markdown_default_is_read_only_and_creates_no_local_storage(tmp
 def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     args = [
         "memory-loop",
-        "entry-gate-design-final-non-validation-boundary-audit",
+        "entry-gate-design-closure-handoff-contract",
         "--workspace-root",
         str(tmp_path),
         "--format",
@@ -508,7 +454,7 @@ def test_operator_markdown_format_is_explicit_and_stable(tmp_path):
     assert first_stderr == ""
     assert second_stderr == ""
     assert first_stdout == second_stdout
-    assert first_stdout.startswith("# P4-M4.13")
+    assert first_stdout.startswith("# P4-M4.14")
     assert not (tmp_path / ".local").exists()
 
 
@@ -524,7 +470,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     markdown_code, _, markdown_stderr, markdown_stdout = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-final-non-validation-boundary-audit",
+            "entry-gate-design-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -532,7 +478,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
     json_code, json_payload, json_stderr, _ = _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-final-non-validation-boundary-audit",
+            "entry-gate-design-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -542,7 +488,7 @@ def test_command_does_not_instantiate_writable_store(monkeypatch, tmp_path):
 
     assert markdown_code == 0
     assert markdown_stderr == ""
-    assert markdown_stdout.startswith("# P4-M4.13")
+    assert markdown_stdout.startswith("# P4-M4.14")
     assert json_code == 0
     assert json_stderr == ""
     assert json_payload["count"] == 23
@@ -553,7 +499,7 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
     _run_operator(
         [
             "memory-loop",
-            "entry-gate-design-final-non-validation-boundary-audit",
+            "entry-gate-design-closure-handoff-contract",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -561,27 +507,27 @@ def test_command_creates_no_storage_files_or_state_changes(tmp_path):
 
     storage_root = tmp_path / ".local" / "subspace_memory"
     for filename in (
-        "entry_gate_design_final_non_validation_boundary_audit.jsonl",
+        "entry_gate_design_closure_handoff_contract.jsonl",
+        "closure_handoff_validation.jsonl",
+        "closure_handoff_execution.jsonl",
+        "closure_handoff_record_creation.jsonl",
+        "closure_handoff_storage.jsonl",
+        "closure_handoff_persistence.jsonl",
+        "closure_handoff_mutation.jsonl",
         "final_non_validation_audit_execution.jsonl",
-        "live_audit_evaluation.jsonl",
         "entry_gate_validation.jsonl",
         "readiness_validation.jsonl",
         "transition_validation.jsonl",
         "package_validation.jsonl",
         "package_assembly_validation.jsonl",
-        "package_assembly_composition.jsonl",
-        "package_assembly_execution.jsonl",
-        "package_assembly_scoring.jsonl",
-        "package_assembly_routing.jsonl",
-        "package_assembly_planning.jsonl",
-        "package_assembly_graph_construction.jsonl",
+        "gate_activation.jsonl",
         "verdict_generation.jsonl",
         "approval.jsonl",
         "authorization.jsonl",
         "confirmation.jsonl",
-        "recommendation.jsonl",
-        "ranking.jsonl",
-        "transition_execution.jsonl",
+        "routing.jsonl",
+        "planning.jsonl",
+        "execution.jsonl",
         "record_creation.jsonl",
         "storage.jsonl",
         "persistence.jsonl",
@@ -595,17 +541,15 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
     commands = _memory_loop_subcommands(build_parser())
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "entry-gate-design-final-non-validation-boundary-audit" in commands
+    assert "entry-gate-design-closure-handoff-contract" in commands
     assert not (commands & PROHIBITED_MEMORY_LOOP_COMMANDS)
 
 
 def test_command_is_not_packaged_as_top_level_entry_point():
     entry_points = _project_entry_points()
 
-    assert "entry-gate-design-final-non-validation-boundary-audit" not in entry_points
-    assert "entry-gate-design-final-non-validation-boundary-audit" not in str(
-        entry_points
-    )
+    assert "entry-gate-design-closure-handoff-contract" not in entry_points
+    assert "entry-gate-design-closure-handoff-contract" not in str(entry_points)
 
 
 def test_static_doc_contains_required_boundaries_and_fields():
@@ -613,13 +557,11 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M4_13_ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT.md"
+        / "CIVILIZATION_CORE_P4_M4_14_ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
-    assert doc.startswith(
-        "# P4-M4.13 Entry Gate Design Final Non-Validation Boundary Audit\n"
-    )
+    assert doc.startswith("# P4-M4.14 Entry Gate Design Closure Handoff Contract\n")
     for field_id in FIELD_IDS:
         assert field_id in doc
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -627,26 +569,24 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    custom = EntryGateDesignFinalNonValidationBoundaryAuditField(
+    custom = EntryGateDesignClosureHandoffContractField(
         field_order=24,
-        field_id="custom-entry-gate-design-final-non-validation-boundary-audit",
-        field_name="Custom Entry Gate Design Final Non-Validation Boundary Audit Field",
-        field_purpose="Custom read-only final non-validation audit surface field.",
-        p4_m4_entry_gate_design_final_non_validation_boundary_audit_category=(
-            "custom-entry-gate-design-final-non-validation-boundary-audit-category"
+        field_id="custom-entry-gate-design-closure-handoff-contract",
+        field_name="Custom Entry Gate Design Closure Handoff Contract Field",
+        field_purpose="Custom read-only closure handoff surface field.",
+        p4_m4_entry_gate_design_closure_handoff_contract_category=(
+            "custom-entry-gate-design-closure-handoff-contract-category"
         ),
-        p4_m4_entry_gate_design_final_non_validation_boundary_audit_semantics_disabled=(
+        p4_m4_entry_gate_design_closure_handoff_contract_semantics_disabled=(
             "no validation semantics"
         ),
     )
 
-    markdown = render_entry_gate_design_final_non_validation_boundary_audit_markdown(
-        [custom]
-    )
+    markdown = render_entry_gate_design_closure_handoff_contract_markdown([custom])
 
-    assert "custom-entry-gate-design-final-non-validation-boundary-audit" in markdown
-    assert "Custom read-only final non-validation audit surface field." in markdown
-    assert ENTRY_GATE_DESIGN_FINAL_NON_VALIDATION_BOUNDARY_AUDIT_BOUNDARY in markdown
+    assert "custom-entry-gate-design-closure-handoff-contract" in markdown
+    assert "Custom read-only closure handoff surface field." in markdown
+    assert ENTRY_GATE_DESIGN_CLOSURE_HANDOFF_CONTRACT_BOUNDARY in markdown
 
 
 def _run_operator(args: list[str]) -> tuple[int, dict[str, object], str, str]:
