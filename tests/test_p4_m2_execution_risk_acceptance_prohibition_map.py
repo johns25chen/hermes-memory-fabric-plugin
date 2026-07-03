@@ -117,6 +117,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-phase-terminal-closure-seal",
     "p4-m4-final-closure-index-entry-planning-gate",
     "p4-m4-final-closure-evidence-index",
+    "p4-m4-final-closure-operator-handoff-index",
 }
 
 PREVIOUS_P4_M2_6_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
