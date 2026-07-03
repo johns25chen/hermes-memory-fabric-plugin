@@ -381,6 +381,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     "entry-gate-design-phase-terminal-closure-seal",
     "p4-m4-final-closure-index-entry-planning-gate",
     "p4-m4-final-closure-evidence-index",
+    "p4-m4-final-closure-operator-handoff-index",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
