@@ -117,6 +117,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-final-phase-handoff-summary",
     "entry-gate-design-phase-terminal-closure-seal",
     "p4-m4-final-closure-index-entry-planning-gate",
+    "p4-m4-final-closure-evidence-index",
 }
 
 TRUE_STATUS_FLAGS = (

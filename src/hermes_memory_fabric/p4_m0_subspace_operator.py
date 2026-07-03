@@ -387,6 +387,12 @@ from .p4_m4_final_closure_index_entry_planning_gate import (
     p4_m4_final_closure_index_entry_planning_gate_report,
     render_p4_m4_final_closure_index_entry_planning_gate_markdown,
 )
+from .p4_m4_final_closure_evidence_index import (
+    P4_M4_FINAL_CLOSURE_EVIDENCE_INDEX_BOUNDARY,
+    p4_m4_final_closure_evidence_index_as_dicts,
+    p4_m4_final_closure_evidence_index_report,
+    render_p4_m4_final_closure_evidence_index_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1240,6 +1246,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_p4_m4_final_closure_index_entry_planning_gate)
     memory_loop_p4_m4_final_closure_index_entry_planning_gate.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m4_final_closure_evidence_index = (
+        memory_loop_subparsers.add_parser(
+            "p4-m4-final-closure-evidence-index"
+        )
+    )
+    _add_workspace_root(memory_loop_p4_m4_final_closure_evidence_index)
+    memory_loop_p4_m4_final_closure_evidence_index.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2705,6 +2722,21 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m4_final_closure_index_entry_"
                 f"planning_gate_format:{args.format}"
+            )
+        if args.memory_loop_command == "p4-m4-final-closure-evidence-index":
+            if args.format == "markdown":
+                return render_p4_m4_final_closure_evidence_index_markdown()
+            if args.format == "json":
+                fields = p4_m4_final_closure_evidence_index_as_dicts()
+                return {
+                    "boundary": P4_M4_FINAL_CLOSURE_EVIDENCE_INDEX_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": p4_m4_final_closure_evidence_index_report(),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m4_final_closure_evidence_"
+                f"index_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

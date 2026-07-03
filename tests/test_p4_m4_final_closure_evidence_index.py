@@ -12,44 +12,44 @@ from hermes_memory_fabric.p4_m0_subspace_operator import (
     build_parser,
     run_operator_command,
 )
-from hermes_memory_fabric.p4_m4_final_closure_index_entry_planning_gate import (
+from hermes_memory_fabric.p4_m4_final_closure_evidence_index import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    P4_M4_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE_BOUNDARY,
+    P4_M4_FINAL_CLOSURE_EVIDENCE_INDEX_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    P4M4FinalClosureIndexEntryPlanningGateField,
-    list_p4_m4_final_closure_index_entry_planning_gate_fields,
-    p4_m4_final_closure_index_entry_planning_gate_as_dicts,
-    p4_m4_final_closure_index_entry_planning_gate_field_ids,
-    p4_m4_final_closure_index_entry_planning_gate_report,
-    render_p4_m4_final_closure_index_entry_planning_gate_markdown,
+    P4M4FinalClosureEvidenceIndexField,
+    list_p4_m4_final_closure_evidence_index_fields,
+    p4_m4_final_closure_evidence_index_as_dicts,
+    p4_m4_final_closure_evidence_index_field_ids,
+    p4_m4_final_closure_evidence_index_report,
+    render_p4_m4_final_closure_evidence_index_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m4-final-closure-index-entry-planning-gate-id",
-    "p4-m4-final-closure-index-entry-planning-gate-phase",
-    "p4-m4-final-closure-index-entry-planning-gate-mode",
-    "p4-m4-final-closure-index-entry-planning-gate-direct-prior-terminal-closure-seal-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-final-phase-handoff-summary-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-phase-closure-review-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-closure-handoff-contract-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-final-non-validation-boundary-audit-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-package-assembly-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-safeguard-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-assumption-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-risk-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-impact-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-dependency-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-constraint-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-transition-reason-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-target-phase-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-declared-human-context-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-evidence-reference-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-request-envelope-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-inherited-prior-boundary-reference",
-    "p4-m4-final-closure-index-entry-planning-gate-static-final-closure-index-definition",
-    "p4-m4-final-closure-index-entry-planning-gate-p4-m5-start-validation-scoring-verdict-execution-record-mutation-semantics-disabled",
+    "p4-m4-final-closure-evidence-index-id",
+    "p4-m4-final-closure-evidence-index-phase",
+    "p4-m4-final-closure-evidence-index-mode",
+    "p4-m4-final-closure-evidence-index-direct-prior-final-closure-index-entry-planning-gate-reference",
+    "p4-m4-final-closure-evidence-index-direct-prior-terminal-closure-seal-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-final-phase-handoff-summary-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-phase-closure-review-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-closure-handoff-contract-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-final-non-validation-boundary-audit-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-package-assembly-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-safeguard-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-assumption-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-risk-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-impact-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-dependency-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-constraint-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-transition-reason-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-target-phase-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-declared-human-context-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-evidence-reference-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-request-envelope-reference",
+    "p4-m4-final-closure-evidence-index-inherited-prior-boundary-reference",
+    "p4-m4-final-closure-evidence-index-static-evidence-index-and-validation-scoring-verdict-execution-record-mutation-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -57,43 +57,44 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m4_final_closure_index_entry_planning_gate_category",
-    "p4_m4_final_closure_index_entry_planning_gate_semantics_disabled",
+    "p4_m4_final_closure_evidence_index_category",
+    "p4_m4_final_closure_evidence_index_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M4-FC.0
-P4-M4 Final Closure Index / P4-M5 Entry Planning Gate
+P4-M4-FC.1
+P4-M4 Final Closure Evidence Index
 read-only
 definition-only
-p4-m4-final-closure-index-only
-p4-m5-entry-planning-gate-only
+p4-m4-final-closure-evidence-index-only
+evidence-index-only
+evidence-reference-non-validation-boundary-only
+evidence-index-non-scoring-boundary-only
+evidence-index-non-verdict-boundary-only
+evidence-index-non-execution-boundary-only
+evidence-index-non-record-boundary-only
+evidence-index-non-mutation-boundary-only
 p4-m5-non-start-boundary-only
-planning-gate-non-validation-boundary-only
-planning-gate-non-scoring-boundary-only
-planning-gate-non-verdict-boundary-only
-planning-gate-non-execution-boundary-only
-planning-gate-non-record-boundary-only
-planning-gate-non-mutation-boundary-only
 declaration-only
 inspection-only
-P4-M4-FC.0 is not P4-M4.18
-P4-M4-FC.0 is not P4-M5
-P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate is definition only
-P4-M4-FC.0 is p4-m4-final-closure-index-only
-P4-M4-FC.0 is p4-m5-entry-planning-gate-only
-P4-M4-FC.0 is p4-m5-non-start-boundary-only
-P4-M4-FC.0 is planning-gate-non-validation-boundary-only
-P4-M4-FC.0 is planning-gate-non-scoring-boundary-only
-P4-M4-FC.0 is planning-gate-non-verdict-boundary-only
-P4-M4-FC.0 is planning-gate-non-execution-boundary-only
-P4-M4-FC.0 is planning-gate-non-record-boundary-only
-P4-M4-FC.0 is planning-gate-non-mutation-boundary-only
-P4-M4-FC.0 is declaration-only
+P4-M4-FC.1 is not P4-M4.18
+P4-M4-FC.1 is not P4-M5
+P4-M4-FC.1 P4-M4 Final Closure Evidence Index is definition only
+P4-M4-FC.1 is p4-m4-final-closure-evidence-index-only
+P4-M4-FC.1 is evidence-index-only
+P4-M4-FC.1 is evidence-reference-non-validation-boundary-only
+P4-M4-FC.1 is evidence-index-non-scoring-boundary-only
+P4-M4-FC.1 is evidence-index-non-verdict-boundary-only
+P4-M4-FC.1 is evidence-index-non-execution-boundary-only
+P4-M4-FC.1 is evidence-index-non-record-boundary-only
+P4-M4-FC.1 is evidence-index-non-mutation-boundary-only
+P4-M4-FC.1 is p4-m5-non-start-boundary-only
+P4-M4-FC.1 is declaration-only
+P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate remains the direct prior final closure index and entry planning gate reference
+P4-M4-FC.0 remains only an inherited static final closure index and entry planning gate surface reference
 P4-M4.17 Entry Gate Design Phase Terminal Closure Seal remains the direct prior terminal closure seal reference
-P4-M4.17 terminal closure seal remains only an inherited static terminal closure seal surface reference
 P4-M4.16 Entry Gate Design Final Phase Handoff Summary remains the inherited prior final phase handoff summary reference
 P4-M4.15 Entry Gate Design Phase Closure Review remains the inherited prior phase closure review reference
 P4-M4.14 Entry Gate Design Closure Handoff Contract remains the inherited prior closure handoff contract reference
@@ -114,8 +115,16 @@ P4-M4.0 Entry Gate Design Boundary Contract remains the inherited prior design b
 P4-M3.16 Governed Transition Intake Final Phase Handoff Summary remains the inherited prior closed-phase handoff reference
 P4-M4 static definition chain remains closed
 P4-M4 design layer remains terminally sealed
-P4-M4 final closure index starts only as a static declared index surface
-P4-M5 entry planning gate starts only as a static non-start planning gate surface
+P4-M4 final closure evidence index starts only as a static declared evidence index surface
+P4-M4 evidence references remain static reference-only entries
+P4-M4 evidence validation remains not implemented
+P4-M4 evidence scoring remains not implemented
+P4-M4 evidence verdict remains not implemented
+P4-M4 evidence execution remains not implemented
+P4-M4 evidence record creation remains not implemented
+P4-M4 evidence storage remains not implemented
+P4-M4 evidence persistence remains not implemented
+P4-M4 evidence mutation remains not implemented
 P4-M5 entry validation remains not implemented
 P4-M5 readiness validation remains not implemented
 P4-M5 entry scoring remains not implemented
@@ -136,6 +145,14 @@ no P4-M5 entry scoring
 no P4-M5 entry verdict
 no P4-M5 entry execution
 no P4-M5 start
+no evidence validation
+no evidence scoring
+no evidence verdict
+no evidence execution
+no evidence record creation
+no evidence storage
+no evidence persistence
+no evidence mutation
 no validation
 no scoring
 no verdict
@@ -162,26 +179,29 @@ no tag
 )
 
 OPERATOR_SMOKE_PHRASES = (
-    "P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate",
+    "P4-M4-FC.1 P4-M4 Final Closure Evidence Index",
     "read-only",
     "definition-only",
-    "p4-m4-final-closure-index-only",
-    "p4-m5-entry-planning-gate-only",
+    "p4-m4-final-closure-evidence-index-only",
+    "evidence-index-only",
+    "evidence-reference-non-validation-boundary-only",
+    "evidence-index-non-scoring-boundary-only",
+    "evidence-index-non-verdict-boundary-only",
+    "evidence-index-non-execution-boundary-only",
+    "evidence-index-non-record-boundary-only",
+    "evidence-index-non-mutation-boundary-only",
     "p4-m5-non-start-boundary-only",
-    "planning-gate-non-validation-boundary-only",
-    "planning-gate-non-scoring-boundary-only",
-    "planning-gate-non-verdict-boundary-only",
-    "planning-gate-non-execution-boundary-only",
-    "planning-gate-non-record-boundary-only",
-    "planning-gate-non-mutation-boundary-only",
     "declaration-only",
     "inspection-only",
-    "P4-M4-FC.0 is not P4-M4.18",
-    "P4-M4-FC.0 is not P4-M5",
+    "P4-M4-FC.1 is not P4-M4.18",
+    "P4-M4-FC.1 is not P4-M5",
+    "P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate remains the direct prior final closure index and entry planning gate reference",
     "P4-M4.17 Entry Gate Design Phase Terminal Closure Seal remains the direct prior terminal closure seal reference",
     "P4-M4 static definition chain remains closed",
     "P4-M4 design layer remains terminally sealed",
-    "P4-M5 entry planning gate starts only as a static non-start planning gate surface",
+    "P4-M4 final closure evidence index starts only as a static declared evidence index surface",
+    "P4-M4 evidence references remain static reference-only entries",
+    "P4-M4 evidence validation remains not implemented",
     "P4-M5 entry validation remains not implemented",
     "P4-M5 readiness validation remains not implemented",
     "P4-M5 entry verdict remains not implemented",
@@ -197,6 +217,14 @@ OPERATOR_SMOKE_PHRASES = (
     "no P4-M5 entry verdict",
     "no P4-M5 entry execution",
     "no P4-M5 start",
+    "no evidence validation",
+    "no evidence scoring",
+    "no evidence verdict",
+    "no evidence execution",
+    "no evidence record creation",
+    "no evidence storage",
+    "no evidence persistence",
+    "no evidence mutation",
     "no validation",
     "no scoring",
     "no verdict",
@@ -224,24 +252,25 @@ EXPECTED_TRUE_STATUS_FLAGS = tuple(
     line
     for line in """
 definition_only
-p4_m4_final_closure_index_only
-p4_m5_entry_planning_gate_only
+p4_m4_final_closure_evidence_index_only
+evidence_index_only
+evidence_reference_non_validation_boundary_only
+evidence_index_non_scoring_boundary_only
+evidence_index_non_verdict_boundary_only
+evidence_index_non_execution_boundary_only
+evidence_index_non_record_boundary_only
+evidence_index_non_mutation_boundary_only
 p4_m5_non_start_boundary_only
-planning_gate_non_validation_boundary_only
-planning_gate_non_scoring_boundary_only
-planning_gate_non_verdict_boundary_only
-planning_gate_non_execution_boundary_only
-planning_gate_non_record_boundary_only
-planning_gate_non_mutation_boundary_only
 declaration_only
 inspection_only
-p4_m4_fc_0_started
-p4_m4_fc_0_definition_only
-p4_m4_fc_0_final_closure_index_only
-p4_m4_fc_0_p4_m5_entry_planning_gate_only
-p4_m4_fc_0_p4_m5_non_start_boundary_only
+p4_m4_fc_1_started
+p4_m4_fc_1_definition_only
+p4_m4_fc_1_final_closure_evidence_index_only
+p4_m4_fc_1_evidence_index_only
+p4_m4_fc_1_p4_m5_non_start_boundary_only
+p4_m4_fc_0_final_closure_index_entry_planning_gate_reference_defined
+p4_m4_fc_0_static_reference_defined
 p4_m4_17_terminal_closure_seal_reference_defined
-p4_m4_17_terminal_closure_seal_static_reference_defined
 p4_m4_16_final_phase_handoff_summary_reference_defined
 p4_m4_15_phase_closure_review_reference_defined
 p4_m4_14_closure_handoff_contract_reference_defined
@@ -262,9 +291,8 @@ p4_m4_0_entry_gate_design_boundary_contract_reference_defined
 p4_m3_16_final_phase_handoff_summary_reference_defined
 p4_m4_static_definition_chain_closed_reference_defined
 p4_m4_design_layer_terminally_sealed_reference_defined
-p4_m4_final_closure_index_surface_defined
-p4_m5_entry_planning_gate_surface_defined
-p4_m5_non_start_boundary_defined
+p4_m4_final_closure_evidence_index_surface_defined
+p4_m4_static_evidence_references_defined
 p4_m5_start_deferred
 v7_start_deferred
 productization_deferred
@@ -287,6 +315,18 @@ p4_m5_entry_scoring_enabled
 p4_m5_entry_verdict_enabled
 p4_m5_entry_execution_enabled
 p4_m5_start_enabled
+evidence_validation_enabled
+evidence_scoring_enabled
+evidence_verdict_enabled
+evidence_execution_enabled
+evidence_record_creation_enabled
+evidence_storage_enabled
+evidence_persistence_enabled
+evidence_mutation_enabled
+final_closure_evidence_index_validation_enabled
+final_closure_evidence_index_scoring_enabled
+final_closure_evidence_index_verdict_enabled
+final_closure_evidence_index_execution_enabled
 final_closure_index_validation_enabled
 final_closure_index_scoring_enabled
 final_closure_index_verdict_enabled
@@ -424,50 +464,47 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
 
 
 def test_field_inventory_is_exact_and_ordered():
-    fields = list_p4_m4_final_closure_index_entry_planning_gate_fields()
+    fields = list_p4_m4_final_closure_evidence_index_fields()
 
     assert len(fields) == 23
-    assert p4_m4_final_closure_index_entry_planning_gate_field_ids() == FIELD_IDS
+    assert p4_m4_final_closure_evidence_index_field_ids() == FIELD_IDS
     assert tuple(field.field_order for field in fields) == tuple(range(1, 24))
-    assert all(
-        isinstance(field, P4M4FinalClosureIndexEntryPlanningGateField)
-        for field in fields
-    )
+    assert all(isinstance(field, P4M4FinalClosureEvidenceIndexField) for field in fields)
     assert {
         field.name
-        for field in dataclasses.fields(P4M4FinalClosureIndexEntryPlanningGateField)
+        for field in dataclasses.fields(P4M4FinalClosureEvidenceIndexField)
     } == DATACLASS_FIELDS
 
 
 def test_boundary_phrase_inventory_is_required_contract():
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in BOUNDARY_PHRASE_LINES
-        assert phrase in P4_M4_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE_BOUNDARY
+        assert phrase in P4_M4_FINAL_CLOSURE_EVIDENCE_INDEX_BOUNDARY
 
 
 def test_markdown_renders_static_boundary_and_field_ids():
-    markdown = render_p4_m4_final_closure_index_entry_planning_gate_markdown()
+    markdown = render_p4_m4_final_closure_evidence_index_markdown()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in markdown
     for field_id in FIELD_IDS:
         assert field_id in markdown
     assert "## Status Report" in markdown
-    assert "## P4-M4 Final Closure Index Entry Planning Gate Fields" in markdown
-    assert "P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate" in markdown
+    assert "## P4-M4 Final Closure Evidence Index Fields" in markdown
+    assert "P4-M4-FC.1 P4-M4 Final Closure Evidence Index" in markdown
 
 
 def test_report_has_required_true_false_status_flags():
-    status = p4_m4_final_closure_index_entry_planning_gate_report()
+    status = p4_m4_final_closure_evidence_index_report()
 
-    assert status["phase"] == "P4-M4-FC.0"
-    assert status["feature"] == "P4-M4 Final Closure Index / P4-M5 Entry Planning Gate"
+    assert status["phase"] == "P4-M4-FC.1"
+    assert status["feature"] == "P4-M4 Final Closure Evidence Index"
     assert status["mode"] == "read-only"
     assert status["package_version"] == "6.16.0"
-    assert status["p4_m4_final_closure_index_entry_planning_gate_field_count"] == 23
+    assert status["p4_m4_final_closure_evidence_index_field_count"] == 23
     assert (
         status[
-            "referenced_p4_m4_17_entry_gate_design_phase_terminal_closure_seal_field_count"
+            "referenced_p4_m4_fc_0_final_closure_index_entry_planning_gate_field_count"
         ]
         == 23
     )
@@ -480,14 +517,14 @@ def test_report_has_required_true_false_status_flags():
 
 
 def test_as_dicts_is_deterministic_and_read_only_shape():
-    fields = p4_m4_final_closure_index_entry_planning_gate_as_dicts()
+    fields = p4_m4_final_closure_evidence_index_as_dicts()
 
     assert len(fields) == 23
     assert tuple(field["field_id"] for field in fields) == FIELD_IDS
-    assert fields == p4_m4_final_closure_index_entry_planning_gate_as_dicts()
+    assert fields == p4_m4_final_closure_evidence_index_as_dicts()
     assert all(
-        field["p4_m4_final_closure_index_entry_planning_gate_category"]
-        == "p4-m4-final-closure-index-entry-planning-gate-category"
+        field["p4_m4_final_closure_evidence_index_category"]
+        == "p4-m4-final-closure-evidence-index-category"
         for field in fields
     )
 
@@ -507,7 +544,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m4-final-closure-index-entry-planning-gate",
+            "p4-m4-final-closure-evidence-index",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -516,9 +553,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     assert code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith(
-        "# P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate\n"
-    )
+    assert stdout.startswith("# P4-M4-FC.1 P4-M4 Final Closure Evidence Index\n")
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
     assert not (tmp_path / ".local" / "subspace_memory").exists()
@@ -528,7 +563,7 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     code, output, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m4-final-closure-index-entry-planning-gate",
+            "p4-m4-final-closure-evidence-index",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -540,11 +575,11 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     assert stderr == ""
     assert stdout.startswith("{")
     assert output["count"] == 23
-    assert output["boundary"] == P4_M4_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE_BOUNDARY
+    assert output["boundary"] == P4_M4_FINAL_CLOSURE_EVIDENCE_INDEX_BOUNDARY
     assert tuple(field["field_id"] for field in output["fields"]) == FIELD_IDS
     status = output["status"]
-    assert status["phase"] == "P4-M4-FC.0"
-    assert status["feature"] == "P4-M4 Final Closure Index / P4-M5 Entry Planning Gate"
+    assert status["phase"] == "P4-M4-FC.1"
+    assert status["feature"] == "P4-M4 Final Closure Evidence Index"
     assert status["mode"] == "read-only"
     for flag in EXPECTED_TRUE_STATUS_FLAGS:
         assert status[flag] is True
@@ -557,15 +592,15 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
     commands = _memory_loop_subcommands(build_parser())
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
-    assert "p4-m4-final-closure-index-entry-planning-gate" in commands
+    assert "p4-m4-final-closure-evidence-index" in commands
 
 
 def test_pyproject_entry_points_do_not_productize_command():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     entry_points = pyproject["project"]["entry-points"]
 
-    assert "p4-m4-final-closure-index-entry-planning-gate" not in entry_points
-    assert "p4-m4-final-closure-index-entry-planning-gate" not in str(entry_points)
+    assert "p4-m4-final-closure-evidence-index" not in entry_points
+    assert "p4-m4-final-closure-evidence-index" not in str(entry_points)
     assert pyproject["project"]["version"] == "6.16.0"
 
 
@@ -574,13 +609,11 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M4_FC_0_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE.md"
+        / "CIVILIZATION_CORE_P4_M4_FC_1_FINAL_CLOSURE_EVIDENCE_INDEX.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
-    assert doc.startswith(
-        "# P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate\n"
-    )
+    assert doc.startswith("# P4-M4-FC.1 P4-M4 Final Closure Evidence Index\n")
     for field_id in FIELD_IDS:
         assert field_id in doc
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -588,32 +621,32 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    field = P4M4FinalClosureIndexEntryPlanningGateField(
+    field = P4M4FinalClosureEvidenceIndexField(
         field_order=99,
-        field_id="custom-final-closure-index-entry-planning-gate",
-        field_name="Custom Final Closure Index Entry Planning Gate",
+        field_id="custom-final-closure-evidence-index",
+        field_name="Custom Final Closure Evidence Index",
         field_purpose="custom read-only definition-only inspection-only field",
-        p4_m4_final_closure_index_entry_planning_gate_category=(
-            "custom-final-closure-index-entry-planning-gate-category"
+        p4_m4_final_closure_evidence_index_category=(
+            "custom-final-closure-evidence-index-category"
         ),
-        p4_m4_final_closure_index_entry_planning_gate_semantics_disabled=(
-            "no validation semantics; no execution semantics; no mutation semantics"
+        p4_m4_final_closure_evidence_index_semantics_disabled=(
+            "no evidence validation semantics; no execution semantics; no mutation semantics"
         ),
     )
 
-    markdown = render_p4_m4_final_closure_index_entry_planning_gate_markdown((field,))
+    markdown = render_p4_m4_final_closure_evidence_index_markdown((field,))
 
-    assert "custom-final-closure-index-entry-planning-gate" in markdown
-    assert "no validation semantics; no execution semantics" in markdown
-    assert "P4-M4-FC.0 P4-M4 Final Closure Index / P4-M5 Entry Planning Gate" in markdown
+    assert "custom-final-closure-evidence-index" in markdown
+    assert "no evidence validation semantics; no execution semantics" in markdown
+    assert "P4-M4-FC.1 P4-M4 Final Closure Evidence Index" in markdown
 
 
 def test_forbidden_stage_filenames_are_not_created():
     project_root = Path(__file__).resolve().parents[1]
     changed_names = (
-        "src/hermes_memory_fabric/p4_m4_final_closure_index_entry_planning_gate.py",
-        "tests/test_p4_m4_final_closure_index_entry_planning_gate.py",
-        "docs/CIVILIZATION_CORE_P4_M4_FC_0_FINAL_CLOSURE_INDEX_ENTRY_PLANNING_GATE.md",
+        "src/hermes_memory_fabric/p4_m4_final_closure_evidence_index.py",
+        "tests/test_p4_m4_final_closure_evidence_index.py",
+        "docs/CIVILIZATION_CORE_P4_M4_FC_1_FINAL_CLOSURE_EVIDENCE_INDEX.md",
     )
 
     assert all("p4_m5" not in name and "P4_M5" not in name for name in changed_names)
