@@ -501,6 +501,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "entry-gate-design-final-non-validation-boundary-audit",
     "entry-gate-design-closure-handoff-contract",
     "entry-gate-design-phase-closure-review",
+    "entry-gate-design-final-phase-handoff-summary",
 }
 
 PREVIOUS_P4_M4_3_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {

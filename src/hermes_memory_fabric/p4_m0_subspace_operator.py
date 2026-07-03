@@ -369,6 +369,12 @@ from .p4_m4_entry_gate_design_phase_closure_review import (
     entry_gate_design_phase_closure_review_report,
     render_entry_gate_design_phase_closure_review_markdown,
 )
+from .p4_m4_entry_gate_design_final_phase_handoff_summary import (
+    ENTRY_GATE_DESIGN_FINAL_PHASE_HANDOFF_SUMMARY_BOUNDARY,
+    entry_gate_design_final_phase_handoff_summary_as_dicts,
+    entry_gate_design_final_phase_handoff_summary_report,
+    render_entry_gate_design_final_phase_handoff_summary_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1188,6 +1194,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_workspace_root(memory_loop_entry_gate_design_phase_closure_review)
     memory_loop_entry_gate_design_phase_closure_review.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+
+    memory_loop_entry_gate_design_final_phase_handoff_summary = (
+        memory_loop_subparsers.add_parser(
+            "entry-gate-design-final-phase-handoff-summary"
+        )
+    )
+    _add_workspace_root(memory_loop_entry_gate_design_final_phase_handoff_summary)
+    memory_loop_entry_gate_design_final_phase_handoff_summary.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2586,6 +2604,29 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_entry_gate_design_phase_closure_"
                 f"review_format:{args.format}"
+            )
+
+        if (
+            args.memory_loop_command
+            == "entry-gate-design-final-phase-handoff-summary"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_entry_gate_design_final_phase_handoff_summary_markdown()
+                )
+            if args.format == "json":
+                fields = entry_gate_design_final_phase_handoff_summary_as_dicts()
+                return {
+                    "boundary": ENTRY_GATE_DESIGN_FINAL_PHASE_HANDOFF_SUMMARY_BOUNDARY,
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        entry_gate_design_final_phase_handoff_summary_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_entry_gate_design_final_phase_handoff_"
+                f"summary_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
