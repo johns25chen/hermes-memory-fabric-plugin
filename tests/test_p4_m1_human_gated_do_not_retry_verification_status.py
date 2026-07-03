@@ -454,6 +454,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutat
     "declared-transition-package-assembly-envelope-contract",
     "entry-gate-design-final-non-validation-boundary-audit",
     "entry-gate-design-closure-handoff-contract",
+    "entry-gate-design-phase-closure-review",
     }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

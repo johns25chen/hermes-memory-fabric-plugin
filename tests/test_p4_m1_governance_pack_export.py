@@ -131,6 +131,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-package-assembly-envelope-contract",
     "entry-gate-design-final-non-validation-boundary-audit",
     "entry-gate-design-closure-handoff-contract",
+    "entry-gate-design-phase-closure-review",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
