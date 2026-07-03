@@ -413,6 +413,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-safeguard-envelope-contract",
     "declared-transition-package-assembly-envelope-contract",
     "entry-gate-design-final-non-validation-boundary-audit",
+    "entry-gate-design-closure-handoff-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

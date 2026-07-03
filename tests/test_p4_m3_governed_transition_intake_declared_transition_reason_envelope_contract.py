@@ -111,6 +111,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "declared-transition-safeguard-envelope-contract",
     "declared-transition-package-assembly-envelope-contract",
     "entry-gate-design-final-non-validation-boundary-audit",
+    "entry-gate-design-closure-handoff-contract",
 }
 
 PREVIOUS_P4_M3_4_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
