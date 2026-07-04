@@ -417,6 +417,12 @@ from .p4_m4_final_closure_boundary_freeze_index import (
     p4_m4_final_closure_boundary_freeze_index_report,
     render_p4_m4_final_closure_boundary_freeze_index_markdown,
 )
+from .p4_m4_final_closure_roadmap_alignment_snapshot import (
+    P4_M4_FINAL_CLOSURE_ROADMAP_ALIGNMENT_SNAPSHOT_BOUNDARY,
+    p4_m4_final_closure_roadmap_alignment_snapshot_as_dicts,
+    p4_m4_final_closure_roadmap_alignment_snapshot_report,
+    render_p4_m4_final_closure_roadmap_alignment_snapshot_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1331,6 +1337,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m4_final_closure_boundary_freeze_index
     )
     memory_loop_p4_m4_final_closure_boundary_freeze_index.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m4_final_closure_roadmap_alignment_snapshot = (
+        memory_loop_subparsers.add_parser(
+            "p4-m4-final-closure-roadmap-alignment-snapshot"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m4_final_closure_roadmap_alignment_snapshot
+    )
+    memory_loop_p4_m4_final_closure_roadmap_alignment_snapshot.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2909,6 +2928,32 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m4_final_closure_boundary_"
                 f"freeze_index_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m4-final-closure-roadmap-alignment-snapshot"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m4_final_closure_roadmap_alignment_snapshot_markdown()
+                )
+            if args.format == "json":
+                fields = (
+                    p4_m4_final_closure_roadmap_alignment_snapshot_as_dicts()
+                )
+                return {
+                    "boundary": (
+                        P4_M4_FINAL_CLOSURE_ROADMAP_ALIGNMENT_SNAPSHOT_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m4_final_closure_roadmap_alignment_snapshot_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m4_final_closure_roadmap_"
+                f"alignment_snapshot_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

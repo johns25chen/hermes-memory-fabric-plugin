@@ -119,6 +119,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m4-final-closure-transition-readiness-non-start-index",
     "p4-m4-final-closure-non-start-bridge-index",
     "p4-m4-final-closure-boundary-freeze-index",
+    "p4-m4-final-closure-roadmap-alignment-snapshot",
 }
 
 PREVIOUS_P4_M2_11_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
