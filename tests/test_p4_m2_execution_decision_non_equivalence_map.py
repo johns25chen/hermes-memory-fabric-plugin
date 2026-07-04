@@ -118,6 +118,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m4-final-closure-evidence-index",
     "p4-m4-final-closure-operator-handoff-index",
     "p4-m4-final-closure-transition-readiness-non-start-index",
+    "p4-m4-final-closure-non-start-bridge-index",
 }
 
 PREVIOUS_P4_M2_8_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
