@@ -447,6 +447,14 @@ from .p4_m5_3_connector_readiness_audit_surface_map import (
     p4_m5_3_connector_readiness_audit_surface_map_report,
     render_p4_m5_3_connector_readiness_audit_surface_map_markdown,
 )
+from .p4_m5_4_cross_surface_alignment_map import (
+    FALSE_STATUS_FLAGS as P4_M5_4_FALSE_STATUS_FLAGS,
+    P4_M5_4_CROSS_SURFACE_ALIGNMENT_MAP_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M5_4_TRUE_STATUS_FLAGS,
+    p4_m5_4_cross_surface_alignment_map_as_dicts,
+    p4_m5_4_cross_surface_alignment_map_report,
+    render_p4_m5_4_cross_surface_alignment_map_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1426,6 +1434,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m5_3_connector_readiness_audit_surface_map
     )
     memory_loop_p4_m5_3_connector_readiness_audit_surface_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m5_4_cross_surface_alignment_map = (
+        memory_loop_subparsers.add_parser(
+            "p4-m5-4-cross-surface-alignment-map"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m5_4_cross_surface_alignment_map
+    )
+    memory_loop_p4_m5_4_cross_surface_alignment_map.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3121,6 +3142,23 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m5_3_connector_readiness_audit_"
                 f"surface_map_format:{args.format}"
+            )
+        if args.memory_loop_command == "p4-m5-4-cross-surface-alignment-map":
+            if args.format == "markdown":
+                return render_p4_m5_4_cross_surface_alignment_map_markdown()
+            if args.format == "json":
+                fields = p4_m5_4_cross_surface_alignment_map_as_dicts()
+                return {
+                    "boundary": P4_M5_4_CROSS_SURFACE_ALIGNMENT_MAP_BOUNDARY,
+                    "count": len(fields),
+                    "false_flags": len(P4_M5_4_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": p4_m5_4_cross_surface_alignment_map_report(),
+                    "true_flags": len(P4_M5_4_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m5_4_cross_surface_alignment_"
+                f"map_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
