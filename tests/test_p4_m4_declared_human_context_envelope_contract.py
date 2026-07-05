@@ -429,6 +429,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract",
     "p4-m5-1-api-readiness-audit-surface-map",
     "p4-m5-2-mcp-readiness-audit-surface-map",
+    "p4-m5-3-connector-readiness-audit-surface-map",
 }
 
 PREVIOUS_P4_M4_2_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
