@@ -441,6 +441,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands
     "p4-m4-final-closure-roadmap-alignment-snapshot",
     "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract",
     "p4-m5-1-api-readiness-audit-surface-map",
+    "p4-m5-2-mcp-readiness-audit-surface-map",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

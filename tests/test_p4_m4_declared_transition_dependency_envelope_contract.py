@@ -639,6 +639,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m4-final-closure-roadmap-alignment-snapshot",
     "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract",
     "p4-m5-1-api-readiness-audit-surface-map",
+    "p4-m5-2-mcp-readiness-audit-surface-map",
 }
 
 PREVIOUS_P4_M4_6_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
