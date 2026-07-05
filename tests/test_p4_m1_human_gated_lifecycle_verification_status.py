@@ -439,6 +439,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_lifecycle_commands
     "p4-m4-final-closure-non-start-bridge-index",
     "p4-m4-final-closure-boundary-freeze-index",
     "p4-m4-final-closure-roadmap-alignment-snapshot",
+    "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 

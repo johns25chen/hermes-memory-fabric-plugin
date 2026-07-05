@@ -444,6 +444,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m4-final-closure-non-start-bridge-index",
     "p4-m4-final-closure-boundary-freeze-index",
     "p4-m4-final-closure-roadmap-alignment-snapshot",
+    "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {
