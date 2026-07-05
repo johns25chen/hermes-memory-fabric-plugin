@@ -374,6 +374,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     "p4-m5-1-api-readiness-audit-surface-map",
     "p4-m5-2-mcp-readiness-audit-surface-map",
     "p4-m5-3-connector-readiness-audit-surface-map",
+    "p4-m5-4-cross-surface-alignment-map",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
