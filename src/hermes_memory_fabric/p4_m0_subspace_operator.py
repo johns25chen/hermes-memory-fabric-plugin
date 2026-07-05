@@ -435,6 +435,12 @@ from .p4_m5_1_api_readiness_audit_surface_map import (
     p4_m5_1_api_readiness_audit_surface_map_report,
     render_p4_m5_1_api_readiness_audit_surface_map_markdown,
 )
+from .p4_m5_2_mcp_readiness_audit_surface_map import (
+    P4_M5_2_MCP_READINESS_AUDIT_SURFACE_MAP_BOUNDARY,
+    p4_m5_2_mcp_readiness_audit_surface_map_as_dicts,
+    p4_m5_2_mcp_readiness_audit_surface_map_report,
+    render_p4_m5_2_mcp_readiness_audit_surface_map_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1388,6 +1394,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m5_1_api_readiness_audit_surface_map
     )
     memory_loop_p4_m5_1_api_readiness_audit_surface_map.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m5_2_mcp_readiness_audit_surface_map = (
+        memory_loop_subparsers.add_parser(
+            "p4-m5-2-mcp-readiness-audit-surface-map"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m5_2_mcp_readiness_audit_surface_map
+    )
+    memory_loop_p4_m5_2_mcp_readiness_audit_surface_map.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3038,6 +3057,26 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 }
             raise ValueError(
                 "unsupported_memory_loop_p4_m5_1_api_readiness_audit_"
+                f"surface_map_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m5-2-mcp-readiness-audit-surface-map"
+        ):
+            if args.format == "markdown":
+                return render_p4_m5_2_mcp_readiness_audit_surface_map_markdown()
+            if args.format == "json":
+                fields = p4_m5_2_mcp_readiness_audit_surface_map_as_dicts()
+                return {
+                    "boundary": (
+                        P4_M5_2_MCP_READINESS_AUDIT_SURFACE_MAP_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": p4_m5_2_mcp_readiness_audit_surface_map_report(),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m5_2_mcp_readiness_audit_"
                 f"surface_map_format:{args.format}"
             )
 
