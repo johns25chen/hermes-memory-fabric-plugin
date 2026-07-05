@@ -423,6 +423,12 @@ from .p4_m4_final_closure_roadmap_alignment_snapshot import (
     p4_m4_final_closure_roadmap_alignment_snapshot_report,
     render_p4_m4_final_closure_roadmap_alignment_snapshot_markdown,
 )
+from .p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract import (
+    P4_M5_0_API_MCP_CONNECTOR_READINESS_AUDIT_BOUNDARY_CONTRACT_BOUNDARY,
+    p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_as_dicts,
+    p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_report,
+    render_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1350,6 +1356,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m4_final_closure_roadmap_alignment_snapshot
     )
     memory_loop_p4_m4_final_closure_roadmap_alignment_snapshot.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract = (
+        memory_loop_subparsers.add_parser(
+            "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract
+    )
+    memory_loop_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -2954,6 +2973,33 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m4_final_closure_roadmap_"
                 f"alignment_snapshot_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_markdown()
+                )
+            if args.format == "json":
+                fields = (
+                    p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_as_dicts()
+                )
+                return {
+                    "boundary": (
+                        P4_M5_0_API_MCP_CONNECTOR_READINESS_AUDIT_BOUNDARY_CONTRACT_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_report()
+                    ),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m5_0_api_mcp_connector_"
+                "readiness_audit_boundary_contract_format:"
+                f"{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
