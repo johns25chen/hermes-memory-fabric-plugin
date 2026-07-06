@@ -12,46 +12,47 @@ from hermes_memory_fabric.p4_m0_subspace_operator import (
     build_parser,
     run_operator_command,
 )
-from hermes_memory_fabric.p4_m6_0_next_corridor_entry_boundary_contract import (
+from hermes_memory_fabric.p4_m6_2_entry_acceptance_non_evidence_surface import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT_BOUNDARY,
+    P4_M6_2_ENTRY_ACCEPTANCE_NON_EVIDENCE_SURFACE_BOUNDARY,
+    SUPPLEMENTAL_TRUE_STATUS_FLAGS,
     TRUE_STATUS_FLAGS,
-    P4M60NextCorridorEntryBoundaryContractField,
-    list_p4_m6_0_next_corridor_entry_boundary_contract_fields,
-    p4_m6_0_next_corridor_entry_boundary_contract_as_dicts,
-    p4_m6_0_next_corridor_entry_boundary_contract_field_ids,
-    p4_m6_0_next_corridor_entry_boundary_contract_report,
-    render_p4_m6_0_next_corridor_entry_boundary_contract_markdown,
+    P4M62EntryAcceptanceNonEvidenceSurfaceField,
+    list_p4_m6_2_entry_acceptance_non_evidence_surface_fields,
+    p4_m6_2_entry_acceptance_non_evidence_surface_as_dicts,
+    p4_m6_2_entry_acceptance_non_evidence_surface_field_ids,
+    p4_m6_2_entry_acceptance_non_evidence_surface_report,
+    render_p4_m6_2_entry_acceptance_non_evidence_surface_markdown,
 )
 
 
 FIELD_IDS = tuple(
     line
     for line in """
-p4-m6-0-next-corridor-entry-boundary-contract-id
-p4-m6-0-next-corridor-entry-boundary-contract-phase
-p4-m6-0-next-corridor-entry-boundary-contract-mode
-p4-m6-0-next-corridor-entry-boundary-contract-p4-m6-definition-corridor-position
-p4-m6-0-next-corridor-entry-boundary-contract-direct-prior-p4-m5-6-final-closure-handoff-reference
-p4-m6-0-next-corridor-entry-boundary-contract-inherited-p4-m5-readiness-audit-corridor-reference
-p4-m6-0-next-corridor-entry-boundary-contract-next-corridor-entry-scope-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-next-corridor-non-implementation-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-api-implementation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-mcp-implementation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-connector-implementation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-agent-auto-call-external-integration-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-network-live-probing-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-oauth-credential-secret-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-api-mcp-connector-call-data-operation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-authentication-authorization-schema-validation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-readiness-validation-inference-scoring-verdict-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-readiness-routing-execution-record-storage-persistence-mutation-non-start-entry-boundary
-p4-m6-0-next-corridor-entry-boundary-contract-entry-precondition-definition-only-surface
-p4-m6-0-next-corridor-entry-boundary-contract-entry-acceptance-non-evidence-surface
-p4-m6-0-next-corridor-entry-boundary-contract-implementation-start-deferred-surface
-p4-m6-0-next-corridor-entry-boundary-contract-v7-productization-ui-operator-console-deferred-surface
-p4-m6-0-next-corridor-entry-boundary-contract-static-entry-boundary-and-validation-inference-scoring-verdict-routing-execution-record-storage-mutation-semantics-disabled
+p4-m6-2-entry-acceptance-non-evidence-surface-id
+p4-m6-2-entry-acceptance-non-evidence-surface-phase
+p4-m6-2-entry-acceptance-non-evidence-surface-mode
+p4-m6-2-entry-acceptance-non-evidence-surface-p4-m6-position
+p4-m6-2-entry-acceptance-non-evidence-surface-direct-prior-p4-m6-1-entry-preconditions-definition-surface-reference
+p4-m6-2-entry-acceptance-non-evidence-surface-inherited-p4-m6-0-entry-boundary-contract-reference
+p4-m6-2-entry-acceptance-non-evidence-surface-static-acceptance-label-scope
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-label-definition-surface
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-evidence-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-validation-input-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-authorization-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-confirmation-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-approval-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-recommendation-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-routing-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-execution-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-record-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-storage-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-persistence-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-acceptance-non-mutation-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-implementation-corridor-v7-productization-ui-operator-console-deferred-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-api-mcp-connector-agent-network-external-integration-non-start-boundary
+p4-m6-2-entry-acceptance-non-evidence-surface-static-acceptance-and-evidence-validation-authorization-routing-execution-record-storage-mutation-semantics-disabled
 """.splitlines()
     if line
 )
@@ -61,32 +62,38 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m6_0_next_corridor_entry_boundary_contract_category",
-    "p4_m6_0_next_corridor_entry_boundary_contract_semantics_disabled",
+    "p4_m6_2_entry_acceptance_non_evidence_surface_category",
+    "p4_m6_2_entry_acceptance_non_evidence_surface_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M6.0
-Next Corridor Entry Boundary Contract
-P4-M6.0 Next Corridor Entry Boundary Contract
+P4-M6.2
+Entry Acceptance Non-Evidence Surface
+P4-M6.2 Entry Acceptance Non-Evidence Surface
 read-only
 definition-only
-p4-m6-0-next-corridor-entry-boundary-contract-only
-next-corridor-entry-definition-only
+p4-m6-2-entry-acceptance-non-evidence-surface-only
+entry-acceptance-non-evidence-surface-only
+static-acceptance-labels-only
+non-evidence-acceptance-surface-only
+non-validation-input-acceptance-surface-only
+non-validation-acceptance-surface-only
+non-inference-acceptance-surface-only
+non-scoring-acceptance-surface-only
+non-verdict-acceptance-surface-only
+non-authorization-acceptance-surface-only
+non-confirmation-acceptance-surface-only
+non-approval-acceptance-surface-only
+non-recommendation-acceptance-surface-only
+non-routing-acceptance-surface-only
+non-execution-acceptance-surface-only
+non-record-acceptance-surface-only
+non-storage-acceptance-surface-only
+non-persistence-acceptance-surface-only
+non-mutation-acceptance-surface-only
 implementation-corridor-not-started-boundary-only
-api-mcp-connector-readiness-audit-handoff-reference-only
-p4-m5-final-closure-handoff-reference-only
-entry-boundary-non-validation-boundary-only
-entry-boundary-non-inference-boundary-only
-entry-boundary-non-scoring-boundary-only
-entry-boundary-non-verdict-boundary-only
-entry-boundary-non-routing-boundary-only
-entry-boundary-non-execution-boundary-only
-entry-boundary-non-record-boundary-only
-entry-boundary-non-storage-boundary-only
-entry-boundary-non-mutation-boundary-only
 api-implementation-disabled
 mcp-implementation-disabled
 connector-implementation-disabled
@@ -95,77 +102,80 @@ network-access-disabled
 external-system-integration-disabled
 declaration-only
 inspection-only
-P4-M6.0 opens only the next definition corridor entry boundary contract
-P4-M6.0 does not open implementation work
-P4-M6.0 is not API implementation
-P4-M6.0 is not MCP implementation
-P4-M6.0 is not Connector implementation
-P4-M6.0 is not API client implementation
-P4-M6.0 is not MCP client implementation
-P4-M6.0 is not MCP server implementation
-P4-M6.0 is not MCP transport implementation
-P4-M6.0 is not MCP session implementation
-P4-M6.0 is not Connector client implementation
-P4-M6.0 is not Connector adapter implementation
-P4-M6.0 is not Connector runtime implementation
-P4-M6.0 is not Agent auto-call
-P4-M6.0 is not external system integration
-P4-M6.0 is not network access
-P4-M6.0 is not live API endpoint probing
-P4-M6.0 is not live MCP server probing
-P4-M6.0 is not live provider probing
-P4-M6.0 is not live provider discovery
-P4-M6.0 is not OAuth flow
-P4-M6.0 is not credential use
-P4-M6.0 is not secret access
-P4-M6.0 is not secret inspection
-P4-M6.0 is not API call
-P4-M6.0 is not MCP tool call
-P4-M6.0 is not MCP resource access
-P4-M6.0 is not MCP prompt execution
-P4-M6.0 is not connector data fetch
-P4-M6.0 is not connector data write
-P4-M6.0 is not connector mutation
-P4-M6.0 is not authentication testing
-P4-M6.0 is not authorization testing
-P4-M6.0 is not schema validation
-P4-M6.0 does not perform readiness validation
-P4-M6.0 does not infer readiness
-P4-M6.0 does not score readiness
-P4-M6.0 does not produce readiness verdict
-P4-M6.0 does not route implementation
-P4-M6.0 does not execute
-P4-M6.0 does not create readiness records
-P4-M6.0 does not create storage
-P4-M6.0 does not persist state
-P4-M6.0 does not mutate memory
-P4-M6.0 does not start implementation corridor
-P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index remains the direct prior final closure handoff reference
+P4-M6.2 defines only static entry acceptance surfaces
+P4-M6.2 does not accept readiness evidence
+P4-M6.2 does not collect readiness evidence
+P4-M6.2 does not classify readiness evidence
+P4-M6.2 does not treat acceptance as readiness evidence
+P4-M6.2 does not treat acceptance as validation input
+P4-M6.2 does not validate acceptance
+P4-M6.2 does not infer acceptance
+P4-M6.2 does not score acceptance
+P4-M6.2 does not produce acceptance verdict
+P4-M6.2 does not authorize entry
+P4-M6.2 does not confirm entry
+P4-M6.2 does not approve entry
+P4-M6.2 does not recommend entry
+P4-M6.2 does not route implementation
+P4-M6.2 does not execute
+P4-M6.2 does not create records
+P4-M6.2 does not create storage
+P4-M6.2 does not persist state
+P4-M6.2 does not mutate memory
+P4-M6.2 does not start implementation corridor
+P4-M6.2 is not API implementation
+P4-M6.2 is not MCP implementation
+P4-M6.2 is not Connector implementation
+P4-M6.2 is not API client implementation
+P4-M6.2 is not MCP client implementation
+P4-M6.2 is not MCP server implementation
+P4-M6.2 is not MCP transport implementation
+P4-M6.2 is not MCP session implementation
+P4-M6.2 is not Connector client implementation
+P4-M6.2 is not Connector adapter implementation
+P4-M6.2 is not Connector runtime implementation
+P4-M6.2 is not Agent auto-call
+P4-M6.2 is not external system integration
+P4-M6.2 is not network access
+P4-M6.2 is not live API endpoint probing
+P4-M6.2 is not live MCP server probing
+P4-M6.2 is not live provider probing
+P4-M6.2 is not live provider discovery
+P4-M6.2 is not OAuth flow
+P4-M6.2 is not credential use
+P4-M6.2 is not secret access
+P4-M6.2 is not secret inspection
+P4-M6.2 is not API call
+P4-M6.2 is not MCP tool call
+P4-M6.2 is not MCP resource access
+P4-M6.2 is not MCP prompt execution
+P4-M6.2 is not connector data fetch
+P4-M6.2 is not connector data write
+P4-M6.2 is not connector mutation
+P4-M6.2 is not authentication testing
+P4-M6.2 is not authorization testing
+P4-M6.2 is not schema validation
+P4-M6.1 Entry Preconditions Definition Surface remains the direct prior entry preconditions reference
+P4-M6.0 Next Corridor Entry Boundary Contract remains an inherited entry boundary reference
+P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index remains an inherited final closure handoff reference
 P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal remains an inherited closure seal reference
 P4-M5.4 API / MCP / Connector Cross-Surface Alignment Map remains an inherited cross-surface alignment map reference
-P4-M5.3 Connector Readiness Audit Surface Map remains an inherited Connector surface map reference
-P4-M5.2 MCP Readiness Audit Surface Map remains an inherited MCP surface map reference
-P4-M5.1 API Readiness Audit Surface Map remains an inherited API surface map reference
-P4-M5.0 API / MCP / Connector Readiness Audit Boundary Contract remains the inherited prior boundary contract reference
-Next corridor entry scope boundary is definition-only
-Next corridor non-implementation boundary is definition-only
-API implementation non-start entry boundary is definition-only
-MCP implementation non-start entry boundary is definition-only
-Connector implementation non-start entry boundary is definition-only
-Agent auto-call external integration non-start entry boundary is definition-only
-network live probing non-start entry boundary is definition-only
-OAuth credential secret non-start entry boundary is definition-only
-API MCP Connector call data operation non-start entry boundary is definition-only
-authentication authorization schema validation non-start entry boundary is definition-only
-readiness validation inference scoring verdict non-start entry boundary is definition-only
-readiness routing execution record storage persistence mutation non-start entry boundary is definition-only
-entry precondition surface is definition-only
-entry acceptance surface is not readiness evidence
-implementation start deferred surface is definition-only
-P4-M6.0 entry surfaces are not readiness evidence
-P4-M6.0 entry surfaces are not validation inputs
-P4-M6.0 entry surfaces are not implementation start
-P4-M6.0 entry surfaces are not authorization
+static entry acceptance labels are definition-only
+acceptance label definition surface is definition-only
+acceptance surface scope is definition-only
+entry acceptance surfaces are not readiness evidence
+entry acceptance surfaces are not validation inputs
+entry acceptance surfaces are not authorization
+entry acceptance surfaces are not confirmation
+entry acceptance surfaces are not approval
+entry acceptance surfaces are not recommendation
+entry acceptance surfaces are not routing
+entry acceptance surfaces are not execution
+entry acceptance surfaces are not records
+entry acceptance surfaces are not storage
+entry acceptance surfaces are not persistence
+entry acceptance surfaces are not mutation
+implementation corridor remains not started
 API implementation remains not started
 MCP implementation remains not started
 Connector implementation remains not started
@@ -200,11 +210,20 @@ record creation remains not implemented
 storage remains not implemented
 persistence remains not implemented
 mutation remains not implemented
-implementation corridor remains not started
 v7 remains not started
 productization remains not started
 UI remains not started
 Operator Console remains not started
+no acceptance validation
+no acceptance inference
+no acceptance scoring
+no acceptance verdict
+no readiness evidence
+no validation inputs
+no authorization
+no confirmation
+no approval
+no recommendation
 no API implementation
 no MCP implementation
 no Connector implementation
@@ -241,12 +260,8 @@ no readiness validation
 no readiness inference
 no readiness scoring
 no readiness verdict
-no validation
-no scoring
-no verdict
 no routing
 no execution
-no command execution
 no record creation
 no storage
 no persistence
@@ -266,22 +281,27 @@ ALL_EXPECTED_TRUE_STATUS_KEYS = tuple(
     line
     for line in """
 definition_only
-p4_m6_0_next_corridor_entry_boundary_contract_started
-p4_m6_0_next_corridor_entry_boundary_contract_only
-next_corridor_entry_boundary_contract_only
-next_corridor_entry_definition_only
+p4_m6_2_entry_acceptance_non_evidence_surface_started
+p4_m6_2_entry_acceptance_non_evidence_surface_only
+entry_acceptance_non_evidence_surface_only
+static_acceptance_labels_only
+acceptance_non_evidence_surface_only
+acceptance_non_validation_input_surface_only
+acceptance_non_validation_surface_only
+acceptance_non_inference_surface_only
+acceptance_non_scoring_surface_only
+acceptance_non_verdict_surface_only
+acceptance_non_authorization_surface_only
+acceptance_non_confirmation_surface_only
+acceptance_non_approval_surface_only
+acceptance_non_recommendation_surface_only
+acceptance_non_routing_surface_only
+acceptance_non_execution_surface_only
+acceptance_non_record_surface_only
+acceptance_non_storage_surface_only
+acceptance_non_persistence_surface_only
+acceptance_non_mutation_surface_only
 implementation_corridor_not_started_boundary_only
-api_mcp_connector_readiness_audit_handoff_reference_only
-p4_m5_final_closure_handoff_reference_only
-entry_boundary_non_validation_boundary_only
-entry_boundary_non_inference_boundary_only
-entry_boundary_non_scoring_boundary_only
-entry_boundary_non_verdict_boundary_only
-entry_boundary_non_routing_boundary_only
-entry_boundary_non_execution_boundary_only
-entry_boundary_non_record_boundary_only
-entry_boundary_non_storage_boundary_only
-entry_boundary_non_mutation_boundary_only
 api_implementation_disabled
 mcp_implementation_disabled
 connector_implementation_disabled
@@ -290,39 +310,50 @@ network_access_disabled
 external_system_integration_disabled
 declaration_only
 inspection_only
-p4_m6_0_started_as_boundary_definition_only
+p4_m6_2_started_as_acceptance_definition_only
 p4_m6_position_preserved
+p4_m6_1_entry_preconditions_definition_surface_reference_defined
+p4_m6_0_entry_boundary_contract_reference_defined
 p4_m5_6_final_closure_handoff_reference_defined
 p4_m5_5_closure_seal_reference_defined
 p4_m5_4_cross_surface_alignment_map_reference_defined
-p4_m5_3_connector_surface_map_reference_defined
-p4_m5_2_mcp_surface_map_reference_defined
-p4_m5_1_api_surface_map_reference_defined
-p4_m5_0_boundary_contract_reference_defined
-next_corridor_entry_scope_defined
-next_corridor_non_implementation_boundary_defined
-entry_boundary_acceptance_surface_defined
-entry_boundary_precondition_surface_defined
-entry_boundary_deferral_surface_defined
-api_implementation_non_start_surface_defined
-mcp_implementation_non_start_surface_defined
-connector_implementation_non_start_surface_defined
-agent_auto_call_non_start_surface_defined
-external_integration_non_start_surface_defined
-readiness_validation_non_start_surface_defined
-readiness_inference_non_start_surface_defined
-readiness_scoring_non_start_surface_defined
-readiness_verdict_non_start_surface_defined
-readiness_routing_non_start_surface_defined
-readiness_execution_non_start_surface_defined
-readiness_record_storage_mutation_non_start_surface_defined
-operator_console_non_start_surface_defined
-p4_m6_entry_surfaces_are_definition_only
-p4_m6_entry_surfaces_are_not_readiness_evidence
-p4_m6_entry_surfaces_are_not_validation_inputs
-p4_m6_entry_surfaces_are_not_implementation_start
-p4_m6_entry_surfaces_are_not_authorization
-next_corridor_entry_contract_defined_as_non_executable
+static_entry_acceptance_labels_defined
+acceptance_label_definition_surface_defined
+acceptance_surface_scope_defined
+acceptance_non_evidence_boundary_defined
+acceptance_non_validation_input_boundary_defined
+acceptance_non_authorization_boundary_defined
+acceptance_non_confirmation_boundary_defined
+acceptance_non_approval_boundary_defined
+acceptance_non_recommendation_boundary_defined
+acceptance_non_routing_boundary_defined
+acceptance_non_execution_boundary_defined
+acceptance_non_record_boundary_defined
+acceptance_non_storage_boundary_defined
+acceptance_non_persistence_boundary_defined
+acceptance_non_mutation_boundary_defined
+entry_acceptance_surfaces_are_definition_only
+entry_acceptance_surfaces_are_static_labels_only
+entry_acceptance_surfaces_are_not_readiness_evidence
+entry_acceptance_surfaces_are_not_validation_inputs
+entry_acceptance_surfaces_are_not_authorization
+entry_acceptance_surfaces_are_not_confirmation
+entry_acceptance_surfaces_are_not_approval
+entry_acceptance_surfaces_are_not_recommendation
+entry_acceptance_surfaces_are_not_routing
+entry_acceptance_surfaces_are_not_execution
+entry_acceptance_surfaces_are_not_records
+entry_acceptance_surfaces_are_not_storage
+entry_acceptance_surfaces_are_not_persistence
+entry_acceptance_surfaces_are_not_mutation
+acceptance_validation_deferred
+acceptance_inference_deferred
+acceptance_scoring_deferred
+acceptance_verdict_deferred
+acceptance_authorization_deferred
+acceptance_confirmation_deferred
+acceptance_approval_deferred
+acceptance_recommendation_deferred
 implementation_start_deferred
 api_implementation_deferred
 mcp_implementation_deferred
@@ -344,27 +375,65 @@ v7_start_deferred
 productization_deferred
 ui_deferred
 operator_console_deferred
+command_returns_before_store_creation
+no_workspace_storage_created
+no_memory_mutation_surface_defined
 """.splitlines()
     if line
 )
+
+COUNTED_EXPECTED_TRUE_STATUS_KEYS = tuple(ALL_EXPECTED_TRUE_STATUS_KEYS[:94])
+SUPPLEMENTAL_EXPECTED_TRUE_STATUS_KEYS = tuple(ALL_EXPECTED_TRUE_STATUS_KEYS[94:])
 
 ALL_EXPECTED_FALSE_STATUS_KEYS = tuple(
     line
     for line in """
 live_validation_enabled
-next_corridor_implementation_started
-next_corridor_entry_execution_enabled
-next_corridor_entry_validation_enabled
-next_corridor_entry_inference_enabled
-next_corridor_entry_scoring_enabled
-next_corridor_entry_verdict_enabled
-next_corridor_entry_routing_enabled
-next_corridor_entry_record_creation_enabled
-next_corridor_entry_storage_enabled
-next_corridor_entry_mutation_enabled
+entry_acceptance_validation_enabled
+entry_acceptance_inference_enabled
+entry_acceptance_scoring_enabled
+entry_acceptance_verdict_enabled
+entry_acceptance_evidence_enabled
+entry_acceptance_validation_input_enabled
+entry_acceptance_authorization_enabled
+entry_acceptance_confirmation_enabled
+entry_acceptance_approval_enabled
+entry_acceptance_recommendation_enabled
+entry_acceptance_routing_enabled
+entry_acceptance_execution_enabled
+entry_acceptance_record_creation_enabled
+entry_acceptance_storage_enabled
+entry_acceptance_persistence_enabled
+entry_acceptance_mutation_enabled
+acceptance_validation_enabled
+acceptance_inference_enabled
+acceptance_scoring_enabled
+acceptance_verdict_enabled
+acceptance_evidence_collection_enabled
+acceptance_validation_input_enabled
+acceptance_authorization_enabled
+acceptance_confirmation_enabled
+acceptance_approval_enabled
+acceptance_recommendation_enabled
+acceptance_routing_enabled
+acceptance_execution_enabled
+acceptance_record_creation_enabled
+acceptance_storage_enabled
+acceptance_persistence_enabled
+acceptance_mutation_enabled
+readiness_evidence_collection_enabled
+readiness_evidence_classification_enabled
+validation_input_enabled
+authorization_enabled
+confirmation_enabled
+approval_enabled
+recommendation_enabled
+routing_enabled
+executable_planning_enabled
+next_action_generation_enabled
 implementation_corridor_started
 implementation_entry_enabled
-implementation_preconditions_validation_enabled
+implementation_acceptance_validation_enabled
 api_enabled
 api_implementation_enabled
 api_client_enabled
@@ -424,6 +493,10 @@ entry_validation_enabled
 entry_inference_enabled
 entry_scoring_enabled
 entry_verdict_enabled
+entry_authorization_enabled
+entry_confirmation_enabled
+entry_approval_enabled
+entry_recommendation_enabled
 entry_routing_enabled
 entry_execution_enabled
 entry_record_creation_enabled
@@ -447,15 +520,6 @@ handoff_execution_enabled
 handoff_record_creation_enabled
 handoff_storage_enabled
 handoff_mutation_enabled
-approval_enabled
-authorization_enabled
-confirmation_enabled
-recommendation_enabled
-ranking_enabled
-routing_enabled
-planning_enabled
-executable_planning_enabled
-next_action_generation_enabled
 execution_enabled
 command_execution_enabled
 record_creation_enabled
@@ -466,74 +530,93 @@ v7_started
 productization_started
 ui_started
 operator_console_started
-mvp_started
-deploy_started
-full_memory_graph_started
 version_bump_enabled
 tag_creation_enabled
 """.splitlines()
     if line
 )
 
-OPERATOR_SMOKE_PHRASES = (
-    "P4-M6.0 Next Corridor Entry Boundary Contract",
-    "read-only",
-    "definition-only",
-    "p4-m6-0-next-corridor-entry-boundary-contract-only",
-    "next-corridor-entry-definition-only",
-    "implementation-corridor-not-started-boundary-only",
-    "api-mcp-connector-readiness-audit-handoff-reference-only",
-    "p4-m5-final-closure-handoff-reference-only",
-    "entry-boundary-non-validation-boundary-only",
-    "entry-boundary-non-inference-boundary-only",
-    "entry-boundary-non-scoring-boundary-only",
-    "entry-boundary-non-verdict-boundary-only",
-    "entry-boundary-non-routing-boundary-only",
-    "entry-boundary-non-execution-boundary-only",
-    "entry-boundary-non-record-boundary-only",
-    "entry-boundary-non-storage-boundary-only",
-    "entry-boundary-non-mutation-boundary-only",
-    "api-implementation-disabled",
-    "mcp-implementation-disabled",
-    "connector-implementation-disabled",
-    "agent-auto-call-disabled",
-    "network-access-disabled",
-    "external-system-integration-disabled",
-    "declaration-only",
-    "inspection-only",
-    "P4-M6.0 opens only the next definition corridor entry boundary contract",
-    "P4-M6.0 does not open implementation work",
-    "P4-M6.0 is not API implementation",
-    "P4-M6.0 is not MCP implementation",
-    "P4-M6.0 is not Connector implementation",
-    "P4-M6.0 is not network access",
-    "P4-M6.0 does not perform readiness validation",
-    "P4-M6.0 does not infer readiness",
-    "P4-M6.0 does not score readiness",
-    "P4-M6.0 does not produce readiness verdict",
-    "P4-M6.0 does not start implementation corridor",
-    "no API implementation",
-    "no MCP implementation",
-    "no Connector implementation",
-    "no Agent auto-call",
-    "no external system integration",
-    "no network access",
-    "no readiness validation",
-    "no readiness inference",
-    "no readiness scoring",
-    "no readiness verdict",
-    "no routing",
-    "no execution",
-    "no storage",
-    "no persistence",
-    "no mutation",
-    "no implementation start",
-    "no v7",
-    "no productization",
-    "no UI",
-    "no Operator Console",
-    "no version bump",
-    "no tag",
+OPERATOR_SMOKE_PHRASES = tuple(
+    line
+    for line in """
+P4-M6.2 Entry Acceptance Non-Evidence Surface
+read-only
+definition-only
+p4-m6-2-entry-acceptance-non-evidence-surface-only
+entry-acceptance-non-evidence-surface-only
+static-acceptance-labels-only
+non-evidence-acceptance-surface-only
+non-validation-input-acceptance-surface-only
+non-validation-acceptance-surface-only
+non-inference-acceptance-surface-only
+non-scoring-acceptance-surface-only
+non-verdict-acceptance-surface-only
+non-authorization-acceptance-surface-only
+non-confirmation-acceptance-surface-only
+non-approval-acceptance-surface-only
+non-recommendation-acceptance-surface-only
+non-routing-acceptance-surface-only
+non-execution-acceptance-surface-only
+non-record-acceptance-surface-only
+non-storage-acceptance-surface-only
+non-persistence-acceptance-surface-only
+non-mutation-acceptance-surface-only
+implementation-corridor-not-started-boundary-only
+api-implementation-disabled
+mcp-implementation-disabled
+connector-implementation-disabled
+agent-auto-call-disabled
+network-access-disabled
+external-system-integration-disabled
+declaration-only
+inspection-only
+P4-M6.2 defines only static entry acceptance surfaces
+P4-M6.2 does not accept readiness evidence
+P4-M6.2 does not collect readiness evidence
+P4-M6.2 does not classify readiness evidence
+P4-M6.2 does not treat acceptance as readiness evidence
+P4-M6.2 does not treat acceptance as validation input
+P4-M6.2 does not validate acceptance
+P4-M6.2 does not infer acceptance
+P4-M6.2 does not score acceptance
+P4-M6.2 does not produce acceptance verdict
+P4-M6.2 does not authorize entry
+P4-M6.2 does not confirm entry
+P4-M6.2 does not approve entry
+P4-M6.2 does not recommend entry
+P4-M6.2 does not route implementation
+P4-M6.2 does not execute
+P4-M6.2 does not create storage
+P4-M6.2 does not mutate memory
+P4-M6.2 does not start implementation corridor
+no acceptance validation
+no readiness evidence
+no validation inputs
+no authorization
+no API implementation
+no MCP implementation
+no Connector implementation
+no Agent auto-call
+no external system integration
+no network access
+no readiness validation
+no readiness inference
+no readiness scoring
+no readiness verdict
+no routing
+no execution
+no storage
+no persistence
+no mutation
+no implementation start
+no v7
+no productization
+no UI
+no Operator Console
+no version bump
+no tag
+""".splitlines()
+    if line
 )
 
 EXPECTED_MEMORY_LOOP_COMMANDS = set(
@@ -624,48 +707,64 @@ p4-m6-2-entry-acceptance-non-evidence-surface
 )
 
 
+
+# P4-M6.2 strict counted boolean status alignment.
+# Expected true status keys must exactly match TRUE_STATUS_FLAGS.
+ALL_EXPECTED_TRUE_STATUS_KEYS = COUNTED_EXPECTED_TRUE_STATUS_KEYS
+SUPPLEMENTAL_EXPECTED_TRUE_STATUS_KEYS = ()
+
 def test_field_inventory_is_exact_and_ordered():
-    fields = list_p4_m6_0_next_corridor_entry_boundary_contract_fields()
+    fields = list_p4_m6_2_entry_acceptance_non_evidence_surface_fields()
 
     assert len(fields) == 23
-    assert p4_m6_0_next_corridor_entry_boundary_contract_field_ids() == FIELD_IDS
+    assert p4_m6_2_entry_acceptance_non_evidence_surface_field_ids() == FIELD_IDS
     assert tuple(field.field_order for field in fields) == tuple(range(1, 24))
     assert all(
-        isinstance(field, P4M60NextCorridorEntryBoundaryContractField)
+        isinstance(field, P4M62EntryAcceptanceNonEvidenceSurfaceField)
         for field in fields
     )
     assert {
         field.name
-        for field in dataclasses.fields(P4M60NextCorridorEntryBoundaryContractField)
+        for field in dataclasses.fields(P4M62EntryAcceptanceNonEvidenceSurfaceField)
     } == DATACLASS_FIELDS
 
 
 def test_boundary_phrase_inventory_is_required_contract():
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in BOUNDARY_PHRASE_LINES
-        assert phrase in P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT_BOUNDARY
+        assert phrase in P4_M6_2_ENTRY_ACCEPTANCE_NON_EVIDENCE_SURFACE_BOUNDARY
 
 
 def test_markdown_renders_static_boundary_and_field_ids():
-    markdown = render_p4_m6_0_next_corridor_entry_boundary_contract_markdown()
+    markdown = render_p4_m6_2_entry_acceptance_non_evidence_surface_markdown()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in markdown
     for field_id in FIELD_IDS:
         assert field_id in markdown
     assert "## Status Report" in markdown
-    assert "## P4-M6.0 Next Corridor Entry Boundary Contract Fields" in markdown
-    assert "P4-M6.0 Next Corridor Entry Boundary Contract" in markdown
+    assert "## P4-M6.2 Entry Acceptance Non-Evidence Surface Fields" in markdown
+    assert "P4-M6.2 Entry Acceptance Non-Evidence Surface" in markdown
 
 
 def test_report_has_required_true_false_status_flags():
-    status = p4_m6_0_next_corridor_entry_boundary_contract_report()
+    status = p4_m6_2_entry_acceptance_non_evidence_surface_report()
 
-    assert status["phase"] == "P4-M6.0"
-    assert status["feature"] == "Next Corridor Entry Boundary Contract"
+    assert status["phase"] == "P4-M6.2"
+    assert status["feature"] == "Entry Acceptance Non-Evidence Surface"
     assert status["mode"] == "read-only"
     assert status["package_version"] == "6.16.0"
-    assert status["p4_m6_0_next_corridor_entry_boundary_contract_field_count"] == 23
+    assert status["p4_m6_2_entry_acceptance_non_evidence_surface_field_count"] == 23
+    assert (
+        status[
+            "referenced_p4_m6_1_entry_preconditions_definition_surface_field_count"
+        ]
+        == 23
+    )
+    assert (
+        status["referenced_p4_m6_0_next_corridor_entry_boundary_contract_field_count"]
+        == 23
+    )
     assert (
         status[
             "referenced_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_field_count"
@@ -679,24 +778,13 @@ def test_report_has_required_true_false_status_flags():
         == 23
     )
     assert status["referenced_p4_m5_4_cross_surface_alignment_map_field_count"] == 23
-    assert (
-        status[
-            "referenced_p4_m5_3_connector_readiness_audit_surface_map_field_count"
-        ]
-        == 23
-    )
-    assert status["referenced_p4_m5_2_mcp_readiness_audit_surface_map_field_count"] == 23
-    assert status["referenced_p4_m5_1_api_readiness_audit_surface_map_field_count"] == 23
-    assert (
-        status[
-            "referenced_p4_m5_0_api_mcp_connector_readiness_audit_boundary_contract_field_count"
-        ]
-        == 23
-    )
-    assert TRUE_STATUS_FLAGS == ALL_EXPECTED_TRUE_STATUS_KEYS
+    assert TRUE_STATUS_FLAGS == COUNTED_EXPECTED_TRUE_STATUS_KEYS
+    assert SUPPLEMENTAL_TRUE_STATUS_FLAGS == SUPPLEMENTAL_EXPECTED_TRUE_STATUS_KEYS
     assert FALSE_STATUS_FLAGS == ALL_EXPECTED_FALSE_STATUS_KEYS
-    assert len(TRUE_STATUS_FLAGS) == 79
-    assert len(FALSE_STATUS_FLAGS) == 120
+    assert len(TRUE_STATUS_FLAGS) == 94
+    assert len(SUPPLEMENTAL_TRUE_STATUS_FLAGS) == 0
+    assert len(ALL_EXPECTED_TRUE_STATUS_KEYS) == 94
+    assert len(FALSE_STATUS_FLAGS) == 144
     for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
         assert status[flag] is True
     for flag in ALL_EXPECTED_FALSE_STATUS_KEYS:
@@ -704,14 +792,14 @@ def test_report_has_required_true_false_status_flags():
 
 
 def test_as_dicts_is_deterministic_and_read_only_shape():
-    fields = p4_m6_0_next_corridor_entry_boundary_contract_as_dicts()
+    fields = p4_m6_2_entry_acceptance_non_evidence_surface_as_dicts()
 
     assert len(fields) == 23
     assert tuple(field["field_id"] for field in fields) == FIELD_IDS
-    assert fields == p4_m6_0_next_corridor_entry_boundary_contract_as_dicts()
+    assert fields == p4_m6_2_entry_acceptance_non_evidence_surface_as_dicts()
     assert all(
-        field["p4_m6_0_next_corridor_entry_boundary_contract_category"]
-        == "p4-m6-0-next-corridor-entry-boundary-contract-category"
+        field["p4_m6_2_entry_acceptance_non_evidence_surface_category"]
+        == "p4-m6-2-entry-acceptance-non-evidence-surface-category"
         for field in fields
     )
 
@@ -731,7 +819,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-0-next-corridor-entry-boundary-contract",
+            "p4-m6-2-entry-acceptance-non-evidence-surface",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -740,7 +828,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     assert code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M6.0 Next Corridor Entry Boundary Contract\n")
+    assert stdout.startswith("# P4-M6.2 Entry Acceptance Non-Evidence Surface\n")
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -752,7 +840,7 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     code, output, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-0-next-corridor-entry-boundary-contract",
+            "p4-m6-2-entry-acceptance-non-evidence-surface",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -764,13 +852,13 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     assert stderr == ""
     assert stdout.startswith("{")
     assert output["count"] == 23
-    assert output["true_flags"] == 79
-    assert output["false_flags"] == 120
-    assert output["boundary"] == P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT_BOUNDARY
+    assert output["true_flags"] == 94
+    assert output["false_flags"] == 144
+    assert output["boundary"] == P4_M6_2_ENTRY_ACCEPTANCE_NON_EVIDENCE_SURFACE_BOUNDARY
     assert tuple(field["field_id"] for field in output["fields"]) == FIELD_IDS
     status = output["status"]
-    assert status["phase"] == "P4-M6.0"
-    assert status["feature"] == "Next Corridor Entry Boundary Contract"
+    assert status["phase"] == "P4-M6.2"
+    assert status["feature"] == "Entry Acceptance Non-Evidence Surface"
     assert status["mode"] == "read-only"
     for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
         assert status[flag] is True
@@ -783,6 +871,8 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
     commands = _memory_loop_subcommands(build_parser())
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
+    assert "p4-m6-2-entry-acceptance-non-evidence-surface" in commands
+    assert "p4-m6-1-entry-preconditions-definition-surface" in commands
     assert "p4-m6-0-next-corridor-entry-boundary-contract" in commands
     assert "p4-m5-6-final-closure-handoff-next-corridor-non-start-index" in commands
     assert "p4-m5-5-readiness-audit-closure-non-start-boundary-seal" in commands
@@ -797,7 +887,7 @@ def test_pyproject_entry_points_do_not_productize_command():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     entry_points = pyproject["project"]["entry-points"]
 
-    command = "p4-m6-0-next-corridor-entry-boundary-contract"
+    command = "p4-m6-2-entry-acceptance-non-evidence-surface"
     assert command not in entry_points
     assert command not in str(entry_points)
     assert pyproject["project"]["version"] == "6.16.0"
@@ -808,11 +898,11 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT.md"
+        / "CIVILIZATION_CORE_P4_M6_2_ENTRY_ACCEPTANCE_NON_EVIDENCE_SURFACE.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
-    assert doc.startswith("# P4-M6.0 Next Corridor Entry Boundary Contract\n")
+    assert doc.startswith("# P4-M6.2 Entry Acceptance Non-Evidence Surface\n")
     for field_id in FIELD_IDS:
         assert field_id in doc
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -820,25 +910,24 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    field = P4M60NextCorridorEntryBoundaryContractField(
+    field = P4M62EntryAcceptanceNonEvidenceSurfaceField(
         field_order=99,
-        field_id="custom-p4-m6-0-next-corridor-entry-boundary-contract",
-        field_name="Custom P4-M6.0 Next Corridor Entry Boundary Contract",
+        field_id="custom-p4-m6-2-entry-acceptance-non-evidence-surface",
+        field_name="Custom P4-M6.2 Entry Acceptance Non-Evidence Surface",
         field_purpose="custom read-only definition-only inspection-only field",
-        p4_m6_0_next_corridor_entry_boundary_contract_category=(
-            "custom-p4-m6-0-next-corridor-entry-boundary-contract-category"
+        p4_m6_2_entry_acceptance_non_evidence_surface_category=(
+            "custom-p4-m6-2-entry-acceptance-non-evidence-surface-category"
         ),
-        p4_m6_0_next_corridor_entry_boundary_contract_semantics_disabled=(
-            "no API client semantics; no MCP client semantics; "
-            "no Connector runtime semantics"
+        p4_m6_2_entry_acceptance_non_evidence_surface_semantics_disabled=(
+            "no acceptance validation semantics; no readiness evidence semantics"
         ),
     )
 
-    markdown = render_p4_m6_0_next_corridor_entry_boundary_contract_markdown((field,))
+    markdown = render_p4_m6_2_entry_acceptance_non_evidence_surface_markdown((field,))
 
-    assert "custom-p4-m6-0-next-corridor-entry-boundary-contract" in markdown
-    assert "no API client semantics; no MCP client semantics" in markdown
-    assert "P4-M6.0 Next Corridor Entry Boundary Contract" in markdown
+    assert "custom-p4-m6-2-entry-acceptance-non-evidence-surface" in markdown
+    assert "no acceptance validation semantics" in markdown
+    assert "P4-M6.2 Entry Acceptance Non-Evidence Surface" in markdown
 
 
 def test_forbidden_implementation_files_are_not_created():
