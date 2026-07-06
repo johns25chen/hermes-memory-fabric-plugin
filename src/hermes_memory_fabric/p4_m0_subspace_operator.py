@@ -463,6 +463,14 @@ from .p4_m5_5_readiness_audit_closure_non_start_boundary_seal import (
     p4_m5_5_readiness_audit_closure_non_start_boundary_seal_report,
     render_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_markdown,
 )
+from .p4_m5_6_final_closure_handoff_next_corridor_non_start_index import (
+    FALSE_STATUS_FLAGS as P4_M5_6_FALSE_STATUS_FLAGS,
+    P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M5_6_TRUE_STATUS_FLAGS,
+    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_as_dicts,
+    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_report,
+    render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1468,6 +1476,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m5_5_readiness_audit_closure_non_start_boundary_seal
     )
     memory_loop_p4_m5_5_readiness_audit_closure_non_start_boundary_seal.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m5_6_final_closure_handoff_next_corridor_non_start_index = (
+        memory_loop_subparsers.add_parser(
+            "p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m5_6_final_closure_handoff_next_corridor_non_start_index
+    )
+    memory_loop_p4_m5_6_final_closure_handoff_next_corridor_non_start_index.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3208,6 +3229,35 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m5_5_readiness_audit_closure_"
                 "non_start_boundary_seal_format:"
+                f"{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown()
+                )
+            if args.format == "json":
+                fields = (
+                    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_as_dicts()
+                )
+                return {
+                    "boundary": (
+                        P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "false_flags": len(P4_M5_6_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m5_6_final_closure_handoff_next_corridor_non_start_index_report()
+                    ),
+                    "true_flags": len(P4_M5_6_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m5_6_final_closure_handoff_"
+                "next_corridor_non_start_index_format:"
                 f"{args.format}"
             )
 

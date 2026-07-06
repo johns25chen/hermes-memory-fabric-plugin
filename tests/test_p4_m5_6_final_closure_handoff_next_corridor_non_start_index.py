@@ -12,46 +12,44 @@ from hermes_memory_fabric.p4_m0_subspace_operator import (
     build_parser,
     run_operator_command,
 )
-from hermes_memory_fabric.p4_m5_5_readiness_audit_closure_non_start_boundary_seal import (
-    ADDITIONAL_FALSE_STATUS_KEYS,
-    ADDITIONAL_TRUE_STATUS_KEYS,
+from hermes_memory_fabric.p4_m5_6_final_closure_handoff_next_corridor_non_start_index import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    P4_M5_5_READINESS_AUDIT_CLOSURE_NON_START_BOUNDARY_SEAL_BOUNDARY,
+    P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    P4M55ReadinessAuditClosureNonStartBoundarySealField,
-    list_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_fields,
-    p4_m5_5_readiness_audit_closure_non_start_boundary_seal_as_dicts,
-    p4_m5_5_readiness_audit_closure_non_start_boundary_seal_field_ids,
-    p4_m5_5_readiness_audit_closure_non_start_boundary_seal_report,
-    render_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_markdown,
+    P4M56FinalClosureHandoffNextCorridorNonStartIndexField,
+    list_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_fields,
+    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_as_dicts,
+    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_field_ids,
+    p4_m5_6_final_closure_handoff_next_corridor_non_start_index_report,
+    render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown,
 )
 
 
 FIELD_IDS = (
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-id",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-phase",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-mode",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-readiness-audit-position",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-direct-prior-cross-surface-alignment-map-reference",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-inherited-prior-api-mcp-connector-surface-map-and-boundary-contract-reference",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-0-boundary-contract-closure-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-1-api-surface-map-closure-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-2-mcp-surface-map-closure-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-3-connector-surface-map-closure-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-p4-m5-4-cross-surface-alignment-map-closure-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-api-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-mcp-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-connector-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-agent-auto-call-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-external-integration-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-readiness-validation-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-readiness-verdict-routing-execution-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-readiness-record-storage-persistence-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-memory-mutation-non-start-seal-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-handoff-to-next-definition-corridor-surface",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-v7-productization-ui-operator-console-deferred",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-static-closure-seal-and-validation-inference-scoring-verdict-routing-execution-record-storage-mutation-semantics-disabled",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-id",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-phase",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-mode",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-readiness-audit-position",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-direct-prior-readiness-audit-closure-non-start-boundary-seal-reference",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-inherited-prior-api-mcp-connector-readiness-audit-definition-corridor-reference",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-0-boundary-contract-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-1-api-surface-map-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-2-mcp-surface-map-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-3-connector-surface-map-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-4-cross-surface-alignment-map-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-p4-m5-5-readiness-audit-closure-seal-final-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-api-mcp-connector-readiness-audit-corridor-final-closure-index",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-next-corridor-non-start-index",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-api-implementation-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-mcp-implementation-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-connector-implementation-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-agent-auto-call-external-integration-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-readiness-validation-inference-scoring-verdict-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-readiness-routing-execution-record-storage-persistence-mutation-non-start-handoff-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-next-corridor-entry-preconditions-deferred-surface",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-v7-productization-ui-operator-console-deferred",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-static-final-closure-handoff-and-validation-inference-scoring-verdict-routing-execution-record-storage-mutation-semantics-disabled",
 )
 
 DATACLASS_FIELDS = {
@@ -59,30 +57,30 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m5_5_readiness_audit_closure_non_start_boundary_seal_category",
-    "p4_m5_5_readiness_audit_closure_non_start_boundary_seal_semantics_disabled",
+    "p4_m5_6_final_closure_handoff_next_corridor_non_start_index_category",
+    "p4_m5_6_final_closure_handoff_next_corridor_non_start_index_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M5.5
-Readiness Audit Closure / Non-Start Boundary Seal
-P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal
+P4-M5.6
+Final Closure Handoff / Next Corridor Non-Start Index
+P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index
 read-only
 definition-only
-p4-m5-5-readiness-audit-closure-non-start-boundary-seal-only
-api-mcp-connector-readiness-audit-corridor-closure-only
-non-start-boundary-seal-only
-readiness-audit-closure-non-validation-boundary-only
-readiness-audit-closure-non-inference-boundary-only
-readiness-audit-closure-non-scoring-boundary-only
-readiness-audit-closure-non-verdict-boundary-only
-readiness-audit-closure-non-routing-boundary-only
-readiness-audit-closure-non-execution-boundary-only
-readiness-audit-closure-non-record-boundary-only
-readiness-audit-closure-non-storage-boundary-only
-readiness-audit-closure-non-mutation-boundary-only
+p4-m5-6-final-closure-handoff-next-corridor-non-start-index-only
+api-mcp-connector-readiness-audit-corridor-final-closure-only
+next-corridor-non-start-index-only
+final-closure-handoff-non-validation-boundary-only
+final-closure-handoff-non-inference-boundary-only
+final-closure-handoff-non-scoring-boundary-only
+final-closure-handoff-non-verdict-boundary-only
+final-closure-handoff-non-routing-boundary-only
+final-closure-handoff-non-execution-boundary-only
+final-closure-handoff-non-record-boundary-only
+final-closure-handoff-non-storage-boundary-only
+final-closure-handoff-non-mutation-boundary-only
 api-implementation-disabled
 mcp-implementation-disabled
 connector-implementation-disabled
@@ -91,71 +89,75 @@ network-access-disabled
 external-system-integration-disabled
 declaration-only
 inspection-only
-P4-M5.5 closes the P4-M5.0 through P4-M5.4 readiness audit definition corridor only
-P4-M5.5 seals non-start boundaries only
-P4-M5.5 is not API implementation
-P4-M5.5 is not MCP implementation
-P4-M5.5 is not Connector implementation
-P4-M5.5 is not API client implementation
-P4-M5.5 is not MCP client implementation
-P4-M5.5 is not MCP server implementation
-P4-M5.5 is not MCP transport implementation
-P4-M5.5 is not MCP session implementation
-P4-M5.5 is not Connector client implementation
-P4-M5.5 is not Connector adapter implementation
-P4-M5.5 is not Connector runtime implementation
-P4-M5.5 is not Agent auto-call
-P4-M5.5 is not external system integration
-P4-M5.5 is not network access
-P4-M5.5 is not live API endpoint probing
-P4-M5.5 is not live MCP server probing
-P4-M5.5 is not live provider probing
-P4-M5.5 is not OAuth flow
-P4-M5.5 is not credential use
-P4-M5.5 is not secret access
-P4-M5.5 is not secret inspection
-P4-M5.5 is not API call
-P4-M5.5 is not MCP tool call
-P4-M5.5 is not MCP resource access
-P4-M5.5 is not MCP prompt execution
-P4-M5.5 is not connector data fetch
-P4-M5.5 is not connector data write
-P4-M5.5 is not connector mutation
-P4-M5.5 is not authentication testing
-P4-M5.5 is not authorization testing
-P4-M5.5 is not schema validation
-P4-M5.5 does not perform readiness validation
-P4-M5.5 does not infer readiness
-P4-M5.5 does not score readiness
-P4-M5.5 does not produce readiness verdict
-P4-M5.5 does not route implementation
-P4-M5.5 does not execute
-P4-M5.5 does not create readiness records
-P4-M5.5 does not create storage
-P4-M5.5 does not persist state
-P4-M5.5 does not mutate memory
-P4-M5.4 API / MCP / Connector Cross-Surface Alignment Map remains the direct prior cross-surface alignment map reference
+P4-M5.6 finalizes the P4-M5.0 through P4-M5.5 readiness audit definition corridor only
+P4-M5.6 declares the next corridor not started
+P4-M5.6 is not API implementation
+P4-M5.6 is not MCP implementation
+P4-M5.6 is not Connector implementation
+P4-M5.6 is not API client implementation
+P4-M5.6 is not MCP client implementation
+P4-M5.6 is not MCP server implementation
+P4-M5.6 is not MCP transport implementation
+P4-M5.6 is not MCP session implementation
+P4-M5.6 is not Connector client implementation
+P4-M5.6 is not Connector adapter implementation
+P4-M5.6 is not Connector runtime implementation
+P4-M5.6 is not Agent auto-call
+P4-M5.6 is not external system integration
+P4-M5.6 is not network access
+P4-M5.6 is not live API endpoint probing
+P4-M5.6 is not live MCP server probing
+P4-M5.6 is not live provider probing
+P4-M5.6 is not live provider discovery
+P4-M5.6 is not OAuth flow
+P4-M5.6 is not credential use
+P4-M5.6 is not secret access
+P4-M5.6 is not secret inspection
+P4-M5.6 is not API call
+P4-M5.6 is not MCP tool call
+P4-M5.6 is not MCP resource access
+P4-M5.6 is not MCP prompt execution
+P4-M5.6 is not connector data fetch
+P4-M5.6 is not connector data write
+P4-M5.6 is not connector mutation
+P4-M5.6 is not authentication testing
+P4-M5.6 is not authorization testing
+P4-M5.6 is not schema validation
+P4-M5.6 does not perform readiness validation
+P4-M5.6 does not infer readiness
+P4-M5.6 does not score readiness
+P4-M5.6 does not produce readiness verdict
+P4-M5.6 does not route implementation
+P4-M5.6 does not execute
+P4-M5.6 does not create readiness records
+P4-M5.6 does not create storage
+P4-M5.6 does not persist state
+P4-M5.6 does not mutate memory
+P4-M5.6 does not start the next corridor
+P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal remains the direct prior closure seal reference
+P4-M5.4 API / MCP / Connector Cross-Surface Alignment Map remains an inherited cross-surface alignment map reference
 P4-M5.3 Connector Readiness Audit Surface Map remains an inherited Connector surface map reference
 P4-M5.2 MCP Readiness Audit Surface Map remains an inherited MCP surface map reference
 P4-M5.1 API Readiness Audit Surface Map remains an inherited API surface map reference
 P4-M5.0 API / MCP / Connector Readiness Audit Boundary Contract remains the inherited prior boundary contract reference
-P4-M5.0 boundary contract closure surface is definition-only
-P4-M5.1 API surface map closure surface is definition-only
-P4-M5.2 MCP surface map closure surface is definition-only
-P4-M5.3 Connector surface map closure surface is definition-only
-P4-M5.4 cross-surface alignment map closure surface is definition-only
-API non-start seal surface is definition-only
-MCP non-start seal surface is definition-only
-Connector non-start seal surface is definition-only
-Agent auto-call non-start seal surface is definition-only
-external integration non-start seal surface is definition-only
-readiness validation non-start seal surface is definition-only
-readiness verdict routing execution non-start seal surface is definition-only
-readiness record storage persistence non-start seal surface is definition-only
-memory mutation non-start seal surface is definition-only
-handoff to next definition corridor surface is definition-only
-Readiness audit closure surfaces are not readiness evidence
-Readiness audit closure surfaces are not validation inputs
+P4-M5.0 boundary contract final handoff surface is definition-only
+P4-M5.1 API surface map final handoff surface is definition-only
+P4-M5.2 MCP surface map final handoff surface is definition-only
+P4-M5.3 Connector surface map final handoff surface is definition-only
+P4-M5.4 cross-surface alignment map final handoff surface is definition-only
+P4-M5.5 readiness audit closure seal final handoff surface is definition-only
+API / MCP / Connector readiness audit corridor final closure index is definition-only
+next corridor non-start index is definition-only
+API implementation non-start handoff surface is definition-only
+MCP implementation non-start handoff surface is definition-only
+Connector implementation non-start handoff surface is definition-only
+Agent auto-call external integration non-start handoff surface is definition-only
+readiness validation inference scoring verdict non-start handoff surface is definition-only
+readiness routing execution record storage persistence mutation non-start handoff surface is definition-only
+next corridor entry preconditions deferred surface is definition-only
+Final closure handoff surfaces are not readiness evidence
+Final closure handoff surfaces are not validation inputs
+Final closure handoff surfaces are not next corridor start
 API implementation remains not started
 MCP implementation remains not started
 Connector implementation remains not started
@@ -190,6 +192,7 @@ record creation remains not implemented
 storage remains not implemented
 persistence remains not implemented
 mutation remains not implemented
+next corridor remains not started
 v7 remains not started
 productization remains not started
 UI remains not started
@@ -240,6 +243,7 @@ no record creation
 no storage
 no persistence
 no mutation
+no next corridor start
 no v7
 no productization
 no UI
@@ -254,19 +258,19 @@ ALL_EXPECTED_TRUE_STATUS_KEYS = tuple(
     line
     for line in """
 definition_only
-p4_m5_5_readiness_audit_closure_non_start_boundary_seal_started
-p4_m5_5_readiness_audit_closure_non_start_boundary_seal_only
-api_mcp_connector_readiness_audit_corridor_closure_only
-non_start_boundary_seal_only
-readiness_audit_closure_non_validation_boundary_only
-readiness_audit_closure_non_inference_boundary_only
-readiness_audit_closure_non_scoring_boundary_only
-readiness_audit_closure_non_verdict_boundary_only
-readiness_audit_closure_non_routing_boundary_only
-readiness_audit_closure_non_execution_boundary_only
-readiness_audit_closure_non_record_boundary_only
-readiness_audit_closure_non_storage_boundary_only
-readiness_audit_closure_non_mutation_boundary_only
+p4_m5_6_final_closure_handoff_next_corridor_non_start_index_started
+p4_m5_6_final_closure_handoff_next_corridor_non_start_index_only
+api_mcp_connector_readiness_audit_corridor_final_closure_only
+next_corridor_non_start_index_only
+final_closure_handoff_non_validation_boundary_only
+final_closure_handoff_non_inference_boundary_only
+final_closure_handoff_non_scoring_boundary_only
+final_closure_handoff_non_verdict_boundary_only
+final_closure_handoff_non_routing_boundary_only
+final_closure_handoff_non_execution_boundary_only
+final_closure_handoff_non_record_boundary_only
+final_closure_handoff_non_storage_boundary_only
+final_closure_handoff_non_mutation_boundary_only
 api_implementation_disabled
 mcp_implementation_disabled
 connector_implementation_disabled
@@ -275,35 +279,40 @@ network_access_disabled
 external_system_integration_disabled
 declaration_only
 inspection_only
-p4_m5_5_started_as_closure_seal_only
+p4_m5_6_started_as_final_closure_handoff_only
 p4_m5_readiness_audit_position_preserved
+p4_m5_5_closure_seal_reference_defined
 p4_m5_4_cross_surface_alignment_map_reference_defined
 p4_m5_3_connector_surface_map_reference_defined
 p4_m5_2_mcp_surface_map_reference_defined
 p4_m5_1_api_surface_map_reference_defined
 p4_m5_0_boundary_contract_reference_defined
-p4_m5_0_boundary_contract_closure_surface_defined
-p4_m5_1_api_surface_map_closure_surface_defined
-p4_m5_2_mcp_surface_map_closure_surface_defined
-p4_m5_3_connector_surface_map_closure_surface_defined
-p4_m5_4_cross_surface_alignment_map_closure_surface_defined
-api_non_start_seal_surface_defined
-mcp_non_start_seal_surface_defined
-connector_non_start_seal_surface_defined
-agent_auto_call_non_start_seal_surface_defined
-external_integration_non_start_seal_surface_defined
-readiness_validation_non_start_seal_surface_defined
-readiness_verdict_routing_execution_non_start_seal_surface_defined
-readiness_record_storage_persistence_non_start_seal_surface_defined
-memory_mutation_non_start_seal_surface_defined
-handoff_to_next_definition_corridor_surface_defined
-readiness_audit_closure_surfaces_are_definition_only
-readiness_audit_closure_surfaces_are_not_readiness_evidence
-readiness_audit_closure_surfaces_are_not_validation_inputs
-api_surface_closure_reference_only
-mcp_surface_closure_reference_only
-connector_surface_closure_reference_only
-cross_surface_alignment_closure_reference_only
+p4_m5_0_boundary_contract_final_handoff_surface_defined
+p4_m5_1_api_surface_map_final_handoff_surface_defined
+p4_m5_2_mcp_surface_map_final_handoff_surface_defined
+p4_m5_3_connector_surface_map_final_handoff_surface_defined
+p4_m5_4_cross_surface_alignment_map_final_handoff_surface_defined
+p4_m5_5_readiness_audit_closure_seal_final_handoff_surface_defined
+readiness_audit_corridor_final_closure_index_defined
+next_corridor_non_start_index_defined
+api_implementation_non_start_handoff_surface_defined
+mcp_implementation_non_start_handoff_surface_defined
+connector_implementation_non_start_handoff_surface_defined
+agent_auto_call_external_integration_non_start_handoff_surface_defined
+readiness_validation_inference_scoring_verdict_non_start_handoff_surface_defined
+readiness_routing_execution_record_storage_persistence_mutation_non_start_handoff_surface_defined
+next_corridor_entry_preconditions_deferred_surface_defined
+p4_m5_final_closure_surfaces_are_definition_only
+p4_m5_final_closure_surfaces_are_not_readiness_evidence
+p4_m5_final_closure_surfaces_are_not_validation_inputs
+p4_m5_final_closure_surfaces_are_not_next_corridor_start
+p4_m5_corridor_closed_as_definition_only
+next_corridor_start_deferred
+api_surface_handoff_reference_only
+mcp_surface_handoff_reference_only
+connector_surface_handoff_reference_only
+cross_surface_alignment_handoff_reference_only
+closure_seal_handoff_reference_only
 api_implementation_deferred
 mcp_implementation_deferred
 connector_implementation_deferred
@@ -330,15 +339,18 @@ ALL_EXPECTED_FALSE_STATUS_KEYS = tuple(
     line
     for line in """
 live_validation_enabled
-readiness_audit_closure_validation_enabled
-readiness_audit_closure_inference_enabled
-readiness_audit_closure_scoring_enabled
-readiness_audit_closure_verdict_enabled
-readiness_audit_closure_routing_enabled
-readiness_audit_closure_execution_enabled
-readiness_audit_closure_record_creation_enabled
-readiness_audit_closure_storage_enabled
-readiness_audit_closure_mutation_enabled
+final_closure_handoff_validation_enabled
+final_closure_handoff_inference_enabled
+final_closure_handoff_scoring_enabled
+final_closure_handoff_verdict_enabled
+final_closure_handoff_routing_enabled
+final_closure_handoff_execution_enabled
+final_closure_handoff_record_creation_enabled
+final_closure_handoff_storage_enabled
+final_closure_handoff_mutation_enabled
+next_corridor_started
+next_corridor_entry_enabled
+next_corridor_preconditions_enabled
 api_enabled
 api_implementation_enabled
 api_client_enabled
@@ -403,6 +415,15 @@ closure_execution_enabled
 closure_record_creation_enabled
 closure_storage_enabled
 closure_mutation_enabled
+handoff_validation_enabled
+handoff_inference_enabled
+handoff_scoring_enabled
+handoff_verdict_enabled
+handoff_routing_enabled
+handoff_execution_enabled
+handoff_record_creation_enabled
+handoff_storage_enabled
+handoff_mutation_enabled
 approval_enabled
 authorization_enabled
 confirmation_enabled
@@ -432,21 +453,21 @@ tag_creation_enabled
 )
 
 OPERATOR_SMOKE_PHRASES = (
-    "P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal",
+    "P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index",
     "read-only",
     "definition-only",
-    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-only",
-    "api-mcp-connector-readiness-audit-corridor-closure-only",
-    "non-start-boundary-seal-only",
-    "readiness-audit-closure-non-validation-boundary-only",
-    "readiness-audit-closure-non-inference-boundary-only",
-    "readiness-audit-closure-non-scoring-boundary-only",
-    "readiness-audit-closure-non-verdict-boundary-only",
-    "readiness-audit-closure-non-routing-boundary-only",
-    "readiness-audit-closure-non-execution-boundary-only",
-    "readiness-audit-closure-non-record-boundary-only",
-    "readiness-audit-closure-non-storage-boundary-only",
-    "readiness-audit-closure-non-mutation-boundary-only",
+    "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-only",
+    "api-mcp-connector-readiness-audit-corridor-final-closure-only",
+    "next-corridor-non-start-index-only",
+    "final-closure-handoff-non-validation-boundary-only",
+    "final-closure-handoff-non-inference-boundary-only",
+    "final-closure-handoff-non-scoring-boundary-only",
+    "final-closure-handoff-non-verdict-boundary-only",
+    "final-closure-handoff-non-routing-boundary-only",
+    "final-closure-handoff-non-execution-boundary-only",
+    "final-closure-handoff-non-record-boundary-only",
+    "final-closure-handoff-non-storage-boundary-only",
+    "final-closure-handoff-non-mutation-boundary-only",
     "api-implementation-disabled",
     "mcp-implementation-disabled",
     "connector-implementation-disabled",
@@ -455,16 +476,17 @@ OPERATOR_SMOKE_PHRASES = (
     "external-system-integration-disabled",
     "declaration-only",
     "inspection-only",
-    "P4-M5.5 closes the P4-M5.0 through P4-M5.4 readiness audit definition corridor only",
-    "P4-M5.5 seals non-start boundaries only",
-    "P4-M5.5 is not API implementation",
-    "P4-M5.5 is not MCP implementation",
-    "P4-M5.5 is not Connector implementation",
-    "P4-M5.5 is not network access",
-    "P4-M5.5 does not perform readiness validation",
-    "P4-M5.5 does not infer readiness",
-    "P4-M5.5 does not score readiness",
-    "P4-M5.5 does not produce readiness verdict",
+    "P4-M5.6 finalizes the P4-M5.0 through P4-M5.5 readiness audit definition corridor only",
+    "P4-M5.6 declares the next corridor not started",
+    "P4-M5.6 is not API implementation",
+    "P4-M5.6 is not MCP implementation",
+    "P4-M5.6 is not Connector implementation",
+    "P4-M5.6 is not network access",
+    "P4-M5.6 does not perform readiness validation",
+    "P4-M5.6 does not infer readiness",
+    "P4-M5.6 does not score readiness",
+    "P4-M5.6 does not produce readiness verdict",
+    "P4-M5.6 does not start the next corridor",
     "no API implementation",
     "no MCP implementation",
     "no Connector implementation",
@@ -480,6 +502,7 @@ OPERATOR_SMOKE_PHRASES = (
     "no storage",
     "no persistence",
     "no mutation",
+    "no next corridor start",
     "no v7",
     "no productization",
     "no UI",
@@ -570,27 +593,25 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
 
 
 def test_field_inventory_is_exact_and_ordered():
-    fields = (
-        list_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_fields()
-    )
+    fields = list_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_fields()
 
     assert len(fields) == 23
     assert (
-        p4_m5_5_readiness_audit_closure_non_start_boundary_seal_field_ids()
+        p4_m5_6_final_closure_handoff_next_corridor_non_start_index_field_ids()
         == FIELD_IDS
     )
     assert tuple(field.field_order for field in fields) == tuple(range(1, 24))
     assert all(
         isinstance(
             field,
-            P4M55ReadinessAuditClosureNonStartBoundarySealField,
+            P4M56FinalClosureHandoffNextCorridorNonStartIndexField,
         )
         for field in fields
     )
     assert {
         field.name
         for field in dataclasses.fields(
-            P4M55ReadinessAuditClosureNonStartBoundarySealField
+            P4M56FinalClosureHandoffNextCorridorNonStartIndexField
         )
     } == DATACLASS_FIELDS
 
@@ -600,13 +621,13 @@ def test_boundary_phrase_inventory_is_required_contract():
         assert phrase in BOUNDARY_PHRASE_LINES
         assert (
             phrase
-            in P4_M5_5_READINESS_AUDIT_CLOSURE_NON_START_BOUNDARY_SEAL_BOUNDARY
+            in P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY
         )
 
 
 def test_markdown_renders_static_boundary_and_field_ids():
     markdown = (
-        render_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_markdown()
+        render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown()
     )
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -615,22 +636,34 @@ def test_markdown_renders_static_boundary_and_field_ids():
         assert field_id in markdown
     assert "## Status Report" in markdown
     assert (
-        "## P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal Fields"
+        "## P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index Fields"
         in markdown
     )
-    assert "P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal" in markdown
+    assert (
+        "P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index"
+        in markdown
+    )
 
 
 def test_report_has_required_true_false_status_flags():
-    status = p4_m5_5_readiness_audit_closure_non_start_boundary_seal_report()
+    status = p4_m5_6_final_closure_handoff_next_corridor_non_start_index_report()
 
-    assert status["phase"] == "P4-M5.5"
-    assert status["feature"] == "Readiness Audit Closure / Non-Start Boundary Seal"
+    assert status["phase"] == "P4-M5.6"
+    assert (
+        status["feature"]
+        == "Final Closure Handoff / Next Corridor Non-Start Index"
+    )
     assert status["mode"] == "read-only"
     assert status["package_version"] == "6.16.0"
     assert (
         status[
-            "p4_m5_5_readiness_audit_closure_non_start_boundary_seal_field_count"
+            "p4_m5_6_final_closure_handoff_next_corridor_non_start_index_field_count"
+        ]
+        == 23
+    )
+    assert (
+        status[
+            "referenced_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_field_count"
         ]
         == 23
     )
@@ -652,16 +685,10 @@ def test_report_has_required_true_false_status_flags():
         ]
         == 23
     )
-    assert TRUE_STATUS_FLAGS + ADDITIONAL_TRUE_STATUS_KEYS == (
-        ALL_EXPECTED_TRUE_STATUS_KEYS
-    )
-    assert FALSE_STATUS_FLAGS + ADDITIONAL_FALSE_STATUS_KEYS == (
-        ALL_EXPECTED_FALSE_STATUS_KEYS
-    )
-    assert len(TRUE_STATUS_FLAGS) == 67
-    assert len(FALSE_STATUS_FLAGS) == 95
-    assert len(ALL_EXPECTED_TRUE_STATUS_KEYS) == 69
-    assert len(ALL_EXPECTED_FALSE_STATUS_KEYS) == 98
+    assert TRUE_STATUS_FLAGS == ALL_EXPECTED_TRUE_STATUS_KEYS
+    assert FALSE_STATUS_FLAGS == ALL_EXPECTED_FALSE_STATUS_KEYS
+    assert len(TRUE_STATUS_FLAGS) == 74
+    assert len(FALSE_STATUS_FLAGS) == 110
     for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
         assert status[flag] is True
     for flag in ALL_EXPECTED_FALSE_STATUS_KEYS:
@@ -669,19 +696,19 @@ def test_report_has_required_true_false_status_flags():
 
 
 def test_as_dicts_is_deterministic_and_read_only_shape():
-    fields = p4_m5_5_readiness_audit_closure_non_start_boundary_seal_as_dicts()
+    fields = p4_m5_6_final_closure_handoff_next_corridor_non_start_index_as_dicts()
 
     assert len(fields) == 23
     assert tuple(field["field_id"] for field in fields) == FIELD_IDS
     assert (
         fields
-        == p4_m5_5_readiness_audit_closure_non_start_boundary_seal_as_dicts()
+        == p4_m5_6_final_closure_handoff_next_corridor_non_start_index_as_dicts()
     )
     assert all(
         field[
-            "p4_m5_5_readiness_audit_closure_non_start_boundary_seal_category"
+            "p4_m5_6_final_closure_handoff_next_corridor_non_start_index_category"
         ]
-        == "p4-m5-5-readiness-audit-closure-non-start-boundary-seal-category"
+        == "p4-m5-6-final-closure-handoff-next-corridor-non-start-index-category"
         for field in fields
     )
 
@@ -701,7 +728,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m5-5-readiness-audit-closure-non-start-boundary-seal",
+            "p4-m5-6-final-closure-handoff-next-corridor-non-start-index",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -711,7 +738,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     assert payload == {}
     assert stderr == ""
     assert stdout.startswith(
-        "# P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal\n"
+        "# P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index\n"
     )
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
@@ -722,7 +749,7 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     code, output, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m5-5-readiness-audit-closure-non-start-boundary-seal",
+            "p4-m5-6-final-closure-handoff-next-corridor-non-start-index",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -734,16 +761,19 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     assert stderr == ""
     assert stdout.startswith("{")
     assert output["count"] == 23
-    assert output["true_flags"] == 67
-    assert output["false_flags"] == 95
+    assert output["true_flags"] == 74
+    assert output["false_flags"] == 110
     assert (
         output["boundary"]
-        == P4_M5_5_READINESS_AUDIT_CLOSURE_NON_START_BOUNDARY_SEAL_BOUNDARY
+        == P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY
     )
     assert tuple(field["field_id"] for field in output["fields"]) == FIELD_IDS
     status = output["status"]
-    assert status["phase"] == "P4-M5.5"
-    assert status["feature"] == "Readiness Audit Closure / Non-Start Boundary Seal"
+    assert status["phase"] == "P4-M5.6"
+    assert (
+        status["feature"]
+        == "Final Closure Handoff / Next Corridor Non-Start Index"
+    )
     assert status["mode"] == "read-only"
     for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
         assert status[flag] is True
@@ -757,7 +787,12 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
     assert (
-        "p4-m5-5-readiness-audit-closure-non-start-boundary-seal" in commands
+        "p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
+        in commands
+    )
+    assert (
+        "p4-m5-5-readiness-audit-closure-non-start-boundary-seal"
+        in commands
     )
     assert "p4-m5-4-cross-surface-alignment-map" in commands
     assert "p4-m5-0-api-mcp-connector-readiness-audit-boundary-contract" in commands
@@ -770,7 +805,7 @@ def test_pyproject_entry_points_do_not_productize_command():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     entry_points = pyproject["project"]["entry-points"]
 
-    command = "p4-m5-5-readiness-audit-closure-non-start-boundary-seal"
+    command = "p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
     assert command not in entry_points
     assert command not in str(entry_points)
     assert pyproject["project"]["version"] == "6.16.0"
@@ -781,12 +816,12 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M5_5_READINESS_AUDIT_CLOSURE_NON_START_BOUNDARY_SEAL.md"
+        / "CIVILIZATION_CORE_P4_M5_6_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
     assert doc.startswith(
-        "# P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal\n"
+        "# P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index\n"
     )
     for field_id in FIELD_IDS:
         assert field_id in doc
@@ -795,34 +830,37 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    field = P4M55ReadinessAuditClosureNonStartBoundarySealField(
+    field = P4M56FinalClosureHandoffNextCorridorNonStartIndexField(
         field_order=99,
         field_id=(
-            "custom-p4-m5-5-readiness-audit-closure-non-start-boundary-seal"
+            "custom-p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
         ),
-        field_name="Custom P4-M5.5 Readiness Audit Closure Seal",
+        field_name="Custom P4-M5.6 Final Closure Handoff Index",
         field_purpose="custom read-only definition-only inspection-only field",
-        p4_m5_5_readiness_audit_closure_non_start_boundary_seal_category=(
-            "custom-p4-m5-5-readiness-audit-closure-non-start-boundary-seal-category"
+        p4_m5_6_final_closure_handoff_next_corridor_non_start_index_category=(
+            "custom-p4-m5-6-final-closure-handoff-next-corridor-non-start-index-category"
         ),
-        p4_m5_5_readiness_audit_closure_non_start_boundary_seal_semantics_disabled=(
+        p4_m5_6_final_closure_handoff_next_corridor_non_start_index_semantics_disabled=(
             "no API client semantics; no MCP client semantics; "
             "no Connector runtime semantics"
         ),
     )
 
     markdown = (
-        render_p4_m5_5_readiness_audit_closure_non_start_boundary_seal_markdown(
+        render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown(
             (field,)
         )
     )
 
     assert (
-        "custom-p4-m5-5-readiness-audit-closure-non-start-boundary-seal"
+        "custom-p4-m5-6-final-closure-handoff-next-corridor-non-start-index"
         in markdown
     )
     assert "no API client semantics; no MCP client semantics" in markdown
-    assert "P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal" in markdown
+    assert (
+        "P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index"
+        in markdown
+    )
 
 
 def test_forbidden_implementation_files_are_not_created():
@@ -859,9 +897,9 @@ def _run_operator(args: list[str]) -> tuple[int, dict[str, object], str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
     code = run_operator_command(args, stdout=stdout, stderr=stderr)
-    stdout_value = stdout.getvalue()
-    payload = json.loads(stdout_value) if stdout_value.startswith("{") else {}
-    return code, payload, stderr.getvalue(), stdout_value
+    stdout_text = stdout.getvalue()
+    payload = json.loads(stdout_text) if stdout_text.startswith("{") else {}
+    return code, payload, stderr.getvalue(), stdout_text
 
 
 def _memory_loop_subcommands(parser: argparse.ArgumentParser) -> set[str]:
@@ -869,9 +907,11 @@ def _memory_loop_subcommands(parser: argparse.ArgumentParser) -> set[str]:
         if isinstance(action, argparse._SubParsersAction):
             memory_loop_parser = action.choices["memory-loop"]
             break
-    else:
-        raise AssertionError("memory-loop parser not found")
+    else:  # pragma: no cover - parser structure regression guard
+        raise AssertionError("memory-loop parser is missing")
+
     for action in memory_loop_parser._actions:
         if isinstance(action, argparse._SubParsersAction):
             return set(action.choices)
-    raise AssertionError("memory-loop subcommands not found")
+
+    raise AssertionError("memory-loop subparser choices are missing")
