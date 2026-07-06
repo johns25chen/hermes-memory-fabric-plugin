@@ -127,6 +127,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m5-2-mcp-readiness-audit-surface-map",
     "p4-m5-3-connector-readiness-audit-surface-map",
     "p4-m5-4-cross-surface-alignment-map",
+    "p4-m5-5-readiness-audit-closure-non-start-boundary-seal",
 }
 
 PREVIOUS_P4_M3_9_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
