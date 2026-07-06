@@ -471,6 +471,14 @@ from .p4_m5_6_final_closure_handoff_next_corridor_non_start_index import (
     p4_m5_6_final_closure_handoff_next_corridor_non_start_index_report,
     render_p4_m5_6_final_closure_handoff_next_corridor_non_start_index_markdown,
 )
+from .p4_m6_0_next_corridor_entry_boundary_contract import (
+    FALSE_STATUS_FLAGS as P4_M6_0_FALSE_STATUS_FLAGS,
+    P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M6_0_TRUE_STATUS_FLAGS,
+    p4_m6_0_next_corridor_entry_boundary_contract_as_dicts,
+    p4_m6_0_next_corridor_entry_boundary_contract_report,
+    render_p4_m6_0_next_corridor_entry_boundary_contract_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1489,6 +1497,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m5_6_final_closure_handoff_next_corridor_non_start_index
     )
     memory_loop_p4_m5_6_final_closure_handoff_next_corridor_non_start_index.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m6_0_next_corridor_entry_boundary_contract = (
+        memory_loop_subparsers.add_parser(
+            "p4-m6-0-next-corridor-entry-boundary-contract"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m6_0_next_corridor_entry_boundary_contract
+    )
+    memory_loop_p4_m6_0_next_corridor_entry_boundary_contract.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3259,6 +3280,30 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 "unsupported_memory_loop_p4_m5_6_final_closure_handoff_"
                 "next_corridor_non_start_index_format:"
                 f"{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m6-0-next-corridor-entry-boundary-contract"
+        ):
+            if args.format == "markdown":
+                return render_p4_m6_0_next_corridor_entry_boundary_contract_markdown()
+            if args.format == "json":
+                fields = p4_m6_0_next_corridor_entry_boundary_contract_as_dicts()
+                return {
+                    "boundary": (
+                        P4_M6_0_NEXT_CORRIDOR_ENTRY_BOUNDARY_CONTRACT_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "false_flags": len(P4_M6_0_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m6_0_next_corridor_entry_boundary_contract_report()
+                    ),
+                    "true_flags": len(P4_M6_0_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m6_0_next_corridor_entry_"
+                f"boundary_contract_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
