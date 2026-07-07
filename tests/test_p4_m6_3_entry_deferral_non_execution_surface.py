@@ -12,46 +12,46 @@ from hermes_memory_fabric.p4_m0_subspace_operator import (
     build_parser,
     run_operator_command,
 )
-from hermes_memory_fabric.p4_m6_1_entry_preconditions_definition_surface import (
+from hermes_memory_fabric.p4_m6_3_entry_deferral_non_execution_surface import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    P4_M6_1_ENTRY_PRECONDITIONS_DEFINITION_SURFACE_BOUNDARY,
+    P4_M6_3_ENTRY_DEFERRAL_NON_EXECUTION_SURFACE_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    P4M61EntryPreconditionsDefinitionSurfaceField,
-    list_p4_m6_1_entry_preconditions_definition_surface_fields,
-    p4_m6_1_entry_preconditions_definition_surface_as_dicts,
-    p4_m6_1_entry_preconditions_definition_surface_field_ids,
-    p4_m6_1_entry_preconditions_definition_surface_report,
-    render_p4_m6_1_entry_preconditions_definition_surface_markdown,
+    P4M63EntryDeferralNonExecutionSurfaceField,
+    list_p4_m6_3_entry_deferral_non_execution_surface_fields,
+    p4_m6_3_entry_deferral_non_execution_surface_as_dicts,
+    p4_m6_3_entry_deferral_non_execution_surface_field_ids,
+    p4_m6_3_entry_deferral_non_execution_surface_report,
+    render_p4_m6_3_entry_deferral_non_execution_surface_markdown,
 )
 
 
 FIELD_IDS = tuple(
     line
     for line in """
-p4-m6-1-entry-preconditions-definition-surface-id
-p4-m6-1-entry-preconditions-definition-surface-phase
-p4-m6-1-entry-preconditions-definition-surface-mode
-p4-m6-1-entry-preconditions-definition-surface-p4-m6-position
-p4-m6-1-entry-preconditions-definition-surface-direct-prior-p4-m6-0-entry-boundary-contract-reference
-p4-m6-1-entry-preconditions-definition-surface-inherited-p4-m5-final-closure-handoff-reference
-p4-m6-1-entry-preconditions-definition-surface-static-precondition-label-scope
-p4-m6-1-entry-preconditions-definition-surface-repository-state-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-version-lock-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-main-cleanliness-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-no-uv-lock-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-no-repo-codex-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-no-tag-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-command-allowlist-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-boundary-phrase-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-field-and-status-shape-precondition-label
-p4-m6-1-entry-preconditions-definition-surface-non-evidence-boundary
-p4-m6-1-entry-preconditions-definition-surface-non-validation-non-inference-non-scoring-non-verdict-boundary
-p4-m6-1-entry-preconditions-definition-surface-non-authorization-non-confirmation-non-approval-boundary
-p4-m6-1-entry-preconditions-definition-surface-non-routing-non-execution-boundary
-p4-m6-1-entry-preconditions-definition-surface-non-record-non-storage-non-persistence-non-mutation-boundary
-p4-m6-1-entry-preconditions-definition-surface-implementation-corridor-v7-productization-ui-operator-console-deferred-boundary
-p4-m6-1-entry-preconditions-definition-surface-static-precondition-and-validation-inference-scoring-verdict-authorization-routing-execution-record-storage-mutation-semantics-disabled
+p4-m6-3-entry-deferral-non-execution-surface-id
+p4-m6-3-entry-deferral-non-execution-surface-phase
+p4-m6-3-entry-deferral-non-execution-surface-mode
+p4-m6-3-entry-deferral-non-execution-surface-p4-m6-position
+p4-m6-3-entry-deferral-non-execution-surface-direct-prior-p4-m6-2-entry-acceptance-non-evidence-surface-reference
+p4-m6-3-entry-deferral-non-execution-surface-inherited-p4-m6-1-entry-preconditions-definition-surface-reference
+p4-m6-3-entry-deferral-non-execution-surface-inherited-p4-m6-0-entry-boundary-contract-reference
+p4-m6-3-entry-deferral-non-execution-surface-static-deferral-label-scope
+p4-m6-3-entry-deferral-non-execution-surface-deferral-label-definition-surface
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-execution-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-rejection-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-denial-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-approval-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-authorization-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-confirmation-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-recommendation-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-routing-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-readiness-validation-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-readiness-evidence-boundary
+p4-m6-3-entry-deferral-non-execution-surface-deferral-non-record-storage-persistence-mutation-boundary
+p4-m6-3-entry-deferral-non-execution-surface-implementation-corridor-v7-productization-ui-operator-console-deferred-boundary
+p4-m6-3-entry-deferral-non-execution-surface-api-mcp-connector-agent-network-external-integration-non-start-boundary
+p4-m6-3-entry-deferral-non-execution-surface-static-deferral-and-validation-authorization-routing-execution-record-storage-mutation-semantics-disabled
 """.splitlines()
     if line
 )
@@ -61,34 +61,37 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m6_1_entry_preconditions_definition_surface_category",
-    "p4_m6_1_entry_preconditions_definition_surface_semantics_disabled",
+    "p4_m6_3_entry_deferral_non_execution_surface_category",
+    "p4_m6_3_entry_deferral_non_execution_surface_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M6.1
-Entry Preconditions Definition Surface
-P4-M6.1 Entry Preconditions Definition Surface
+P4-M6.3
+Entry Deferral Non-Execution Surface
+P4-M6.3 Entry Deferral Non-Execution Surface
 read-only
 definition-only
-p4-m6-1-entry-preconditions-definition-surface-only
-entry-preconditions-definition-surface-only
-static-precondition-labels-only
-non-evidence-precondition-surface-only
-non-validation-precondition-surface-only
-non-inference-precondition-surface-only
-non-scoring-precondition-surface-only
-non-verdict-precondition-surface-only
-non-authorization-precondition-surface-only
-non-confirmation-precondition-surface-only
-non-approval-precondition-surface-only
-non-routing-precondition-surface-only
-non-execution-precondition-surface-only
-non-record-precondition-surface-only
-non-storage-precondition-surface-only
-non-mutation-precondition-surface-only
+p4-m6-3-entry-deferral-non-execution-surface-only
+entry-deferral-non-execution-surface-only
+static-deferral-labels-only
+non-execution-deferral-surface-only
+non-rejection-deferral-surface-only
+non-denial-deferral-surface-only
+non-approval-deferral-surface-only
+non-authorization-deferral-surface-only
+non-confirmation-deferral-surface-only
+non-recommendation-deferral-surface-only
+non-routing-deferral-surface-only
+non-validation-deferral-surface-only
+non-inference-deferral-surface-only
+non-scoring-deferral-surface-only
+non-verdict-deferral-surface-only
+non-record-deferral-surface-only
+non-storage-deferral-surface-only
+non-persistence-deferral-surface-only
+non-mutation-deferral-surface-only
 implementation-corridor-not-started-boundary-only
 api-implementation-disabled
 mcp-implementation-disabled
@@ -98,82 +101,83 @@ network-access-disabled
 external-system-integration-disabled
 declaration-only
 inspection-only
-P4-M6.1 defines only static entry precondition surfaces
-P4-M6.1 does not validate preconditions
-P4-M6.1 does not infer preconditions
-P4-M6.1 does not score preconditions
-P4-M6.1 does not produce precondition verdict
-P4-M6.1 does not treat preconditions as readiness evidence
-P4-M6.1 does not treat preconditions as validation inputs
-P4-M6.1 does not authorize entry
-P4-M6.1 does not confirm entry
-P4-M6.1 does not approve entry
-P4-M6.1 does not recommend entry
-P4-M6.1 does not route implementation
-P4-M6.1 does not execute
-P4-M6.1 does not create records
-P4-M6.1 does not create storage
-P4-M6.1 does not persist state
-P4-M6.1 does not mutate memory
-P4-M6.1 does not start implementation corridor
-P4-M6.1 is not API implementation
-P4-M6.1 is not MCP implementation
-P4-M6.1 is not Connector implementation
-P4-M6.1 is not API client implementation
-P4-M6.1 is not MCP client implementation
-P4-M6.1 is not MCP server implementation
-P4-M6.1 is not MCP transport implementation
-P4-M6.1 is not MCP session implementation
-P4-M6.1 is not Connector client implementation
-P4-M6.1 is not Connector adapter implementation
-P4-M6.1 is not Connector runtime implementation
-P4-M6.1 is not Agent auto-call
-P4-M6.1 is not external system integration
-P4-M6.1 is not network access
-P4-M6.1 is not live API endpoint probing
-P4-M6.1 is not live MCP server probing
-P4-M6.1 is not live provider probing
-P4-M6.1 is not live provider discovery
-P4-M6.1 is not OAuth flow
-P4-M6.1 is not credential use
-P4-M6.1 is not secret access
-P4-M6.1 is not secret inspection
-P4-M6.1 is not API call
-P4-M6.1 is not MCP tool call
-P4-M6.1 is not MCP resource access
-P4-M6.1 is not MCP prompt execution
-P4-M6.1 is not connector data fetch
-P4-M6.1 is not connector data write
-P4-M6.1 is not connector mutation
-P4-M6.1 is not authentication testing
-P4-M6.1 is not authorization testing
-P4-M6.1 is not schema validation
-P4-M6.0 Next Corridor Entry Boundary Contract remains the direct prior entry boundary reference
+P4-M6.3 defines only static entry deferral surfaces
+P4-M6.3 does not reject entry
+P4-M6.3 does not deny entry
+P4-M6.3 does not approve entry
+P4-M6.3 does not authorize entry
+P4-M6.3 does not confirm entry
+P4-M6.3 does not recommend entry
+P4-M6.3 does not route implementation
+P4-M6.3 does not execute
+P4-M6.3 does not validate deferral
+P4-M6.3 does not infer deferral
+P4-M6.3 does not score deferral
+P4-M6.3 does not produce deferral verdict
+P4-M6.3 does not collect readiness evidence
+P4-M6.3 does not classify readiness evidence
+P4-M6.3 does not treat deferral as readiness evidence
+P4-M6.3 does not treat deferral as validation input
+P4-M6.3 does not create records
+P4-M6.3 does not create storage
+P4-M6.3 does not persist state
+P4-M6.3 does not mutate memory
+P4-M6.3 does not start implementation corridor
+P4-M6.3 is not API implementation
+P4-M6.3 is not MCP implementation
+P4-M6.3 is not Connector implementation
+P4-M6.3 is not API client implementation
+P4-M6.3 is not MCP client implementation
+P4-M6.3 is not MCP server implementation
+P4-M6.3 is not MCP transport implementation
+P4-M6.3 is not MCP session implementation
+P4-M6.3 is not Connector client implementation
+P4-M6.3 is not Connector adapter implementation
+P4-M6.3 is not Connector runtime implementation
+P4-M6.3 is not Agent auto-call
+P4-M6.3 is not external system integration
+P4-M6.3 is not network access
+P4-M6.3 is not live API endpoint probing
+P4-M6.3 is not live MCP server probing
+P4-M6.3 is not live provider probing
+P4-M6.3 is not live provider discovery
+P4-M6.3 is not OAuth flow
+P4-M6.3 is not credential use
+P4-M6.3 is not secret access
+P4-M6.3 is not secret inspection
+P4-M6.3 is not API call
+P4-M6.3 is not MCP tool call
+P4-M6.3 is not MCP resource access
+P4-M6.3 is not MCP prompt execution
+P4-M6.3 is not connector data fetch
+P4-M6.3 is not connector data write
+P4-M6.3 is not connector mutation
+P4-M6.3 is not authentication testing
+P4-M6.3 is not authorization testing
+P4-M6.3 is not schema validation
+P4-M6.2 Entry Acceptance Non-Evidence Surface remains the direct prior entry acceptance reference
+P4-M6.1 Entry Preconditions Definition Surface remains an inherited entry preconditions reference
+P4-M6.0 Next Corridor Entry Boundary Contract remains an inherited entry boundary reference
 P4-M5.6 Final Closure Handoff / Next Corridor Non-Start Index remains an inherited final closure handoff reference
 P4-M5.5 Readiness Audit Closure / Non-Start Boundary Seal remains an inherited closure seal reference
 P4-M5.4 API / MCP / Connector Cross-Surface Alignment Map remains an inherited cross-surface alignment map reference
-static entry precondition labels are definition-only
-repository state precondition label is definition-only
-version lock precondition label is definition-only
-main cleanliness precondition label is definition-only
-no uv.lock precondition label is definition-only
-no repo .codex precondition label is definition-only
-no tag precondition label is definition-only
-command allowlist precondition label is definition-only
-boundary phrase precondition label is definition-only
-field and status shape precondition label is definition-only
-entry precondition surfaces are not readiness evidence
-entry precondition surfaces are not validation inputs
-entry precondition surfaces are not authorization
-entry precondition surfaces are not confirmation
-entry precondition surfaces are not approval
-entry precondition surfaces are not recommendation
-entry precondition surfaces are not routing
-entry precondition surfaces are not execution
-entry precondition surfaces are not records
-entry precondition surfaces are not storage
-entry precondition surfaces are not persistence
-entry precondition surfaces are not mutation
+static entry deferral labels are definition-only
+deferral label definition surface is definition-only
+deferral surface scope is definition-only
+entry deferral surfaces are not rejection
+entry deferral surfaces are not denial
+entry deferral surfaces are not approval
+entry deferral surfaces are not authorization
+entry deferral surfaces are not confirmation
+entry deferral surfaces are not recommendation
+entry deferral surfaces are not routing
+entry deferral surfaces are not execution
+entry deferral surfaces are not readiness validation
+entry deferral surfaces are not readiness evidence
+entry deferral surfaces are not records
+entry deferral surfaces are not storage
+entry deferral surfaces are not persistence
+entry deferral surfaces are not mutation
 implementation corridor remains not started
 API implementation remains not started
 MCP implementation remains not started
@@ -181,24 +185,6 @@ Connector implementation remains not started
 Agent auto-call remains not started
 external system integration remains not started
 network access remains not started
-live API endpoint probing remains not started
-live MCP server probing remains not started
-live provider probing remains not started
-live provider discovery remains not started
-OAuth flow remains not started
-credential use remains not started
-secret access remains not started
-secret inspection remains not started
-API call remains not started
-MCP tool call remains not started
-MCP resource access remains not started
-MCP prompt execution remains not started
-connector data fetch remains not started
-connector data write remains not started
-connector mutation remains not started
-authentication testing remains not started
-authorization testing remains not started
-schema validation remains not started
 readiness validation remains not implemented
 readiness inference remains not implemented
 readiness scoring remains not implemented
@@ -213,54 +199,30 @@ v7 remains not started
 productization remains not started
 UI remains not started
 Operator Console remains not started
-no precondition validation
-no precondition inference
-no precondition scoring
-no precondition verdict
-no readiness evidence
-no validation inputs
+no deferral validation
+no deferral inference
+no deferral scoring
+no deferral verdict
+no rejection
+no denial
+no approval
 no authorization
 no confirmation
-no approval
 no recommendation
+no routing
+no execution
+no readiness evidence
+no validation inputs
 no API implementation
 no MCP implementation
 no Connector implementation
-no API client
-no MCP client
-no MCP server
-no MCP transport
-no MCP session
-no Connector client
-no Connector adapter
-no Connector runtime
 no Agent auto-call
 no external system integration
 no network access
-no live API endpoint probing
-no live MCP server probing
-no live provider probing
-no live provider discovery
-no OAuth flow
-no credential use
-no secret access
-no secret inspection
-no API call
-no MCP tool call
-no MCP resource access
-no MCP prompt execution
-no connector data fetch
-no connector data write
-no connector mutation
-no authentication testing
-no authorization testing
-no schema validation
 no readiness validation
 no readiness inference
 no readiness scoring
 no readiness verdict
-no routing
-no execution
 no record creation
 no storage
 no persistence
@@ -276,27 +238,30 @@ no tag
     if line
 )
 
-ALL_EXPECTED_TRUE_STATUS_KEYS = tuple(
+EXPECTED_TRUE_STATUS_KEYS = tuple(
     line
     for line in """
 definition_only
-p4_m6_1_entry_preconditions_definition_surface_started
-p4_m6_1_entry_preconditions_definition_surface_only
-entry_preconditions_definition_surface_only
-static_precondition_labels_only
-non_evidence_precondition_surface_only
-non_validation_precondition_surface_only
-non_inference_precondition_surface_only
-non_scoring_precondition_surface_only
-non_verdict_precondition_surface_only
-non_authorization_precondition_surface_only
-non_confirmation_precondition_surface_only
-non_approval_precondition_surface_only
-non_routing_precondition_surface_only
-non_execution_precondition_surface_only
-non_record_precondition_surface_only
-non_storage_precondition_surface_only
-non_mutation_precondition_surface_only
+p4_m6_3_entry_deferral_non_execution_surface_started
+p4_m6_3_entry_deferral_non_execution_surface_only
+entry_deferral_non_execution_surface_only
+static_deferral_labels_only
+deferral_non_execution_surface_only
+deferral_non_rejection_surface_only
+deferral_non_denial_surface_only
+deferral_non_approval_surface_only
+deferral_non_authorization_surface_only
+deferral_non_confirmation_surface_only
+deferral_non_recommendation_surface_only
+deferral_non_routing_surface_only
+deferral_non_validation_surface_only
+deferral_non_inference_surface_only
+deferral_non_scoring_surface_only
+deferral_non_verdict_surface_only
+deferral_non_record_surface_only
+deferral_non_storage_surface_only
+deferral_non_persistence_surface_only
+deferral_non_mutation_surface_only
 implementation_corridor_not_started_boundary_only
 api_implementation_disabled
 mcp_implementation_disabled
@@ -306,41 +271,57 @@ network_access_disabled
 external_system_integration_disabled
 declaration_only
 inspection_only
-p4_m6_1_started_as_precondition_definition_only
+p4_m6_3_started_as_deferral_definition_only
 p4_m6_position_preserved
+p4_m6_2_entry_acceptance_non_evidence_surface_reference_defined
+p4_m6_1_entry_preconditions_definition_surface_reference_defined
 p4_m6_0_entry_boundary_contract_reference_defined
 p4_m5_6_final_closure_handoff_reference_defined
 p4_m5_5_closure_seal_reference_defined
 p4_m5_4_cross_surface_alignment_map_reference_defined
-static_entry_precondition_labels_defined
-repository_state_precondition_label_defined
-version_lock_precondition_label_defined
-main_cleanliness_precondition_label_defined
-no_uv_lock_precondition_label_defined
-no_repo_codex_precondition_label_defined
-no_tag_precondition_label_defined
-command_allowlist_precondition_label_defined
-boundary_phrase_precondition_label_defined
-field_and_status_shape_precondition_label_defined
-entry_precondition_surfaces_are_definition_only
-entry_precondition_surfaces_are_static_labels_only
-entry_precondition_surfaces_are_not_readiness_evidence
-entry_precondition_surfaces_are_not_validation_inputs
-entry_precondition_surfaces_are_not_authorization
-entry_precondition_surfaces_are_not_confirmation
-entry_precondition_surfaces_are_not_approval
-entry_precondition_surfaces_are_not_recommendation
-entry_precondition_surfaces_are_not_routing
-entry_precondition_surfaces_are_not_execution
-entry_precondition_surfaces_are_not_records
-entry_precondition_surfaces_are_not_storage
-entry_precondition_surfaces_are_not_persistence
-entry_precondition_surfaces_are_not_mutation
-precondition_validation_deferred
-precondition_inference_deferred
-precondition_scoring_deferred
-precondition_verdict_deferred
-precondition_authorization_deferred
+static_entry_deferral_labels_defined
+deferral_label_definition_surface_defined
+deferral_surface_scope_defined
+deferral_non_execution_boundary_defined
+deferral_non_rejection_boundary_defined
+deferral_non_denial_boundary_defined
+deferral_non_approval_boundary_defined
+deferral_non_authorization_boundary_defined
+deferral_non_confirmation_boundary_defined
+deferral_non_recommendation_boundary_defined
+deferral_non_routing_boundary_defined
+deferral_non_readiness_validation_boundary_defined
+deferral_non_readiness_evidence_boundary_defined
+deferral_non_record_boundary_defined
+deferral_non_storage_boundary_defined
+deferral_non_persistence_boundary_defined
+deferral_non_mutation_boundary_defined
+entry_deferral_surfaces_are_definition_only
+entry_deferral_surfaces_are_static_labels_only
+entry_deferral_surfaces_are_not_rejection
+entry_deferral_surfaces_are_not_denial
+entry_deferral_surfaces_are_not_approval
+entry_deferral_surfaces_are_not_authorization
+entry_deferral_surfaces_are_not_confirmation
+entry_deferral_surfaces_are_not_recommendation
+entry_deferral_surfaces_are_not_routing
+entry_deferral_surfaces_are_not_execution
+entry_deferral_surfaces_are_not_readiness_validation
+entry_deferral_surfaces_are_not_readiness_evidence
+entry_deferral_surfaces_are_not_records
+entry_deferral_surfaces_are_not_storage
+entry_deferral_surfaces_are_not_persistence
+entry_deferral_surfaces_are_not_mutation
+deferral_validation_deferred
+deferral_inference_deferred
+deferral_scoring_deferred
+deferral_verdict_deferred
+deferral_authorization_deferred
+deferral_confirmation_deferred
+deferral_approval_deferred
+deferral_recommendation_deferred
+deferral_routing_deferred
+deferral_execution_deferred
 implementation_start_deferred
 api_implementation_deferred
 mcp_implementation_deferred
@@ -362,31 +343,50 @@ v7_start_deferred
 productization_deferred
 ui_deferred
 operator_console_deferred
-command_returns_before_store_creation
-no_workspace_storage_created
-no_memory_mutation_surface_defined
 """.splitlines()
     if line
 )
 
-ALL_EXPECTED_FALSE_STATUS_KEYS = tuple(
+EXPECTED_FALSE_STATUS_KEYS = tuple(
     line
     for line in """
 live_validation_enabled
-entry_precondition_validation_enabled
-entry_precondition_inference_enabled
-entry_precondition_scoring_enabled
-entry_precondition_verdict_enabled
-entry_precondition_authorization_enabled
-entry_precondition_confirmation_enabled
-entry_precondition_approval_enabled
-entry_precondition_recommendation_enabled
-entry_precondition_routing_enabled
-entry_precondition_execution_enabled
-entry_precondition_record_creation_enabled
-entry_precondition_storage_enabled
-entry_precondition_persistence_enabled
-entry_precondition_mutation_enabled
+entry_deferral_validation_enabled
+entry_deferral_inference_enabled
+entry_deferral_scoring_enabled
+entry_deferral_verdict_enabled
+entry_deferral_rejection_enabled
+entry_deferral_denial_enabled
+entry_deferral_approval_enabled
+entry_deferral_authorization_enabled
+entry_deferral_confirmation_enabled
+entry_deferral_recommendation_enabled
+entry_deferral_routing_enabled
+entry_deferral_execution_enabled
+entry_deferral_evidence_enabled
+entry_deferral_validation_input_enabled
+entry_deferral_record_creation_enabled
+entry_deferral_storage_enabled
+entry_deferral_persistence_enabled
+entry_deferral_mutation_enabled
+deferral_validation_enabled
+deferral_inference_enabled
+deferral_scoring_enabled
+deferral_verdict_enabled
+deferral_rejection_enabled
+deferral_denial_enabled
+deferral_approval_enabled
+deferral_authorization_enabled
+deferral_confirmation_enabled
+deferral_recommendation_enabled
+deferral_routing_enabled
+deferral_execution_enabled
+deferral_evidence_collection_enabled
+deferral_validation_input_enabled
+deferral_record_creation_enabled
+deferral_storage_enabled
+deferral_persistence_enabled
+deferral_mutation_enabled
 readiness_evidence_collection_enabled
 readiness_evidence_classification_enabled
 validation_input_enabled
@@ -399,7 +399,7 @@ executable_planning_enabled
 next_action_generation_enabled
 implementation_corridor_started
 implementation_entry_enabled
-implementation_preconditions_validation_enabled
+implementation_deferral_validation_enabled
 api_enabled
 api_implementation_enabled
 api_client_enabled
@@ -443,6 +443,7 @@ agent_auto_call_enabled
 agent_call_enabled
 external_system_integration_enabled
 validation_enabled
+inference_enabled
 scoring_enabled
 verdict_generation_enabled
 readiness_validation_enabled
@@ -459,6 +460,8 @@ entry_validation_enabled
 entry_inference_enabled
 entry_scoring_enabled
 entry_verdict_enabled
+entry_rejection_enabled
+entry_denial_enabled
 entry_authorization_enabled
 entry_confirmation_enabled
 entry_approval_enabled
@@ -496,82 +499,107 @@ v7_started
 productization_started
 ui_started
 operator_console_started
-mvp_started
-deploy_started
-full_memory_graph_started
 version_bump_enabled
+tag_creation_enabled
+deferral_as_rejection_enabled
+deferral_as_denial_enabled
+deferral_as_approval_enabled
+deferral_as_authorization_enabled
+deferral_as_execution_enabled
+deferral_as_readiness_validation_enabled
+deferral_as_readiness_evidence_enabled
 """.splitlines()
     if line
 )
 
-OPERATOR_SMOKE_PHRASES = (
-    "P4-M6.1 Entry Preconditions Definition Surface",
-    "read-only",
-    "definition-only",
-    "p4-m6-1-entry-preconditions-definition-surface-only",
-    "entry-preconditions-definition-surface-only",
-    "static-precondition-labels-only",
-    "non-evidence-precondition-surface-only",
-    "non-validation-precondition-surface-only",
-    "non-inference-precondition-surface-only",
-    "non-scoring-precondition-surface-only",
-    "non-verdict-precondition-surface-only",
-    "non-authorization-precondition-surface-only",
-    "non-confirmation-precondition-surface-only",
-    "non-approval-precondition-surface-only",
-    "non-routing-precondition-surface-only",
-    "non-execution-precondition-surface-only",
-    "non-record-precondition-surface-only",
-    "non-storage-precondition-surface-only",
-    "non-mutation-precondition-surface-only",
-    "implementation-corridor-not-started-boundary-only",
-    "api-implementation-disabled",
-    "mcp-implementation-disabled",
-    "connector-implementation-disabled",
-    "agent-auto-call-disabled",
-    "network-access-disabled",
-    "external-system-integration-disabled",
-    "declaration-only",
-    "inspection-only",
-    "P4-M6.1 defines only static entry precondition surfaces",
-    "P4-M6.1 does not validate preconditions",
-    "P4-M6.1 does not infer preconditions",
-    "P4-M6.1 does not score preconditions",
-    "P4-M6.1 does not produce precondition verdict",
-    "P4-M6.1 does not treat preconditions as readiness evidence",
-    "P4-M6.1 does not treat preconditions as validation inputs",
-    "P4-M6.1 does not authorize entry",
-    "P4-M6.1 does not route implementation",
-    "P4-M6.1 does not execute",
-    "P4-M6.1 does not create storage",
-    "P4-M6.1 does not mutate memory",
-    "P4-M6.1 does not start implementation corridor",
-    "no precondition validation",
-    "no readiness evidence",
-    "no validation inputs",
-    "no authorization",
-    "no API implementation",
-    "no MCP implementation",
-    "no Connector implementation",
-    "no Agent auto-call",
-    "no external system integration",
-    "no network access",
-    "no readiness validation",
-    "no readiness inference",
-    "no readiness scoring",
-    "no readiness verdict",
-    "no routing",
-    "no execution",
-    "no storage",
-    "no persistence",
-    "no mutation",
-    "no implementation start",
-    "no v7",
-    "no productization",
-    "no UI",
-    "no Operator Console",
-    "no version bump",
-    "no tag",
+OPERATOR_SMOKE_PHRASES = tuple(
+    line
+    for line in """
+P4-M6.3 Entry Deferral Non-Execution Surface
+read-only
+definition-only
+p4-m6-3-entry-deferral-non-execution-surface-only
+entry-deferral-non-execution-surface-only
+static-deferral-labels-only
+non-execution-deferral-surface-only
+non-rejection-deferral-surface-only
+non-denial-deferral-surface-only
+non-approval-deferral-surface-only
+non-authorization-deferral-surface-only
+non-confirmation-deferral-surface-only
+non-recommendation-deferral-surface-only
+non-routing-deferral-surface-only
+non-validation-deferral-surface-only
+non-inference-deferral-surface-only
+non-scoring-deferral-surface-only
+non-verdict-deferral-surface-only
+non-record-deferral-surface-only
+non-storage-deferral-surface-only
+non-persistence-deferral-surface-only
+non-mutation-deferral-surface-only
+implementation-corridor-not-started-boundary-only
+api-implementation-disabled
+mcp-implementation-disabled
+connector-implementation-disabled
+agent-auto-call-disabled
+network-access-disabled
+external-system-integration-disabled
+declaration-only
+inspection-only
+P4-M6.3 defines only static entry deferral surfaces
+P4-M6.3 does not reject entry
+P4-M6.3 does not deny entry
+P4-M6.3 does not approve entry
+P4-M6.3 does not authorize entry
+P4-M6.3 does not confirm entry
+P4-M6.3 does not recommend entry
+P4-M6.3 does not route implementation
+P4-M6.3 does not execute
+P4-M6.3 does not validate deferral
+P4-M6.3 does not infer deferral
+P4-M6.3 does not score deferral
+P4-M6.3 does not produce deferral verdict
+P4-M6.3 does not collect readiness evidence
+P4-M6.3 does not treat deferral as readiness evidence
+P4-M6.3 does not treat deferral as validation input
+P4-M6.3 does not create storage
+P4-M6.3 does not mutate memory
+P4-M6.3 does not start implementation corridor
+no deferral validation
+no deferral inference
+no deferral scoring
+no deferral verdict
+no rejection
+no denial
+no approval
+no authorization
+no routing
+no execution
+no readiness evidence
+no validation inputs
+no API implementation
+no MCP implementation
+no Connector implementation
+no Agent auto-call
+no external system integration
+no network access
+no readiness validation
+no readiness inference
+no readiness scoring
+no readiness verdict
+no record creation
+no storage
+no persistence
+no mutation
+no implementation start
+no v7
+no productization
+no UI
+no Operator Console
+no version bump
+no tag
+""".splitlines()
+    if line
 )
 
 EXPECTED_MEMORY_LOOP_COMMANDS = set(
@@ -664,47 +692,57 @@ p4-m6-3-entry-deferral-non-execution-surface
 
 
 def test_field_inventory_is_exact_and_ordered():
-    fields = list_p4_m6_1_entry_preconditions_definition_surface_fields()
+    fields = list_p4_m6_3_entry_deferral_non_execution_surface_fields()
 
     assert len(fields) == 23
-    assert p4_m6_1_entry_preconditions_definition_surface_field_ids() == FIELD_IDS
+    assert p4_m6_3_entry_deferral_non_execution_surface_field_ids() == FIELD_IDS
     assert tuple(field.field_order for field in fields) == tuple(range(1, 24))
     assert all(
-        isinstance(field, P4M61EntryPreconditionsDefinitionSurfaceField)
+        isinstance(field, P4M63EntryDeferralNonExecutionSurfaceField)
         for field in fields
     )
     assert {
         field.name
-        for field in dataclasses.fields(P4M61EntryPreconditionsDefinitionSurfaceField)
+        for field in dataclasses.fields(P4M63EntryDeferralNonExecutionSurfaceField)
     } == DATACLASS_FIELDS
 
 
 def test_boundary_phrase_inventory_is_required_contract():
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in BOUNDARY_PHRASE_LINES
-        assert phrase in P4_M6_1_ENTRY_PRECONDITIONS_DEFINITION_SURFACE_BOUNDARY
+        assert phrase in P4_M6_3_ENTRY_DEFERRAL_NON_EXECUTION_SURFACE_BOUNDARY
 
 
 def test_markdown_renders_static_boundary_and_field_ids():
-    markdown = render_p4_m6_1_entry_preconditions_definition_surface_markdown()
+    markdown = render_p4_m6_3_entry_deferral_non_execution_surface_markdown()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in markdown
     for field_id in FIELD_IDS:
         assert field_id in markdown
     assert "## Status Report" in markdown
-    assert "## P4-M6.1 Entry Preconditions Definition Surface Fields" in markdown
-    assert "P4-M6.1 Entry Preconditions Definition Surface" in markdown
+    assert "## P4-M6.3 Entry Deferral Non-Execution Surface Fields" in markdown
+    assert "P4-M6.3 Entry Deferral Non-Execution Surface" in markdown
 
 
-def test_report_has_required_true_false_status_flags():
-    status = p4_m6_1_entry_preconditions_definition_surface_report()
+def test_report_has_exact_true_false_status_flags():
+    status = p4_m6_3_entry_deferral_non_execution_surface_report()
 
-    assert status["phase"] == "P4-M6.1"
-    assert status["feature"] == "Entry Preconditions Definition Surface"
+    assert status["phase"] == "P4-M6.3"
+    assert status["feature"] == "Entry Deferral Non-Execution Surface"
     assert status["mode"] == "read-only"
     assert status["package_version"] == "6.16.0"
-    assert status["p4_m6_1_entry_preconditions_definition_surface_field_count"] == 23
+    assert status["p4_m6_3_entry_deferral_non_execution_surface_field_count"] == 23
+    assert (
+        status["referenced_p4_m6_2_entry_acceptance_non_evidence_surface_field_count"]
+        == 23
+    )
+    assert (
+        status[
+            "referenced_p4_m6_1_entry_preconditions_definition_surface_field_count"
+        ]
+        == 23
+    )
     assert (
         status["referenced_p4_m6_0_next_corridor_entry_boundary_contract_field_count"]
         == 23
@@ -722,26 +760,25 @@ def test_report_has_required_true_false_status_flags():
         == 23
     )
     assert status["referenced_p4_m5_4_cross_surface_alignment_map_field_count"] == 23
-    assert TRUE_STATUS_FLAGS == ALL_EXPECTED_TRUE_STATUS_KEYS
-    assert FALSE_STATUS_FLAGS == ALL_EXPECTED_FALSE_STATUS_KEYS
-    assert len(TRUE_STATUS_FLAGS) == 86
-    assert len(FALSE_STATUS_FLAGS) == 128
-    for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
-        assert status[flag] is True
-    for flag in ALL_EXPECTED_FALSE_STATUS_KEYS:
-        assert status[flag] is False
-    assert status["tag_creation_enabled"] is False
+    assert TRUE_STATUS_FLAGS == EXPECTED_TRUE_STATUS_KEYS
+    assert FALSE_STATUS_FLAGS == EXPECTED_FALSE_STATUS_KEYS
+    assert len(TRUE_STATUS_FLAGS) == 102
+    assert len(FALSE_STATUS_FLAGS) == 158
+    actual_true_keys = tuple(key for key, value in status.items() if value is True)
+    actual_false_keys = tuple(key for key, value in status.items() if value is False)
+    assert actual_true_keys == TRUE_STATUS_FLAGS
+    assert actual_false_keys == FALSE_STATUS_FLAGS
 
 
 def test_as_dicts_is_deterministic_and_read_only_shape():
-    fields = p4_m6_1_entry_preconditions_definition_surface_as_dicts()
+    fields = p4_m6_3_entry_deferral_non_execution_surface_as_dicts()
 
     assert len(fields) == 23
     assert tuple(field["field_id"] for field in fields) == FIELD_IDS
-    assert fields == p4_m6_1_entry_preconditions_definition_surface_as_dicts()
+    assert fields == p4_m6_3_entry_deferral_non_execution_surface_as_dicts()
     assert all(
-        field["p4_m6_1_entry_preconditions_definition_surface_category"]
-        == "p4-m6-1-entry-preconditions-definition-surface-category"
+        field["p4_m6_3_entry_deferral_non_execution_surface_category"]
+        == "p4-m6-3-entry-deferral-non-execution-surface-category"
         for field in fields
     )
 
@@ -761,7 +798,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-1-entry-preconditions-definition-surface",
+            "p4-m6-3-entry-deferral-non-execution-surface",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -770,7 +807,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     assert code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M6.1 Entry Preconditions Definition Surface\n")
+    assert stdout.startswith("# P4-M6.3 Entry Deferral Non-Execution Surface\n")
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -782,7 +819,7 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     code, output, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-1-entry-preconditions-definition-surface",
+            "p4-m6-3-entry-deferral-non-execution-surface",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -794,19 +831,18 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     assert stderr == ""
     assert stdout.startswith("{")
     assert output["count"] == 23
-    assert output["true_flags"] == 86
-    assert output["false_flags"] == 128
-    assert output["boundary"] == P4_M6_1_ENTRY_PRECONDITIONS_DEFINITION_SURFACE_BOUNDARY
+    assert output["true_flags"] == 102
+    assert output["false_flags"] == 158
+    assert output["boundary"] == P4_M6_3_ENTRY_DEFERRAL_NON_EXECUTION_SURFACE_BOUNDARY
     assert tuple(field["field_id"] for field in output["fields"]) == FIELD_IDS
     status = output["status"]
-    assert status["phase"] == "P4-M6.1"
-    assert status["feature"] == "Entry Preconditions Definition Surface"
+    assert status["phase"] == "P4-M6.3"
+    assert status["feature"] == "Entry Deferral Non-Execution Surface"
     assert status["mode"] == "read-only"
-    for flag in ALL_EXPECTED_TRUE_STATUS_KEYS:
-        assert status[flag] is True
-    for flag in ALL_EXPECTED_FALSE_STATUS_KEYS:
-        assert status[flag] is False
-    assert status["tag_creation_enabled"] is False
+    actual_true_keys = {key for key, value in status.items() if value is True}
+    actual_false_keys = {key for key, value in status.items() if value is False}
+    assert actual_true_keys == set(TRUE_STATUS_FLAGS)
+    assert actual_false_keys == set(FALSE_STATUS_FLAGS)
     assert not (tmp_path / ".local" / "subspace_memory").exists()
 
 
@@ -814,6 +850,8 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
     commands = _memory_loop_subcommands(build_parser())
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
+    assert "p4-m6-3-entry-deferral-non-execution-surface" in commands
+    assert "p4-m6-2-entry-acceptance-non-evidence-surface" in commands
     assert "p4-m6-1-entry-preconditions-definition-surface" in commands
     assert "p4-m6-0-next-corridor-entry-boundary-contract" in commands
     assert "p4-m5-6-final-closure-handoff-next-corridor-non-start-index" in commands
@@ -829,7 +867,7 @@ def test_pyproject_entry_points_do_not_productize_command():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     entry_points = pyproject["project"]["entry-points"]
 
-    command = "p4-m6-1-entry-preconditions-definition-surface"
+    command = "p4-m6-3-entry-deferral-non-execution-surface"
     assert command not in entry_points
     assert command not in str(entry_points)
     assert pyproject["project"]["version"] == "6.16.0"
@@ -840,11 +878,11 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M6_1_ENTRY_PRECONDITIONS_DEFINITION_SURFACE.md"
+        / "CIVILIZATION_CORE_P4_M6_3_ENTRY_DEFERRAL_NON_EXECUTION_SURFACE.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
-    assert doc.startswith("# P4-M6.1 Entry Preconditions Definition Surface\n")
+    assert doc.startswith("# P4-M6.3 Entry Deferral Non-Execution Surface\n")
     for field_id in FIELD_IDS:
         assert field_id in doc
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -852,24 +890,24 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    field = P4M61EntryPreconditionsDefinitionSurfaceField(
+    field = P4M63EntryDeferralNonExecutionSurfaceField(
         field_order=99,
-        field_id="custom-p4-m6-1-entry-preconditions-definition-surface",
-        field_name="Custom P4-M6.1 Entry Preconditions Definition Surface",
+        field_id="custom-p4-m6-3-entry-deferral-non-execution-surface",
+        field_name="Custom P4-M6.3 Entry Deferral Non-Execution Surface",
         field_purpose="custom read-only definition-only inspection-only field",
-        p4_m6_1_entry_preconditions_definition_surface_category=(
-            "custom-p4-m6-1-entry-preconditions-definition-surface-category"
+        p4_m6_3_entry_deferral_non_execution_surface_category=(
+            "custom-p4-m6-3-entry-deferral-non-execution-surface-category"
         ),
-        p4_m6_1_entry_preconditions_definition_surface_semantics_disabled=(
-            "no precondition validation semantics; no readiness evidence semantics"
+        p4_m6_3_entry_deferral_non_execution_surface_semantics_disabled=(
+            "no deferral validation semantics; no execution semantics"
         ),
     )
 
-    markdown = render_p4_m6_1_entry_preconditions_definition_surface_markdown((field,))
+    markdown = render_p4_m6_3_entry_deferral_non_execution_surface_markdown((field,))
 
-    assert "custom-p4-m6-1-entry-preconditions-definition-surface" in markdown
-    assert "no precondition validation semantics" in markdown
-    assert "P4-M6.1 Entry Preconditions Definition Surface" in markdown
+    assert "custom-p4-m6-3-entry-deferral-non-execution-surface" in markdown
+    assert "no deferral validation semantics" in markdown
+    assert "P4-M6.3 Entry Deferral Non-Execution Surface" in markdown
 
 
 def test_forbidden_implementation_files_are_not_created():
