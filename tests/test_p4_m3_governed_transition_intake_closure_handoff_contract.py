@@ -501,6 +501,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-5-entry-escalation-non-routing-surface",
     "p4-m6-6-entry-exception-non-override-surface",
     "p4-m6-7-entry-conflict-non-resolution-surface",
+    "p4-m6-8-entry-ambiguity-non-inference-surface",
 }
 
 PREVIOUS_P4_M3_13_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
