@@ -527,6 +527,14 @@ from .p4_m6_6_entry_exception_non_override_surface import (
     p4_m6_6_entry_exception_non_override_surface_report,
     render_p4_m6_6_entry_exception_non_override_surface_markdown,
 )
+from .p4_m6_7_entry_conflict_non_resolution_surface import (
+    FALSE_STATUS_FLAGS as P4_M6_7_FALSE_STATUS_FLAGS,
+    P4_M6_7_ENTRY_CONFLICT_NON_RESOLUTION_SURFACE_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M6_7_TRUE_STATUS_FLAGS,
+    p4_m6_7_entry_conflict_non_resolution_surface_as_dicts,
+    p4_m6_7_entry_conflict_non_resolution_surface_report,
+    render_p4_m6_7_entry_conflict_non_resolution_surface_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1636,6 +1644,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m6_6_entry_exception_non_override_surface
     )
     memory_loop_p4_m6_6_entry_exception_non_override_surface.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m6_7_entry_conflict_non_resolution_surface = (
+        memory_loop_subparsers.add_parser(
+            "p4-m6-7-entry-conflict-non-resolution-surface"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m6_7_entry_conflict_non_resolution_surface
+    )
+    memory_loop_p4_m6_7_entry_conflict_non_resolution_surface.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3578,6 +3599,32 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m6_6_entry_exception_"
                 f"non_override_surface_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m6-7-entry-conflict-non-resolution-surface"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m6_7_entry_conflict_non_resolution_surface_markdown()
+                )
+            if args.format == "json":
+                fields = p4_m6_7_entry_conflict_non_resolution_surface_as_dicts()
+                return {
+                    "boundary": (
+                        P4_M6_7_ENTRY_CONFLICT_NON_RESOLUTION_SURFACE_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "false_flags": len(P4_M6_7_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m6_7_entry_conflict_non_resolution_surface_report()
+                    ),
+                    "true_flags": len(P4_M6_7_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m6_7_entry_conflict_"
+                f"non_resolution_surface_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
