@@ -454,6 +454,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-0-next-corridor-entry-boundary-contract",
     "p4-m6-1-entry-preconditions-definition-surface",
     "p4-m6-2-entry-acceptance-non-evidence-surface",
+    "p4-m6-3-entry-deferral-non-execution-surface",
 }
 
 PROHIBITED_MEMORY_LOOP_COMMANDS = {

@@ -417,6 +417,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
     "p4-m6-0-next-corridor-entry-boundary-contract",
     "p4-m6-1-entry-preconditions-definition-surface",
     "p4-m6-2-entry-acceptance-non-evidence-surface",
+    "p4-m6-3-entry-deferral-non-execution-surface",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
