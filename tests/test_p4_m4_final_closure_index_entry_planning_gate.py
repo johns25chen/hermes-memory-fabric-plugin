@@ -437,6 +437,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-2-entry-acceptance-non-evidence-surface",
     "p4-m6-3-entry-deferral-non-execution-surface",
     "p4-m6-4-entry-rejection-non-execution-surface",
+    "p4-m6-5-entry-escalation-non-routing-surface",
 }
 
 
