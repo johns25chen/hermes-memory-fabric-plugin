@@ -12,46 +12,46 @@ from hermes_memory_fabric.p4_m0_subspace_operator import (
     build_parser,
     run_operator_command,
 )
-from hermes_memory_fabric.p4_m6_5_entry_escalation_non_routing_surface import (
+from hermes_memory_fabric.p4_m6_6_entry_exception_non_override_surface import (
     BOUNDARY_PHRASE_LINES,
     FALSE_STATUS_FLAGS,
-    P4_M6_5_ENTRY_ESCALATION_NON_ROUTING_SURFACE_BOUNDARY,
+    P4_M6_6_ENTRY_EXCEPTION_NON_OVERRIDE_SURFACE_BOUNDARY,
     TRUE_STATUS_FLAGS,
-    P4M65EntryEscalationNonRoutingSurfaceField,
-    list_p4_m6_5_entry_escalation_non_routing_surface_fields,
-    p4_m6_5_entry_escalation_non_routing_surface_as_dicts,
-    p4_m6_5_entry_escalation_non_routing_surface_field_ids,
-    p4_m6_5_entry_escalation_non_routing_surface_report,
-    render_p4_m6_5_entry_escalation_non_routing_surface_markdown,
+    P4M66EntryExceptionNonOverrideSurfaceField,
+    list_p4_m6_6_entry_exception_non_override_surface_fields,
+    p4_m6_6_entry_exception_non_override_surface_as_dicts,
+    p4_m6_6_entry_exception_non_override_surface_field_ids,
+    p4_m6_6_entry_exception_non_override_surface_report,
+    render_p4_m6_6_entry_exception_non_override_surface_markdown,
 )
 
 
 FIELD_IDS = tuple(
     line
     for line in """
-p4-m6-5-entry-escalation-non-routing-surface-id
-p4-m6-5-entry-escalation-non-routing-surface-phase
-p4-m6-5-entry-escalation-non-routing-surface-mode
-p4-m6-5-entry-escalation-non-routing-surface-p4-m6-position
-p4-m6-5-entry-escalation-non-routing-surface-direct-prior-p4-m6-4-entry-rejection-non-execution-surface-reference
-p4-m6-5-entry-escalation-non-routing-surface-inherited-p4-m6-3-entry-deferral-non-execution-surface-reference
-p4-m6-5-entry-escalation-non-routing-surface-inherited-p4-m6-2-entry-acceptance-non-evidence-surface-reference
-p4-m6-5-entry-escalation-non-routing-surface-inherited-p4-m6-1-entry-preconditions-definition-surface-reference
-p4-m6-5-entry-escalation-non-routing-surface-inherited-p4-m6-0-entry-boundary-contract-reference
-p4-m6-5-entry-escalation-non-routing-surface-static-escalation-label-scope
-p4-m6-5-entry-escalation-non-routing-surface-escalation-label-definition-surface
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-routing-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-notification-dispatch-assignment-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-handoff-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-approval-authorization-confirmation-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-recommendation-execution-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-readiness-validation-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-readiness-evidence-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-validation-inference-scoring-verdict-boundary
-p4-m6-5-entry-escalation-non-routing-surface-escalation-non-record-storage-persistence-mutation-boundary
-p4-m6-5-entry-escalation-non-routing-surface-implementation-corridor-v7-productization-ui-operator-console-deferred-boundary
-p4-m6-5-entry-escalation-non-routing-surface-api-mcp-connector-agent-network-external-integration-non-start-boundary
-p4-m6-5-entry-escalation-non-routing-surface-final-non-routing-definition-boundary
+p4-m6-6-entry-exception-non-override-surface-id
+p4-m6-6-entry-exception-non-override-surface-phase
+p4-m6-6-entry-exception-non-override-surface-mode
+p4-m6-6-entry-exception-non-override-surface-p4-m6-position
+p4-m6-6-entry-exception-non-override-surface-direct-prior-p4-m6-5-entry-escalation-non-routing-surface-reference
+p4-m6-6-entry-exception-non-override-surface-inherited-p4-m6-4-entry-rejection-non-execution-surface-reference
+p4-m6-6-entry-exception-non-override-surface-inherited-p4-m6-3-entry-deferral-non-execution-surface-reference
+p4-m6-6-entry-exception-non-override-surface-inherited-p4-m6-2-entry-acceptance-non-evidence-surface-reference
+p4-m6-6-entry-exception-non-override-surface-inherited-p4-m6-1-entry-preconditions-definition-surface-reference
+p4-m6-6-entry-exception-non-override-surface-inherited-p4-m6-0-entry-boundary-contract-reference
+p4-m6-6-entry-exception-non-override-surface-static-exception-label-scope
+p4-m6-6-entry-exception-non-override-surface-exception-label-definition-surface
+p4-m6-6-entry-exception-non-override-surface-exception-non-override-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-bypass-waiver-exemption-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-force-entry-auto-pass-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-approval-authorization-confirmation-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-recommendation-routing-execution-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-readiness-validation-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-readiness-evidence-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-validation-inference-scoring-verdict-boundary
+p4-m6-6-entry-exception-non-override-surface-exception-non-record-storage-persistence-mutation-boundary
+p4-m6-6-entry-exception-non-override-surface-implementation-corridor-api-mcp-connector-agent-network-v7-productization-ui-operator-console-deferred-boundary
+p4-m6-6-entry-exception-non-override-surface-final-non-override-definition-boundary
 """.splitlines()
     if line
 )
@@ -61,40 +61,42 @@ DATACLASS_FIELDS = {
     "field_id",
     "field_name",
     "field_purpose",
-    "p4_m6_5_entry_escalation_non_routing_surface_category",
-    "p4_m6_5_entry_escalation_non_routing_surface_semantics_disabled",
+    "p4_m6_6_entry_exception_non_override_surface_category",
+    "p4_m6_6_entry_exception_non_override_surface_semantics_disabled",
 }
 
 REQUIRED_BOUNDARY_PHRASES = tuple(
     line
     for line in """
-P4-M6.5
-Entry Escalation Non-Routing Surface
-P4-M6.5 Entry Escalation Non-Routing Surface
+P4-M6.6
+Entry Exception Non-Override Surface
+P4-M6.6 Entry Exception Non-Override Surface
 read-only
 definition-only
-p4-m6-5-entry-escalation-non-routing-surface-only
-entry-escalation-non-routing-surface-only
-static-escalation-labels-only
-escalation-non-routing-surface-only
-escalation-non-notification-surface-only
-escalation-non-dispatch-surface-only
-escalation-non-assignment-surface-only
-escalation-non-handoff-surface-only
-escalation-non-execution-surface-only
-escalation-non-action-surface-only
-escalation-non-approval-surface-only
-escalation-non-authorization-surface-only
-escalation-non-confirmation-surface-only
-escalation-non-recommendation-surface-only
-escalation-non-validation-surface-only
-escalation-non-inference-surface-only
-escalation-non-scoring-surface-only
-escalation-non-verdict-surface-only
-escalation-non-record-surface-only
-escalation-non-storage-surface-only
-escalation-non-persistence-surface-only
-escalation-non-mutation-surface-only
+p4-m6-6-entry-exception-non-override-surface-only
+entry-exception-non-override-surface-only
+static-exception-labels-only
+exception-non-override-surface-only
+exception-non-bypass-surface-only
+exception-non-waiver-surface-only
+exception-non-exemption-surface-only
+exception-non-force-entry-surface-only
+exception-non-auto-pass-surface-only
+exception-non-action-surface-only
+exception-non-approval-surface-only
+exception-non-authorization-surface-only
+exception-non-confirmation-surface-only
+exception-non-recommendation-surface-only
+exception-non-routing-surface-only
+exception-non-execution-surface-only
+exception-non-validation-surface-only
+exception-non-inference-surface-only
+exception-non-scoring-surface-only
+exception-non-verdict-surface-only
+exception-non-record-surface-only
+exception-non-storage-surface-only
+exception-non-persistence-surface-only
+exception-non-mutation-surface-only
 implementation-corridor-not-started-boundary-only
 api-implementation-disabled
 mcp-implementation-disabled
@@ -104,50 +106,55 @@ network-access-disabled
 external-system-integration-disabled
 declaration-only
 inspection-only
-P4-M6.5 defines only static entry escalation label surfaces
-P4-M6.5 does not perform escalation
-P4-M6.5 does not enforce escalation
-P4-M6.5 does not notify anyone
-P4-M6.5 does not dispatch anyone
-P4-M6.5 does not assign anyone
-P4-M6.5 does not hand off anything
-P4-M6.5 does not create tickets
-P4-M6.5 does not create issues
-P4-M6.5 does not enqueue work
-P4-M6.5 does not trigger workflow
-P4-M6.5 does not approve entry
-P4-M6.5 does not authorize entry
-P4-M6.5 does not confirm entry
-P4-M6.5 does not recommend entry
-P4-M6.5 does not route implementation
-P4-M6.5 does not execute
-P4-M6.5 does not validate escalation
-P4-M6.5 does not infer escalation
-P4-M6.5 does not score escalation
-P4-M6.5 does not produce escalation verdict
-P4-M6.5 does not collect readiness evidence
-P4-M6.5 does not classify readiness evidence
-P4-M6.5 does not treat escalation as readiness evidence
-P4-M6.5 does not treat escalation as validation input
-P4-M6.5 does not create records
-P4-M6.5 does not create storage
-P4-M6.5 does not persist state
-P4-M6.5 does not mutate memory
-P4-M6.5 does not start implementation corridor
-P4-M6.4 Entry Rejection Non-Execution Surface remains the direct prior entry rejection reference
+P4-M6.6 defines only static entry exception label surfaces
+P4-M6.6 does not perform exception handling
+P4-M6.6 does not enforce exception handling
+P4-M6.6 does not override any boundary
+P4-M6.6 does not bypass any boundary
+P4-M6.6 does not waive any boundary
+P4-M6.6 does not exempt any boundary
+P4-M6.6 does not force entry
+P4-M6.6 does not auto-pass entry
+P4-M6.6 does not approve entry
+P4-M6.6 does not authorize entry
+P4-M6.6 does not confirm entry
+P4-M6.6 does not recommend entry
+P4-M6.6 does not route implementation
+P4-M6.6 does not execute
+P4-M6.6 does not validate exception
+P4-M6.6 does not infer exception
+P4-M6.6 does not score exception
+P4-M6.6 does not produce exception verdict
+P4-M6.6 does not collect readiness evidence
+P4-M6.6 does not classify readiness evidence
+P4-M6.6 does not treat exception as readiness evidence
+P4-M6.6 does not treat exception as validation input
+P4-M6.6 does not create records
+P4-M6.6 does not create storage
+P4-M6.6 does not persist state
+P4-M6.6 does not mutate memory
+P4-M6.6 does not start implementation corridor
+P4-M6.5 Entry Escalation Non-Routing Surface remains the direct prior entry escalation reference
+P4-M6.4 Entry Rejection Non-Execution Surface remains an inherited entry rejection reference
 P4-M6.3 Entry Deferral Non-Execution Surface remains an inherited entry deferral reference
 P4-M6.2 Entry Acceptance Non-Evidence Surface remains an inherited entry acceptance reference
 P4-M6.1 Entry Preconditions Definition Surface remains an inherited entry preconditions reference
 P4-M6.0 Next Corridor Entry Boundary Contract remains an inherited entry boundary reference
-static entry escalation labels are definition-only
-escalation label definition surface is definition-only
-entry escalation surfaces are not live escalation actions
-entry escalation surfaces are not notification
-entry escalation surfaces are not dispatch
-entry escalation surfaces are not assignment
-entry escalation surfaces are not handoff
-entry escalation surfaces are not routing
-entry escalation surfaces are not execution
+static entry exception labels are definition-only
+exception label definition surface is definition-only
+entry exception surfaces are not live exception actions
+entry exception surfaces are not override
+entry exception surfaces are not bypass
+entry exception surfaces are not waiver
+entry exception surfaces are not exemption
+entry exception surfaces are not force entry
+entry exception surfaces are not auto pass
+entry exception surfaces are not approval
+entry exception surfaces are not authorization
+entry exception surfaces are not confirmation
+entry exception surfaces are not recommendation
+entry exception surfaces are not routing
+entry exception surfaces are not execution
 implementation corridor remains not started
 API implementation remains not started
 MCP implementation remains not started
@@ -155,20 +162,18 @@ Connector implementation remains not started
 Agent auto-call remains not started
 external system integration remains not started
 network access remains not started
-no escalation validation
-no escalation inference
-no escalation scoring
-no escalation verdict
-no escalation action
-no escalation enforcement
-no notification
-no dispatch
-no assignment
-no handoff
-no tickets
-no issues
-no queue enqueue
-no workflow trigger
+no exception validation
+no exception inference
+no exception scoring
+no exception verdict
+no exception action
+no exception enforcement
+no override
+no bypass
+no waiver
+no exemption
+no force entry
+no auto pass
 no approval
 no authorization
 no confirmation
@@ -293,47 +298,51 @@ p4-m6-6-entry-exception-non-override-surface
 
 
 def test_field_inventory_is_exact_and_ordered():
-    fields = list_p4_m6_5_entry_escalation_non_routing_surface_fields()
+    fields = list_p4_m6_6_entry_exception_non_override_surface_fields()
 
     assert len(fields) == 23
-    assert p4_m6_5_entry_escalation_non_routing_surface_field_ids() == FIELD_IDS
+    assert p4_m6_6_entry_exception_non_override_surface_field_ids() == FIELD_IDS
     assert tuple(field.field_order for field in fields) == tuple(range(1, 24))
     assert all(
-        isinstance(field, P4M65EntryEscalationNonRoutingSurfaceField)
+        isinstance(field, P4M66EntryExceptionNonOverrideSurfaceField)
         for field in fields
     )
     assert {
         field.name
-        for field in dataclasses.fields(P4M65EntryEscalationNonRoutingSurfaceField)
+        for field in dataclasses.fields(P4M66EntryExceptionNonOverrideSurfaceField)
     } == DATACLASS_FIELDS
 
 
 def test_boundary_phrase_inventory_is_required_contract():
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in BOUNDARY_PHRASE_LINES
-        assert phrase in P4_M6_5_ENTRY_ESCALATION_NON_ROUTING_SURFACE_BOUNDARY
+        assert phrase in P4_M6_6_ENTRY_EXCEPTION_NON_OVERRIDE_SURFACE_BOUNDARY
 
 
 def test_markdown_renders_static_boundary_and_field_ids():
-    markdown = render_p4_m6_5_entry_escalation_non_routing_surface_markdown()
+    markdown = render_p4_m6_6_entry_exception_non_override_surface_markdown()
 
     for phrase in REQUIRED_BOUNDARY_PHRASES:
         assert phrase in markdown
     for field_id in FIELD_IDS:
         assert field_id in markdown
     assert "## Status Report" in markdown
-    assert "## P4-M6.5 Entry Escalation Non-Routing Surface Fields" in markdown
-    assert "P4-M6.5 Entry Escalation Non-Routing Surface" in markdown
+    assert "## P4-M6.6 Entry Exception Non-Override Surface Fields" in markdown
+    assert "P4-M6.6 Entry Exception Non-Override Surface" in markdown
 
 
 def test_report_has_exact_true_false_status_flags():
-    status = p4_m6_5_entry_escalation_non_routing_surface_report()
+    status = p4_m6_6_entry_exception_non_override_surface_report()
 
-    assert status["phase"] == "P4-M6.5"
-    assert status["feature"] == "Entry Escalation Non-Routing Surface"
+    assert status["phase"] == "P4-M6.6"
+    assert status["feature"] == "Entry Exception Non-Override Surface"
     assert status["mode"] == "read-only"
     assert status["package_version"] == "6.16.0"
-    assert status["p4_m6_5_entry_escalation_non_routing_surface_field_count"] == 23
+    assert status["p4_m6_6_entry_exception_non_override_surface_field_count"] == 23
+    assert (
+        status["referenced_p4_m6_5_entry_escalation_non_routing_surface_field_count"]
+        == 23
+    )
     assert (
         status["referenced_p4_m6_4_entry_rejection_non_execution_surface_field_count"]
         == 23
@@ -369,8 +378,8 @@ def test_report_has_exact_true_false_status_flags():
         == 23
     )
     assert status["referenced_p4_m5_4_cross_surface_alignment_map_field_count"] == 23
-    assert len(TRUE_STATUS_FLAGS) == 121
-    assert len(FALSE_STATUS_FLAGS) == 186
+    assert len(TRUE_STATUS_FLAGS) == 130
+    assert len(FALSE_STATUS_FLAGS) == 215
     actual_true_keys = {key for key, value in status.items() if value is True}
     actual_false_keys = {key for key, value in status.items() if value is False}
     assert actual_true_keys == set(TRUE_STATUS_FLAGS)
@@ -378,16 +387,43 @@ def test_report_has_exact_true_false_status_flags():
 
 
 def test_as_dicts_is_deterministic_and_read_only_shape():
-    fields = p4_m6_5_entry_escalation_non_routing_surface_as_dicts()
+    fields = p4_m6_6_entry_exception_non_override_surface_as_dicts()
 
     assert len(fields) == 23
     assert tuple(field["field_id"] for field in fields) == FIELD_IDS
-    assert fields == p4_m6_5_entry_escalation_non_routing_surface_as_dicts()
+    assert fields == p4_m6_6_entry_exception_non_override_surface_as_dicts()
     assert all(
-        field["p4_m6_5_entry_escalation_non_routing_surface_category"]
-        == "p4-m6-5-entry-escalation-non-routing-surface-category"
+        field["p4_m6_6_entry_exception_non_override_surface_category"]
+        == "p4-m6-6-entry-exception-non-override-surface-category"
         for field in fields
     )
+
+
+def _run_operator(argv: list[str]) -> tuple[int, object, str, str]:
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    output = stdout.getvalue()
+    try:
+        payload = json.loads(output)
+    except json.JSONDecodeError:
+        payload = {}
+    return code, payload, stderr.getvalue(), output
+
+
+def _memory_loop_subcommands(parser: argparse.ArgumentParser) -> set[str]:
+    command_action = next(
+        action
+        for action in parser._actions
+        if isinstance(action, argparse._SubParsersAction)
+    )
+    memory_loop_parser = command_action.choices["memory-loop"]
+    memory_loop_action = next(
+        action
+        for action in memory_loop_parser._actions
+        if isinstance(action, argparse._SubParsersAction)
+    )
+    return set(memory_loop_action.choices)
 
 
 def test_operator_markdown_command_is_read_only_and_pre_store(
@@ -405,7 +441,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     code, payload, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-5-entry-escalation-non-routing-surface",
+            "p4-m6-6-entry-exception-non-override-surface",
             "--workspace-root",
             str(tmp_path),
         ]
@@ -414,7 +450,7 @@ def test_operator_markdown_command_is_read_only_and_pre_store(
     assert code == 0
     assert payload == {}
     assert stderr == ""
-    assert stdout.startswith("# P4-M6.5 Entry Escalation Non-Routing Surface\n")
+    assert stdout.startswith("# P4-M6.6 Entry Exception Non-Override Surface\n")
     for phrase in OPERATOR_SMOKE_PHRASES:
         assert phrase in stdout
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -426,7 +462,7 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     code, output, stderr, stdout = _run_operator(
         [
             "memory-loop",
-            "p4-m6-5-entry-escalation-non-routing-surface",
+            "p4-m6-6-entry-exception-non-override-surface",
             "--workspace-root",
             str(tmp_path),
             "--format",
@@ -438,13 +474,13 @@ def test_operator_json_command_returns_required_report(tmp_path: Path):
     assert stderr == ""
     assert stdout.startswith("{")
     assert output["count"] == 23
-    assert output["true_flags"] == 121
-    assert output["false_flags"] == 186
-    assert output["boundary"] == P4_M6_5_ENTRY_ESCALATION_NON_ROUTING_SURFACE_BOUNDARY
+    assert output["true_flags"] == 130
+    assert output["false_flags"] == 215
+    assert output["boundary"] == P4_M6_6_ENTRY_EXCEPTION_NON_OVERRIDE_SURFACE_BOUNDARY
     assert tuple(field["field_id"] for field in output["fields"]) == FIELD_IDS
     status = output["status"]
-    assert status["phase"] == "P4-M6.5"
-    assert status["feature"] == "Entry Escalation Non-Routing Surface"
+    assert status["phase"] == "P4-M6.6"
+    assert status["feature"] == "Entry Exception Non-Override Surface"
     assert status["mode"] == "read-only"
     actual_true_keys = {key for key, value in status.items() if value is True}
     actual_false_keys = {key for key, value in status.items() if value is False}
@@ -457,6 +493,7 @@ def test_parser_exposes_only_expected_memory_loop_command_surface():
     commands = _memory_loop_subcommands(build_parser())
 
     assert commands == EXPECTED_MEMORY_LOOP_COMMANDS
+    assert "p4-m6-6-entry-exception-non-override-surface" in commands
     assert "p4-m6-5-entry-escalation-non-routing-surface" in commands
     assert "p4-m6-4-entry-rejection-non-execution-surface" in commands
     assert "p4-m6-3-entry-deferral-non-execution-surface" in commands
@@ -476,7 +513,7 @@ def test_pyproject_entry_points_do_not_productize_command():
     pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     entry_points = pyproject["project"]["entry-points"]
 
-    command = "p4-m6-5-entry-escalation-non-routing-surface"
+    command = "p4-m6-6-entry-exception-non-override-surface"
     assert command not in entry_points
     assert command not in str(entry_points)
     assert pyproject["project"]["version"] == "6.16.0"
@@ -487,11 +524,11 @@ def test_static_doc_contains_required_boundaries_and_fields():
     doc_path = (
         project_root
         / "docs"
-        / "CIVILIZATION_CORE_P4_M6_5_ENTRY_ESCALATION_NON_ROUTING_SURFACE.md"
+        / "CIVILIZATION_CORE_P4_M6_6_ENTRY_EXCEPTION_NON_OVERRIDE_SURFACE.md"
     )
     doc = doc_path.read_text(encoding="utf-8")
 
-    assert doc.startswith("# P4-M6.5 Entry Escalation Non-Routing Surface\n")
+    assert doc.startswith("# P4-M6.6 Entry Exception Non-Override Surface\n")
     for field_id in FIELD_IDS:
         assert field_id in doc
     for phrase in REQUIRED_BOUNDARY_PHRASES:
@@ -499,24 +536,24 @@ def test_static_doc_contains_required_boundaries_and_fields():
 
 
 def test_custom_field_rendering_remains_definition_only():
-    field = P4M65EntryEscalationNonRoutingSurfaceField(
+    field = P4M66EntryExceptionNonOverrideSurfaceField(
         field_order=99,
-        field_id="custom-p4-m6-5-entry-escalation-non-routing-surface",
-        field_name="Custom P4-M6.5 Entry Escalation Non-Routing Surface",
+        field_id="custom-p4-m6-6-entry-exception-non-override-surface",
+        field_name="Custom P4-M6.6 Entry Exception Non-Override Surface",
         field_purpose="custom read-only definition-only inspection-only field",
-        p4_m6_5_entry_escalation_non_routing_surface_category=(
-            "custom-p4-m6-5-entry-escalation-non-routing-surface-category"
+        p4_m6_6_entry_exception_non_override_surface_category=(
+            "custom-p4-m6-6-entry-exception-non-override-surface-category"
         ),
-        p4_m6_5_entry_escalation_non_routing_surface_semantics_disabled=(
-            "no escalation validation semantics; no routing semantics"
+        p4_m6_6_entry_exception_non_override_surface_semantics_disabled=(
+            "no exception validation semantics; no override semantics"
         ),
     )
 
-    markdown = render_p4_m6_5_entry_escalation_non_routing_surface_markdown((field,))
+    markdown = render_p4_m6_6_entry_exception_non_override_surface_markdown((field,))
 
-    assert "custom-p4-m6-5-entry-escalation-non-routing-surface" in markdown
-    assert "no escalation validation semantics" in markdown
-    assert "P4-M6.5 Entry Escalation Non-Routing Surface" in markdown
+    assert "custom-p4-m6-6-entry-exception-non-override-surface" in markdown
+    assert "no exception validation semantics" in markdown
+    assert "P4-M6.6 Entry Exception Non-Override Surface" in markdown
 
 
 def test_forbidden_implementation_files_are_not_created():
@@ -544,30 +581,5 @@ def test_forbidden_implementation_files_are_not_created():
         "tests/*connector_runtime*",
         "tests/*live_connector*",
     )
-
     for pattern in forbidden_patterns:
-        assert not list(project_root.glob(pattern))
-
-
-def _run_operator(args: list[str]) -> tuple[int, dict[str, object], str, str]:
-    stdout = io.StringIO()
-    stderr = io.StringIO()
-    code = run_operator_command(args, stdout=stdout, stderr=stderr)
-    stdout_text = stdout.getvalue()
-    payload = json.loads(stdout_text) if stdout_text.startswith("{") else {}
-    return code, payload, stderr.getvalue(), stdout_text
-
-
-def _memory_loop_subcommands(parser: argparse.ArgumentParser) -> set[str]:
-    for action in parser._actions:
-        if isinstance(action, argparse._SubParsersAction):
-            memory_loop_parser = action.choices["memory-loop"]
-            break
-    else:  # pragma: no cover - parser structure regression guard
-        raise AssertionError("memory-loop parser is missing")
-
-    for action in memory_loop_parser._actions:
-        if isinstance(action, argparse._SubParsersAction):
-            return set(action.choices)
-
-    raise AssertionError("memory-loop subparser choices are missing")
+        assert list(project_root.glob(pattern)) == []
