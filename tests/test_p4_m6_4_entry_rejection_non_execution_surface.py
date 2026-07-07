@@ -640,6 +640,7 @@ p4-m6-4-entry-rejection-non-execution-surface
 p4-m6-5-entry-escalation-non-routing-surface
 p4-m6-6-entry-exception-non-override-surface
 p4-m6-7-entry-conflict-non-resolution-surface
+p4-m6-8-entry-ambiguity-non-inference-surface
 """.splitlines()
     if line
 )
