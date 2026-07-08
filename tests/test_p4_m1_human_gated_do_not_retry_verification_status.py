@@ -480,6 +480,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_do_not_retry_mutat
     "p4-m6-6-entry-exception-non-override-surface",
     "p4-m6-7-entry-conflict-non-resolution-surface",
     "p4-m6-8-entry-ambiguity-non-inference-surface",
+        "p4-m6-9-entry-dependency-non-activation-surface",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
