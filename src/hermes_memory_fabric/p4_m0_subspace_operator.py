@@ -559,6 +559,14 @@ from .p4_m6_10_entry_constraint_non_enforcement_surface import (
     p4_m6_10_entry_constraint_non_enforcement_surface_report,
     render_p4_m6_10_entry_constraint_non_enforcement_surface_markdown,
 )
+from .p4_m6_11_entry_risk_non_mitigation_surface import (
+    FALSE_STATUS_FLAGS as P4_M6_11_FALSE_STATUS_FLAGS,
+    P4_M6_11_ENTRY_RISK_NON_MITIGATION_SURFACE_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M6_11_TRUE_STATUS_FLAGS,
+    p4_m6_11_entry_risk_non_mitigation_surface_as_dicts,
+    p4_m6_11_entry_risk_non_mitigation_surface_report,
+    render_p4_m6_11_entry_risk_non_mitigation_surface_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1720,6 +1728,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m6_10_entry_constraint_non_enforcement_surface
     )
     memory_loop_p4_m6_10_entry_constraint_non_enforcement_surface.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m6_11_entry_risk_non_mitigation_surface = (
+        memory_loop_subparsers.add_parser(
+            "p4-m6-11-entry-risk-non-mitigation-surface"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m6_11_entry_risk_non_mitigation_surface
+    )
+    memory_loop_p4_m6_11_entry_risk_non_mitigation_surface.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3770,6 +3791,26 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m6_10_entry_constraint_"
                 f"non_enforcement_surface_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m6-11-entry-risk-non-mitigation-surface"
+        ):
+            if args.format == "markdown":
+                return render_p4_m6_11_entry_risk_non_mitigation_surface_markdown()
+            if args.format == "json":
+                fields = p4_m6_11_entry_risk_non_mitigation_surface_as_dicts()
+                return {
+                    "boundary": P4_M6_11_ENTRY_RISK_NON_MITIGATION_SURFACE_BOUNDARY,
+                    "count": len(fields),
+                    "false_flags": len(P4_M6_11_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": p4_m6_11_entry_risk_non_mitigation_surface_report(),
+                    "true_flags": len(P4_M6_11_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m6_11_entry_risk_"
+                f"non_mitigation_surface_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
