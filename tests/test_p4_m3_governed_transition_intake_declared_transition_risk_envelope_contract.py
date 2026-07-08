@@ -139,6 +139,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-7-entry-conflict-non-resolution-surface",
     "p4-m6-8-entry-ambiguity-non-inference-surface",
     "p4-m6-9-entry-dependency-non-activation-surface",
+    "p4-m6-10-entry-constraint-non-enforcement-surface",
 }
 
 PREVIOUS_P4_M3_8_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
