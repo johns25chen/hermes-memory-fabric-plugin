@@ -391,6 +391,7 @@ def test_no_prohibited_memory_loop_write_import_agent_api_mcp_commands_are_expos
         "p4-m6-11-entry-risk-non-mitigation-surface",
         "p4-m6-12-entry-safeguard-non-activation-surface",
         "p4-m6-13-entry-definition-corridor-closure-review",
+    "p4-m6-14-entry-definition-corridor-final-closure-handoff-next-corridor-non-start-index",
 }
     assert commands.isdisjoint(PROHIBITED_MEMORY_LOOP_COMMANDS)
 
