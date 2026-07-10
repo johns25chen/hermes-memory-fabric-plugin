@@ -567,6 +567,14 @@ from .p4_m6_11_entry_risk_non_mitigation_surface import (
     p4_m6_11_entry_risk_non_mitigation_surface_report,
     render_p4_m6_11_entry_risk_non_mitigation_surface_markdown,
 )
+from .p4_m6_12_entry_safeguard_non_activation_surface import (
+    FALSE_STATUS_FLAGS as P4_M6_12_FALSE_STATUS_FLAGS,
+    P4_M6_12_ENTRY_SAFEGUARD_NON_ACTIVATION_SURFACE_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M6_12_TRUE_STATUS_FLAGS,
+    p4_m6_12_entry_safeguard_non_activation_surface_as_dicts,
+    p4_m6_12_entry_safeguard_non_activation_surface_report,
+    render_p4_m6_12_entry_safeguard_non_activation_surface_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1741,6 +1749,19 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m6_11_entry_risk_non_mitigation_surface
     )
     memory_loop_p4_m6_11_entry_risk_non_mitigation_surface.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m6_12_entry_safeguard_non_activation_surface = (
+        memory_loop_subparsers.add_parser(
+            "p4-m6-12-entry-safeguard-non-activation-surface"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m6_12_entry_safeguard_non_activation_surface
+    )
+    memory_loop_p4_m6_12_entry_safeguard_non_activation_surface.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3811,6 +3832,30 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m6_11_entry_risk_"
                 f"non_mitigation_surface_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m6-12-entry-safeguard-non-activation-surface"
+        ):
+            if args.format == "markdown":
+                return render_p4_m6_12_entry_safeguard_non_activation_surface_markdown()
+            if args.format == "json":
+                fields = p4_m6_12_entry_safeguard_non_activation_surface_as_dicts()
+                return {
+                    "boundary": (
+                        P4_M6_12_ENTRY_SAFEGUARD_NON_ACTIVATION_SURFACE_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "false_flags": len(P4_M6_12_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m6_12_entry_safeguard_non_activation_surface_report()
+                    ),
+                    "true_flags": len(P4_M6_12_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m6_12_entry_safeguard_"
+                f"non_activation_surface_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")
