@@ -141,6 +141,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-9-entry-dependency-non-activation-surface",
     "p4-m6-10-entry-constraint-non-enforcement-surface",
     "p4-m6-11-entry-risk-non-mitigation-surface",
+    "p4-m6-12-entry-safeguard-non-activation-surface",
 }
 
 PREVIOUS_P4_M3_10_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
