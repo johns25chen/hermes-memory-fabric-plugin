@@ -583,6 +583,14 @@ from .p4_m6_13_entry_definition_corridor_closure_review import (
     p4_m6_13_entry_definition_corridor_closure_review_report,
     render_p4_m6_13_entry_definition_corridor_closure_review_markdown,
 )
+from .p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index import (
+    FALSE_STATUS_FLAGS as P4_M6_14_FALSE_STATUS_FLAGS,
+    P4_M6_14_ENTRY_DEFINITION_CORRIDOR_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY,
+    TRUE_STATUS_FLAGS as P4_M6_14_TRUE_STATUS_FLAGS,
+    p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_as_dicts,
+    p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_report,
+    render_p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_markdown,
+)
 from .p4_m1_source_provenance_verification_status import (
     SOURCE_PROVENANCE_VERIFICATION_STATUS_BOUNDARY,
     render_source_provenance_verification_status_markdown,
@@ -1783,6 +1791,20 @@ def build_parser() -> argparse.ArgumentParser:
         memory_loop_p4_m6_13_entry_definition_corridor_closure_review
     )
     memory_loop_p4_m6_13_entry_definition_corridor_closure_review.add_argument(
+        "--format",
+        choices=("markdown", "json"),
+        default="markdown",
+    )
+    memory_loop_p4_m6_14_entry_definition_corridor_final_closure_handoff = (
+        memory_loop_subparsers.add_parser(
+            "p4-m6-14-entry-definition-corridor-final-closure-handoff-"
+            "next-corridor-non-start-index"
+        )
+    )
+    _add_workspace_root(
+        memory_loop_p4_m6_14_entry_definition_corridor_final_closure_handoff
+    )
+    memory_loop_p4_m6_14_entry_definition_corridor_final_closure_handoff.add_argument(
         "--format",
         choices=("markdown", "json"),
         default="markdown",
@@ -3905,6 +3927,36 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             raise ValueError(
                 "unsupported_memory_loop_p4_m6_13_entry_definition_"
                 f"corridor_closure_review_format:{args.format}"
+            )
+        if (
+            args.memory_loop_command
+            == "p4-m6-14-entry-definition-corridor-final-closure-handoff-"
+            "next-corridor-non-start-index"
+        ):
+            if args.format == "markdown":
+                return (
+                    render_p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_markdown()
+                )
+            if args.format == "json":
+                fields = (
+                    p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_as_dicts()
+                )
+                return {
+                    "boundary": (
+                        P4_M6_14_ENTRY_DEFINITION_CORRIDOR_FINAL_CLOSURE_HANDOFF_NEXT_CORRIDOR_NON_START_INDEX_BOUNDARY
+                    ),
+                    "count": len(fields),
+                    "false_flags": len(P4_M6_14_FALSE_STATUS_FLAGS),
+                    "fields": list(fields),
+                    "status": (
+                        p4_m6_14_entry_definition_corridor_final_closure_handoff_next_corridor_non_start_index_report()
+                    ),
+                    "true_flags": len(P4_M6_14_TRUE_STATUS_FLAGS),
+                }
+            raise ValueError(
+                "unsupported_memory_loop_p4_m6_14_entry_definition_"
+                "corridor_final_closure_handoff_next_corridor_non_start_"
+                f"index_format:{args.format}"
             )
 
         raise ValueError(f"unsupported_memory_loop_command:{args.memory_loop_command}")

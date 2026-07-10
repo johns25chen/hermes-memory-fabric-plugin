@@ -143,6 +143,7 @@ EXPECTED_MEMORY_LOOP_COMMANDS = {
     "p4-m6-11-entry-risk-non-mitigation-surface",
     "p4-m6-12-entry-safeguard-non-activation-surface",
     "p4-m6-13-entry-definition-corridor-closure-review",
+    "p4-m6-14-entry-definition-corridor-final-closure-handoff-next-corridor-non-start-index",
 }
 
 PREVIOUS_P4_M3_5_READ_ONLY_COMMANDS = EXPECTED_MEMORY_LOOP_COMMANDS - {
