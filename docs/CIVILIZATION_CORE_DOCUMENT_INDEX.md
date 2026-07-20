@@ -6,7 +6,7 @@ This is a docs-only navigation document.
 
 It is based on the sealed `v6.16.0` Civilization Core Stable Kernel, the merged T1-T10 post-terminal documentation set, and the merged Comprehensive Audit Report.
 
-This index makes no existing doc changes.
+This index changes no implementation or source artifact; its maintenance is limited to document navigation.
 
 This index makes no code changes.
 
@@ -64,6 +64,8 @@ The post-terminal docs are documentation / decision / roadmap / audit / navigati
 | Current post-terminal state | Local git log shows post-terminal docs merged after `v6.16.0`, through the Comprehensive Audit Report. |
 | T1-T10 state | Local git log shows T1-T10 documentation commits `#147` through `#157`. |
 | Comprehensive audit state | Local git log shows `docs: add civilization core comprehensive audit report (#158)` at current branch `HEAD` during index creation. |
+| Historical Macro R6 Productization Design | Formally `CLOSED`; closure is effective at commit baseline `975ec01b75a318d20b00e5dd05a2fb4dceba8ab8`. This historical macro route is distinct from current repository R6 and R5. |
+| Historical Macro R6 decision corpus | The fixed `HMR6-PD-DQ-001` through `HMR6-PD-DQ-030` corpus is exhausted. Unresolved `HOLD` and `DEFER` dispositions remain unresolved and non-authorizing. |
 | Implementation authorization state | T9, T10, and the Comprehensive Audit Report state no v7 implementation authorization, no product implementation authorization, no MVP, and no product deployment. |
 | External candidate state | `llm_wiki`, M-Flow, and GBrain are methodology candidates only; they are not dependencies, adapters, runtime behavior, or Civilization Core identity. |
 
@@ -121,6 +123,45 @@ The post-terminal docs are documentation / decision / roadmap / audit / navigati
 
     Read these as the foundational closure, final roadmap, and candidate-only enhancement sources. They explain the terminal seal and the earliest post-terminal candidate boundary.
 
+### Historical Macro R6 Closed-Workstream Governance Order
+
+Use this complete order only when reviewing or auditing the already closed Historical Macro R6 Productization Design corpus:
+
+1. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_ENTRY_REVIEW.md`
+2. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_WORKSTREAM_CHARTER.md`
+3. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_BASELINE_AND_DECISION_QUESTION_MATRIX.md`
+4. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCT_IDENTITY_AND_VALUE_PROPOSITION_DECISION_FRAMES.md`
+5. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_AUDIENCE_AND_GOVERNANCE_ROLE_DECISION_FRAMES.md`
+6. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_GOVERNED_USER_JOURNEY_STATE_AND_HUMAN_DECISION_POINT_FRAMES.md`
+7. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_CONCEPTUAL_PRODUCT_SURFACE_AND_ACTION_BOUNDARY_DECISION_FRAMES.md`
+8. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_HUMAN_CONTROL_AND_TRUST_DECISION_FRAMES.md`
+9. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PORTFOLIO_DEPLOYMENT_AND_COMMERCIAL_DECISION_FRAMES.md`
+10. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_EXTERNAL_METHODOLOGY_RELEVANCE_AND_NON_ADOPTION_DECISION_FRAMES.md`
+11. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_IMPLEMENTATION_AND_RELEASE_ELIGIBILITY_DECISION_FRAMES.md`
+12. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_INDEPENDENT_CLOSURE_REVIEW.md`
+13. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_FORMAL_CLOSURE_DECISION.md`
+
+The Entry Review is not implementation entry; the Charter is not execution authorization; decision frames are not approved product requirements; `HOLD` and `DEFER` are not resolved decisions; Independent Closure Review `PASS` is not closure; and the Formal Closure Decision merge is documentary closure only. Closure is not implementation readiness, merge is not release, and navigation is not authority.
+
+| Closed-route boundary | Status |
+| --- | --- |
+| Historical Macro R6 Productization Design | `CLOSED` |
+| Formal closure effective commit baseline | `975ec01b75a318d20b00e5dd05a2fb4dceba8ab8` |
+| Package version | `6.16.0` |
+| v6 continuation | `NEVER` |
+| v7 runtime implementation | `DEFER` |
+| Implementation readiness | `NOT-ESTABLISHED` |
+| Implementation authority | `NONE` |
+| Deployment authority | `NONE` |
+| Launch authority | `NONE` |
+| Release authority | `NONE` |
+| Version authority | `NONE` |
+| Tag authority | `NONE` |
+| Automatic successor work | `NONE` |
+| Successor-selection authority | `HUMAN-OWNER-ONLY` |
+
+This closed-workstream order is governance navigation, not a backlog, approval path, roadmap execution sequence, workstream reopening, P4 re-entry, or successor selection. Closure creates no implementation, deployment, launch, release, version, tag, or successor authority.
+
 ## 6. Document Catalog
 
 | Document path | Short name | Purpose | Best reader | When to read it | What not to infer from it |
@@ -139,6 +180,19 @@ The post-terminal docs are documentation / decision / roadmap / audit / navigati
 | `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md` | T9 v7 Pre-Design Decision | Records pre-design decision material for possible future v7 discussion. | v7 design reviewer, maintainer, governance reviewer. | Only after release, handoff, architecture, and boundary docs. | Do not infer that v7 implementation has started or is authorized. |
 | `docs/CIVILIZATION_CORE_PRODUCTIZATION_ROADMAP.md` | T10 Productization Roadmap | Records productization directions, audiences, roadmap concepts, and future gates. | Product reviewer, maintainer, external reviewer. | Only after T9 and boundary docs. | Do not infer MVP, product deployment, Operator Console implementation, UI implementation, or product implementation approval. |
 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | Comprehensive Audit Report | Audits the post-terminal document set, risks, redundancy, reader-path gaps, and safe next steps. | Maintainer, governance reviewer, first-time reviewer. | After T1-T10 context or when choosing safe next docs work. | Do not infer remediation permission, implementation permission, v7 authorization, or product build approval. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_ENTRY_REVIEW.md` | HMR6 Entry Review | Records route identity and entry-gate findings for the historical macro design corpus. | Governance reviewer, maintainer, auditor. | At the start of a closed-corpus review. | Entry Review is not implementation entry, reopening, or successor authority. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_WORKSTREAM_CHARTER.md` | HMR6 Charter | Defines the bounded documentary mission, sequence, gates, and closure conditions. | Governance reviewer, maintainer, auditor. | After the Entry Review. | The Charter is not execution authorization, an active backlog, or current repository R6. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_BASELINE_AND_DECISION_QUESTION_MATRIX.md` | HMR6 Baseline and DQ Matrix | Fixes the route baseline and `HMR6-PD-DQ-001` through `HMR6-PD-DQ-030` corpus. | Governance reviewer, product reviewer, auditor. | Before reading the decision frames. | Corpus definition or exhaustion does not resolve `HOLD` / `DEFER` or authorize implementation. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCT_IDENTITY_AND_VALUE_PROPOSITION_DECISION_FRAMES.md` | HMR6 Product Identity Frames | Frames documentary product identity, value, claim maturity, and evidence gaps. | Product reviewer, governance reviewer. | After the baseline matrix. | Decision frames are not approved requirements, validated claims, or product authority. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_AUDIENCE_AND_GOVERNANCE_ROLE_DECISION_FRAMES.md` | HMR6 Audience and Role Frames | Frames audience evidence and separated governance-role responsibilities. | Governance reviewer, product reviewer. | After product identity frames. | Role labels do not create assignments, permissions, approval, or execution authority. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_GOVERNED_USER_JOURNEY_STATE_AND_HUMAN_DECISION_POINT_FRAMES.md` | HMR6 Journey Frames | Frames conceptual journey states and human decision points. | Governance reviewer, product reviewer. | After audience and role frames. | Conceptual states are not implemented workflows, automatic transitions, or approved requirements. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_CONCEPTUAL_PRODUCT_SURFACE_AND_ACTION_BOUNDARY_DECISION_FRAMES.md` | HMR6 Surface and Action Frames | Frames conceptual information surfaces and action non-equivalence boundaries. | Product reviewer, governance reviewer. | After journey frames. | Surface language is not UI, API, MCP, Connector, Agent, storage, persistence, or runtime design authority. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_HUMAN_CONTROL_AND_TRUST_DECISION_FRAMES.md` | HMR6 Human Control and Trust Frames | Frames consent, control, trust, uncertainty, provenance, and lifecycle boundaries. | Governance / safety reviewer, auditor. | After surface and action frames. | Trust framing is not validated safety, automatic consent, mutation, or authorization. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PORTFOLIO_DEPLOYMENT_AND_COMMERCIAL_DECISION_FRAMES.md` | HMR6 Portfolio Frames | Frames portfolio, deployment, adoption, and commercial evidence boundaries. | Product reviewer, governance reviewer. | After human-control frames. | Portfolio framing is not deployment, launch, pricing, commercial, or release approval. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_EXTERNAL_METHODOLOGY_RELEVANCE_AND_NON_ADOPTION_DECISION_FRAMES.md` | HMR6 External Method Frames | Records external-method relevance and explicit non-adoption boundaries. | Methodology reviewer, governance reviewer. | After portfolio frames. | Relevance is not adoption, dependency, integration, ranking, refresh, or identity transfer. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_IMPLEMENTATION_AND_RELEASE_ELIGIBILITY_DECISION_FRAMES.md` | HMR6 Eligibility Frames | Records non-readiness and implementation, deployment, release, version, and tag authority boundaries. | Governance reviewer, release reviewer, auditor. | Before the closure records. | Eligibility framing does not establish readiness or any implementation or release authority. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_INDEPENDENT_CLOSURE_REVIEW.md` | HMR6 Independent Closure Review | Independently checks corpus coherence and recommends `PASS`. | Auditor, governance reviewer, Human Owner. | After the full design-frame corpus. | `PASS` is not closure, authority, readiness, release, or successor selection. |
+| `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_FORMAL_CLOSURE_DECISION.md` | HMR6 Formal Closure Decision | Records Human Owner `CLOSE` and documentary `CLOSED` status effective at the stated baseline. | Human Owner, governance reviewer, maintainer, auditor. | Last in the authoritative chain. | Formal closure is documentary only: not implementation readiness, release, activation, reopening, or successor authority. |
 
 ## 7. Reader Paths by Role
 

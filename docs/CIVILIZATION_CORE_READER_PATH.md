@@ -7,7 +7,7 @@ This document is a docs-only, navigation-only reader path for the Civilization C
 | Status item | Boundary |
 | --- | --- |
 | Basis | Sealed `v6.16.0` Civilization Core Stable Kernel |
-| Existing docs | no existing document changes |
+| Navigation maintenance | this Reader Path and the Document Index only |
 | Code | no code changes |
 | Package version | no package version change |
 | Tags | no tag |
@@ -80,6 +80,54 @@ This is a deeper governance reading order only. It is still not an implementatio
 | 13 | `docs/CIVILIZATION_CORE_ONE_PAGE_OVERVIEW.md` | Recompress the system into a short external explanation. |
 | 14 | `docs/CIVILIZATION_CORE_FAQ.md` | Resolve common misreadings. |
 | 15 | `docs/CIVILIZATION_CORE_EXTERNAL_CANDIDATE_COMPARISON.md` | Compare `llm_wiki`, M-Flow, and GBrain as methodology candidates only. |
+
+### 5.1 Historical Macro R6 Closed-Workstream Path / 历史宏观 R6 已关闭工作流阅读路径
+
+Historical Macro R6 Productization Design is formally `CLOSED`, effective at commit baseline `975ec01b75a318d20b00e5dd05a2fb4dceba8ab8`. It is a historical macro-roadmap design route, distinct from current repository R6 and R5. First-time, maintainer, governance, and roadmap readers may use the short path below; all thirteen documents are not mandatory for every reader. Return to `docs/CIVILIZATION_CORE_DOCUMENT_INDEX.md` for complete catalog detail.
+
+Short path / 短路径:
+
+1. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_ENTRY_REVIEW.md` — establish route identity; this is not implementation entry.
+2. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_IMPLEMENTATION_AND_RELEASE_ELIGIBILITY_DECISION_FRAMES.md` — confirm `NOT-ESTABLISHED` readiness and `NONE` authorities.
+3. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_INDEPENDENT_CLOSURE_REVIEW.md` — read the `PASS` recommendation; `PASS` is not closure.
+4. `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_FORMAL_CLOSURE_DECISION.md` — read the Human Owner documentary closure decision last.
+
+Full governance/audit path / 完整治理与审计路径:
+
+| Order | Read | Interpretation boundary |
+| --- | --- | --- |
+| 1 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_ENTRY_REVIEW.md` | Entry Review is not implementation entry. |
+| 2 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_WORKSTREAM_CHARTER.md` | Charter is not execution authorization. |
+| 3 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_BASELINE_AND_DECISION_QUESTION_MATRIX.md` | The fixed `HMR6-PD-DQ-001` through `HMR6-PD-DQ-030` corpus is navigation context, not authority. |
+| 4 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCT_IDENTITY_AND_VALUE_PROPOSITION_DECISION_FRAMES.md` | Decision frames are not approved product requirements. |
+| 5 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_AUDIENCE_AND_GOVERNANCE_ROLE_DECISION_FRAMES.md` | Role frames create no assignments or authority. |
+| 6 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_GOVERNED_USER_JOURNEY_STATE_AND_HUMAN_DECISION_POINT_FRAMES.md` | Journey frames are not implemented workflows. |
+| 7 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_CONCEPTUAL_PRODUCT_SURFACE_AND_ACTION_BOUNDARY_DECISION_FRAMES.md` | Conceptual surfaces are not UI, runtime, or action authorization. |
+| 8 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_HUMAN_CONTROL_AND_TRUST_DECISION_FRAMES.md` | Control and trust frames are not validated safety or automatic consent. |
+| 9 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PORTFOLIO_DEPLOYMENT_AND_COMMERCIAL_DECISION_FRAMES.md` | Portfolio framing is not deployment, launch, or commercial approval. |
+| 10 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_EXTERNAL_METHODOLOGY_RELEVANCE_AND_NON_ADOPTION_DECISION_FRAMES.md` | Relevance is not adoption, integration, or identity transfer. |
+| 11 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_IMPLEMENTATION_AND_RELEASE_ELIGIBILITY_DECISION_FRAMES.md` | Eligibility framing does not establish readiness or authority. |
+| 12 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_INDEPENDENT_CLOSURE_REVIEW.md` | Independent Closure Review `PASS` is not closure. |
+| 13 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_FORMAL_CLOSURE_DECISION.md` | Formal Closure Decision merge is documentary closure only. |
+
+| Closed-route boundary | Status |
+| --- | --- |
+| Historical Macro R6 Productization Design | `CLOSED` |
+| Formal closure effective commit baseline | `975ec01b75a318d20b00e5dd05a2fb4dceba8ab8` |
+| Package version | `6.16.0` |
+| v6 continuation | `NEVER` |
+| v7 runtime implementation | `DEFER` |
+| Implementation readiness | `NOT-ESTABLISHED` |
+| Implementation authority | `NONE` |
+| Deployment authority | `NONE` |
+| Launch authority | `NONE` |
+| Release authority | `NONE` |
+| Version authority | `NONE` |
+| Tag authority | `NONE` |
+| Automatic successor work | `NONE` |
+| Successor-selection authority | `HUMAN-OWNER-ONLY` |
+
+The fixed corpus is exhausted, but unresolved `HOLD` and `DEFER` dispositions remain unresolved and non-authorizing. Closure creates no implementation, deployment, launch, release, version, tag, or successor authority. Closure is not implementation readiness; merge is not release; navigation is not authority. This path is not a backlog, workflow, approval path, execution sequence, workstream reopening, P4 re-entry, or automatic successor selection.
 
 ## 6. First-Time Reader Path / 首次阅读者路径
 
