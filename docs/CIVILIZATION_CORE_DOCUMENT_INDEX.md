@@ -385,19 +385,16 @@ Do not change existing docs.
 
 Do not change source, tests, scripts, or config.
 
-## 14. Recommended Next Safe Step After This Index
+## 14. Established Reader-Facing Documents
 
-Create a docs-only one-page overview and FAQ in a later separate PR.
+The following docs-only reader-facing explanation documents already exist:
 
-This index does not create those files.
+- `docs/CIVILIZATION_CORE_ONE_PAGE_OVERVIEW.md`;
+- `docs/CIVILIZATION_CORE_FAQ.md`.
 
-This index does not change existing docs.
+They are established documents, not future creation tasks.
 
-The later PR should only add reader-facing explanation docs.
-
-The later PR should make no code/version/tag/runtime changes.
-
-The later PR should make no dependency, adapter, Memory Graph, durable writer, authorization, execution, MVP, product deployment, or v7 implementation change.
+Their presence creates no code, version, tag, runtime, dependency, adapter, Memory Graph, durable writer, authorization, execution, MVP, product deployment, or v7 implementation change.
 
 ## 15. Final Index Statement
 
