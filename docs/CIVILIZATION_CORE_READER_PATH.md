@@ -44,7 +44,7 @@ For a first contact who needs the shortest safe orientation:
 | 2 | `docs/CIVILIZATION_CORE_DOCUMENT_INDEX.md` | Locate the full document set and role paths. | Approval to act on any listed item. |
 | 3 | `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` | Read the strict boundary source. | A policy engine, executor, or self-authorization layer. |
 
-This is a quick understanding path, not an implementation entry.
+This is a quick understanding path, not an implementation entry. Any reader who interprets implementation, v7, productization, readiness, authorization, or successor state must continue through the ordered IDG.0–IDG.4 path in Section 5.2 and reach the Human Owner `DEFER` decision.
 
 ## 4. Ten-Minute Safe Entry Path / 十分钟安全入口
 
@@ -59,9 +59,11 @@ For readers who need fast boundary literacy:
 | 5 | `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` | Apply the strict authority and memory boundary. | Treating review, audit, test pass, or proposal as authorization. |
 | 6 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | See known risks, consolidation needs, and safe documentation next steps. | Treating audit findings as remediation permission. |
 
+This safe-entry route is sufficient for boundary literacy only. Before interpreting implementation, v7, productization, readiness, authorization, or successor state, continue through Section 5.2 in order through IDG.4.
+
 ## 5. Full Governance Reading Path / 完整治理阅读路径
 
-This is a deeper governance reading order only. It is still not an implementation sequence.
+This is a deeper governance reading order only. It is still not an implementation sequence. Readers interpreting implementation, v7, productization, readiness, authorization, or successor state must also complete the ordered IDG.0–IDG.4 path in Section 5.2.
 
 | Order | Read | Why |
 | --- | --- | --- |
@@ -129,6 +131,48 @@ Full governance/audit path / 完整治理与审计路径:
 
 The fixed corpus is exhausted, but unresolved `HOLD` and `DEFER` dispositions remain unresolved and non-authorizing. Closure creates no implementation, deployment, launch, release, version, tag, or successor authority. Closure is not implementation readiness; merge is not release; navigation is not authority. This path is not a backlog, workflow, approval path, execution sequence, workstream reopening, P4 re-entry, or automatic successor selection.
 
+### 5.2 Implementation Decision Gate Path (IDG.0–IDG.4) / 实施决定门阅读路径
+
+Read this repository-effective decision chain in exact order when interpreting implementation, v7, productization, readiness, authorization, or successor state:
+
+| Order | Stage | Read | Bounded meaning |
+| --- | --- | --- | --- |
+| 1 | IDG.0 | `docs/CIVILIZATION_CORE_IMPLEMENTATION_DECISION_GATE_ENTRY_REVIEW.md` | Permits only separate IDG.1 consideration; entry is not authorization. |
+| 2 | IDG.1 | `docs/CIVILIZATION_CORE_IMPLEMENTATION_EVIDENCE_PACKAGE.md` | Assembles existing documentary evidence and registers missing evidence; it produces no new substantive evidence. |
+| 3 | IDG.2 | `docs/CIVILIZATION_CORE_V7_VERSION_LINE_DESIGNATION_DECISION.md` | Confirms V7 only as a documentary version-line designation, not a package-version change or runtime activation. |
+| 4 | IDG.3 | `docs/CIVILIZATION_CORE_INDEPENDENT_IMPLEMENTATION_READINESS_REVIEW.md` | Finds implementation readiness `NOT-ESTABLISHED`; review completion is not readiness. |
+| 5 | IDG.4 | `docs/CIVILIZATION_CORE_HUMAN_OWNER_IMPLEMENTATION_DECISION.md` | Records the Human Owner decision `DEFER` and final outcome `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`. |
+
+Controlling state / 控制状态:
+
+```text
+IDG_CHAIN=IDG.0-THROUGH-IDG.4
+IDG_CHAIN_DOCUMENTARY_EXECUTION=COMPLETE
+HUMAN_OWNER_IMPLEMENTATION_DECISION=DEFER
+IMPLEMENTATION_DECISION_BASIS=READINESS-NOT-ESTABLISHED
+IDG_04_FINAL_OUTCOME=IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION
+EVIDENCE_SUFFICIENCY=NOT-ESTABLISHED
+EVIDENCE_THRESHOLD=UNDECIDED
+ELIGIBILITY_THRESHOLD=DEFER
+IMPLEMENTATION_DECISION_ELIGIBILITY=DEFER
+IMPLEMENTATION_READINESS=NOT-ESTABLISHED
+IMPLEMENTATION_START=NO
+PRODUCT_IMPLEMENTATION=NOT-AUTHORIZED
+IMPLEMENTATION_AUTHORITY=NONE
+DEPLOYMENT_AUTHORITY=NONE
+LAUNCH_AUTHORITY=NONE
+RELEASE_AUTHORITY=NONE
+VERSION_AUTHORITY=NONE
+TAG_AUTHORITY=NONE
+PACKAGE_VERSION=6.16.0
+V6_CONTINUATION=NEVER
+V7_RUNTIME_IMPLEMENTATION=DEFER
+AUTOMATIC_SUCCESSOR_WORK=NONE
+SUCCESSOR_SELECTION_AUTHORITY=HUMAN-OWNER-ONLY
+```
+
+The chain is documentary and non-authorizing. Reading order is not implementation order; consideration is not authorization; documentary evidence is not substantive evidence; designation is not package-version change or runtime activation; review completion is not readiness; `DEFER` is neither `READY` nor `NOT-READY`; Human Owner `DEFER` is not implementation permission; documentary completion is not implementation start; navigation is not authority; merge is not release; and closure is not successor start.
+
 ## 6. First-Time Reader Path / 首次阅读者路径
 
 First-time readers should read in this conceptual order:
@@ -164,7 +208,7 @@ The operator path supports human inspection and scope control. It does not creat
 | 5 | `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` | Apply strict boundary language. | Self-granted authority. |
 | 6 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | Review risks and safe consolidation work. | Remediation permission. |
 
-Maintainers and receivers must preserve that `v6.16.0` is sealed, there is no v6.17, the terminal marker is metadata only, and post-terminal docs do not reopen v6.
+Maintainers and receivers must preserve that `v6.16.0` is sealed, there is no v6.17, the terminal marker is metadata only, and post-terminal docs do not reopen v6. When handing off or interpreting implementation, v7, productization, readiness, authorization, or successor state, they must follow Section 5.2 in order through IDG.4 and preserve its final `DEFER` / no-authorization state.
 
 ## 9. Governance Reviewer Path / 治理审查者路径
 
@@ -176,7 +220,7 @@ Maintainers and receivers must preserve that `v6.16.0` is sealed, there is no v6
 | 4 | `docs/CIVILIZATION_CORE_TERMINAL_CLOSURE_PACK.md` | Terminal closure and Layer 15 metadata-only interpretation. |
 | 5 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | Known drift risks and consolidation findings. |
 
-Governance review remains review. It does not authorize writes, graph mutation, runtime behavior, dependencies, adapters, execution, or automatic repair.
+Governance review remains review. It does not authorize writes, graph mutation, runtime behavior, dependencies, adapters, execution, or automatic repair. Governance reviewers addressing implementation, readiness, authorization, or successor state must read the Section 5.2 chain in order through IDG.4.
 
 ## 10. Architecture Reviewer Path / 架构审查者路径
 
@@ -197,7 +241,7 @@ Architecture vocabulary must stay separated:
 | Hermes Memory Fabric | Current repository carrier. |
 | Codex, OpenClaw, Hermes | Workflow or carrier tools. |
 
-Architecture review does not prove an active runtime exists and does not claim Layer 15 has been activated.
+Architecture review does not prove an active runtime exists and does not claim Layer 15 has been activated. Where architecture interpretation bears on implementation, v7, readiness, authorization, or successor state, reviewers must continue through the ordered Section 5.2 chain to IDG.4.
 
 ## 11. v7 Design Reviewer Path / v7 设计审查者路径
 
@@ -221,6 +265,8 @@ Required T9 interpretation:
 | Branch boundary | Do not create or imply a v7 implementation branch. |
 | Version boundary | Do not treat v7 as the automatic next version of v6. |
 
+For any v7 designation, runtime, implementation, readiness, authorization, or successor interpretation, read Section 5.2 from IDG.0 through IDG.4; the designation remains documentary and the final Human Owner state is `DEFER` with no authorization.
+
 ## 12. Product Reviewer Path / 产品审查者路径
 
 | Order | Read | Purpose |
@@ -238,6 +284,8 @@ Product-review rules:
 - no product implementation authorization;
 - Operator Console is not approved implementation;
 - product narrative must remain separate from execution permission.
+
+Product reviewers interpreting productization, implementation, readiness, authorization, or successor state must follow Section 5.2 in order through IDG.4; product implementation remains `NOT-AUTHORIZED`.
 
 ## 13. External Methodology Candidate Reviewer Path / 外部方法论候选审查者路径
 
@@ -273,6 +321,13 @@ Stop and return to human review if any interpretation does any of the following:
 - automatically changes the Memory Graph;
 - automatically authorizes or executes;
 - claims self-authorization;
+- treats IDG.0 entry or IDG.1 consideration as authorization;
+- treats documentary evidence as substantive evidence or as satisfying an undecided evidence threshold;
+- treats the V7 documentary designation as a package-version change or runtime activation;
+- treats IDG documentary execution or review completion as implementation readiness or implementation start;
+- bypasses the ordered IDG.0–IDG.4 chain or misses the IDG.4 Human Owner `DEFER` / `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION` outcome;
+- treats `DEFER` as `READY`, `NOT-READY`, or implementation permission;
+- treats navigation as authority, merge as release, or closure as successor start;
 - treats a tool or external project as the system identity.
 
 Stopping means returning to human review. It does not mean automatic repair.
@@ -288,5 +343,7 @@ It does not make the system more executable.
 T1-T10 and later consolidation docs remain docs / decision / roadmap / audit / navigation material.
 
 Future design or product work requires explicit human scope.
+
+The repository-effective IDG.0–IDG.4 documentary chain ends with the Human Owner decision `DEFER` and `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`; documentary completion is not implementation start, and no automatic successor work follows.
 
 No implementation authorization is created.
