@@ -66,8 +66,42 @@ The post-terminal docs are documentation / decision / roadmap / audit / navigati
 | Comprehensive audit state | Local git log shows `docs: add civilization core comprehensive audit report (#158)` at current branch `HEAD` during index creation. |
 | Historical Macro R6 Productization Design | Formally `CLOSED`; closure is effective at commit baseline `975ec01b75a318d20b00e5dd05a2fb4dceba8ab8`. This historical macro route is distinct from current repository R6 and R5. |
 | Historical Macro R6 decision corpus | The fixed `HMR6-PD-DQ-001` through `HMR6-PD-DQ-030` corpus is exhausted. Unresolved `HOLD` and `DEFER` dispositions remain unresolved and non-authorizing. |
+| IDG.0-IDG.4 documentary chain | `COMPLETE`; completion is documentary and creates no implementation authority or start. |
+| Human Owner implementation decision | `DEFER`; decision basis `READINESS-NOT-ESTABLISHED`; final outcome `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`. |
+| Implementation state | Readiness `NOT-ESTABLISHED`; implementation start `NO`; product implementation `NOT-AUTHORIZED`; implementation authority `NONE`. |
+| Execution authorities | Deployment, launch, release, version, and tag authorities are all `NONE`. |
+| Version and runtime boundary | Package version `6.16.0`; V6 continuation `NEVER`; V7 runtime implementation `DEFER`. |
+| Successor boundary | Automatic successor work `NONE`; successor-selection authority `HUMAN-OWNER-ONLY`. |
 | Implementation authorization state | T9, T10, and the Comprehensive Audit Report state no v7 implementation authorization, no product implementation authorization, no MVP, and no product deployment. |
 | External candidate state | `llm_wiki`, M-Flow, and GBrain are methodology candidates only; they are not dependencies, adapters, runtime behavior, or Civilization Core identity. |
+
+Current controlling IDG state:
+
+```text
+IDG_CHAIN=IDG.0-THROUGH-IDG.4
+IDG_CHAIN_DOCUMENTARY_EXECUTION=COMPLETE
+HUMAN_OWNER_IMPLEMENTATION_DECISION=DEFER
+IMPLEMENTATION_DECISION_BASIS=READINESS-NOT-ESTABLISHED
+IDG_04_FINAL_OUTCOME=IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION
+EVIDENCE_SUFFICIENCY=NOT-ESTABLISHED
+EVIDENCE_THRESHOLD=UNDECIDED
+ELIGIBILITY_THRESHOLD=DEFER
+IMPLEMENTATION_DECISION_ELIGIBILITY=DEFER
+IMPLEMENTATION_READINESS=NOT-ESTABLISHED
+IMPLEMENTATION_START=NO
+PRODUCT_IMPLEMENTATION=NOT-AUTHORIZED
+IMPLEMENTATION_AUTHORITY=NONE
+DEPLOYMENT_AUTHORITY=NONE
+LAUNCH_AUTHORITY=NONE
+RELEASE_AUTHORITY=NONE
+VERSION_AUTHORITY=NONE
+TAG_AUTHORITY=NONE
+PACKAGE_VERSION=6.16.0
+V6_CONTINUATION=NEVER
+V7_RUNTIME_IMPLEMENTATION=DEFER
+AUTOMATIC_SUCCESSOR_WORK=NONE
+SUCCESSOR_SELECTION_AUTHORITY=HUMAN-OWNER-ONLY
+```
 
 ## 5. Core Reading Order
 
@@ -122,6 +156,32 @@ The post-terminal docs are documentation / decision / roadmap / audit / navigati
 13. `docs/CIVILIZATION_CORE_TERMINAL_CLOSURE_PACK.md`, `docs/CIVILIZATION_CORE_FINAL_ROADMAP.md`, and `docs/POST_TERMINAL_ENHANCEMENT_CANDIDATES.md`
 
     Read these as the foundational closure, final roadmap, and candidate-only enhancement sources. They explain the terminal seal and the earliest post-terminal candidate boundary.
+
+### Implementation Decision Gate Chain (IDG.0–IDG.4)
+
+Read this complete repository-effective decision chain in order:
+
+1. IDG.0 — `docs/CIVILIZATION_CORE_IMPLEMENTATION_DECISION_GATE_ENTRY_REVIEW.md`
+
+   Permits separate IDG.1 consideration only. Entry is not authorization.
+
+2. IDG.1 — `docs/CIVILIZATION_CORE_IMPLEMENTATION_EVIDENCE_PACKAGE.md`
+
+   Assembles documentary evidence and registers missing evidence; it produces no new substantive evidence. Documentary evidence is not substantive evidence.
+
+3. IDG.2 — `docs/CIVILIZATION_CORE_V7_VERSION_LINE_DESIGNATION_DECISION.md`
+
+   Confirms V7 only as a documentary version-line designation. Designation is not a package-version change or runtime activation.
+
+4. IDG.3 — `docs/CIVILIZATION_CORE_INDEPENDENT_IMPLEMENTATION_READINESS_REVIEW.md`
+
+   Finds implementation readiness `NOT-ESTABLISHED`. Review completion is not readiness.
+
+5. IDG.4 — `docs/CIVILIZATION_CORE_HUMAN_OWNER_IMPLEMENTATION_DECISION.md`
+
+   Records the Human Owner decision `DEFER` and `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`. `DEFER` is neither `READY` nor `NOT-READY`; consideration and Human Owner `DEFER` are not implementation authorization or permission.
+
+The IDG.0-IDG.4 documentary chain is `COMPLETE`, but documentary completion is not implementation start. Navigation is not authority, and the final state remains no authorization and no automatic successor work.
 
 ### Historical Macro R6 Closed-Workstream Governance Order
 
@@ -180,6 +240,11 @@ This closed-workstream order is governance navigation, not a backlog, approval p
 | `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md` | T9 v7 Pre-Design Decision | Records pre-design decision material for possible future v7 discussion. | v7 design reviewer, maintainer, governance reviewer. | Only after release, handoff, architecture, and boundary docs. | Do not infer that v7 implementation has started or is authorized. |
 | `docs/CIVILIZATION_CORE_PRODUCTIZATION_ROADMAP.md` | T10 Productization Roadmap | Records productization directions, audiences, roadmap concepts, and future gates. | Product reviewer, maintainer, external reviewer. | Only after T9 and boundary docs. | Do not infer MVP, product deployment, Operator Console implementation, UI implementation, or product implementation approval. |
 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | Comprehensive Audit Report | Audits the post-terminal document set, risks, redundancy, reader-path gaps, and safe next steps. | Maintainer, governance reviewer, first-time reviewer. | After T1-T10 context or when choosing safe next docs work. | Do not infer remediation permission, implementation permission, v7 authorization, or product build approval. |
+| `docs/CIVILIZATION_CORE_IMPLEMENTATION_DECISION_GATE_ENTRY_REVIEW.md` | IDG.0 Entry Review | Records whether the bounded documentary gate may proceed to separate IDG.1 consideration. | Human Owner, governance reviewer, maintainer. | First in any review of the implementation decision gate chain. | Entry permits consideration only; do not infer IDG.1 start, implementation eligibility, readiness, or authorization. |
+| `docs/CIVILIZATION_CORE_IMPLEMENTATION_EVIDENCE_PACKAGE.md` | IDG.1 Evidence Package | Assembles fixed-corpus documentary evidence and registers missing or insufficient substantive evidence. | Evidence reviewer, governance reviewer, Human Owner. | After IDG.0 and before designation or readiness review. | Documentary evidence and gap registration are not new substantive evidence, evidence sufficiency, threshold satisfaction, readiness, or authorization. |
+| `docs/CIVILIZATION_CORE_V7_VERSION_LINE_DESIGNATION_DECISION.md` | IDG.2 V7 Designation Decision | Confirms V7 as the documentary version-line designation. | Human Owner, version reviewer, governance reviewer. | After IDG.1 when tracing the designated discussion line. | Designation is not a package-version change, V7 runtime activation, implementation authority, release, or tag. |
+| `docs/CIVILIZATION_CORE_INDEPENDENT_IMPLEMENTATION_READINESS_REVIEW.md` | IDG.3 Independent Readiness Review | Independently reviews the fixed documentary corpus and finds implementation readiness `NOT-ESTABLISHED`. | Independent reviewer, governance reviewer, Human Owner. | After IDG.2 and before the Human Owner decision. | Review completion and consideration eligibility are not readiness, implementation permission, or IDG.4 authorization or start. |
+| `docs/CIVILIZATION_CORE_HUMAN_OWNER_IMPLEMENTATION_DECISION.md` | IDG.4 Human Owner Decision | Records `DEFER`, based on `READINESS-NOT-ESTABLISHED`, with final outcome `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`. | Human Owner, maintainer, governance / safety reviewer, engineering contributor. | Last in the IDG chain and before interpreting any implementation-related state. | `DEFER` is neither `READY` nor `NOT-READY`; the decision and documentary completion do not authorize or start implementation or successor work. |
 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_ENTRY_REVIEW.md` | HMR6 Entry Review | Records route identity and entry-gate findings for the historical macro design corpus. | Governance reviewer, maintainer, auditor. | At the start of a closed-corpus review. | Entry Review is not implementation entry, reopening, or successor authority. |
 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_WORKSTREAM_CHARTER.md` | HMR6 Charter | Defines the bounded documentary mission, sequence, gates, and closure conditions. | Governance reviewer, maintainer, auditor. | After the Entry Review. | The Charter is not execution authorization, an active backlog, or current repository R6. |
 | `docs/CIVILIZATION_CORE_HISTORICAL_MACRO_R6_PRODUCTIZATION_DESIGN_BASELINE_AND_DECISION_QUESTION_MATRIX.md` | HMR6 Baseline and DQ Matrix | Fixes the route baseline and `HMR6-PD-DQ-001` through `HMR6-PD-DQ-030` corpus. | Governance reviewer, product reviewer, auditor. | Before reading the decision frames. | Corpus definition or exhaustion does not resolve `HOLD` / `DEFER` or authorize implementation. |
@@ -206,7 +271,7 @@ This closed-workstream order is governance navigation, not a backlog, approval p
 ### Project Maintainer
 
 - Start here: this index, then `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`.
-- Then read: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md`, `docs/CIVILIZATION_CORE_HANDOFF_PACKAGE.md`, `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`, and `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`.
+- Then read: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md`, `docs/CIVILIZATION_CORE_HANDOFF_PACKAGE.md`, `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`, `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`, and the complete IDG.0-IDG.4 chain above through the final IDG.4 `DEFER` / no-authorization decision.
 - Avoid misreading: terminal metadata does not permit a new version or tag.
 - Do not do next: do not change `pyproject.toml`, tag docs-only work, or create `v6.17`.
 
@@ -220,15 +285,15 @@ This closed-workstream order is governance navigation, not a backlog, approval p
 ### Product Reviewer
 
 - Start here: this index, then `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`.
-- Then read: `docs/CIVILIZATION_CORE_PRODUCTIZATION_ROADMAP.md`, `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`, and `docs/POST_TERMINAL_EXTERNAL_MEMORY_SYSTEMS_ABSORPTION_PLAN.md`.
+- Then read: `docs/CIVILIZATION_CORE_PRODUCTIZATION_ROADMAP.md`, `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`, `docs/POST_TERMINAL_EXTERNAL_MEMORY_SYSTEMS_ABSORPTION_PLAN.md`, and the complete IDG.0-IDG.4 chain through IDG.4.
 - Avoid misreading: T10 is roadmap-only and does not create product implementation approval.
 - Do not do next: do not build MVP, implement Operator Console, deploy a product, or add UI/runtime behavior.
 
 ### v7 Design Reviewer
 
 - Start here: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` after this index.
-- Then read: `docs/CIVILIZATION_CORE_ARCHITECTURE_ATLAS.md`, `docs/CIVILIZATION_CORE_VERSION_CHRONICLE.md`, and `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md`.
-- Avoid misreading: T9 is pre-design decision material only.
+- Then read: `docs/CIVILIZATION_CORE_ARCHITECTURE_ATLAS.md`, `docs/CIVILIZATION_CORE_VERSION_CHRONICLE.md`, `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md`, and IDG.0-IDG.4 in order.
+- Avoid misreading: T9 is pre-design decision material only; IDG.2 designates V7 only documentarily, and IDG.4 ends in `DEFER` with no authorization.
 - Do not do next: do not create a v7 implementation branch or treat a T9 `GO` / `DEFER` / `NO-GO` / `NEVER` decision label as execution permission.
 
 ### External Methodology Reviewer
@@ -241,14 +306,14 @@ This closed-workstream order is governance navigation, not a backlog, approval p
 ### Governance / Safety Reviewer
 
 - Start here: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` after this index.
-- Then read: `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`, `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`, `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`, and T9/T10 warning sections.
+- Then read: `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`, `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`, `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`, the complete IDG.0-IDG.4 chain, and T9/T10 warning sections.
 - Avoid misreading: evidence, review, approval request, and approval are separate states.
 - Do not do next: do not permit execution, memory writing, graph mutation, or authorization semantics without explicit separate human-approved scope.
 
 ### Engineering Contributor
 
 - Start here: this index, then `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`.
-- Then read: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md`, `docs/CIVILIZATION_CORE_ARCHITECTURE_ATLAS.md`, and `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`.
+- Then read: `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md`, `docs/CIVILIZATION_CORE_ARCHITECTURE_ATLAS.md`, `docs/CIVILIZATION_CORE_OPERATOR_GUIDE.md`, and IDG.4 after tracing IDG.0-IDG.3.
 - Avoid misreading: architecture maps and operator guidance do not authorize code work.
 - Do not do next: do not change source, tests, scripts, package metadata, dependencies, adapters, runtime behavior, or config from this index.
 
@@ -261,7 +326,8 @@ This is an overview path, not implementation permission.
 3. Skim `docs/CIVILIZATION_CORE_HANDOFF_PACKAGE.md` for transfer boundaries and receiver rules.
 4. Read the T9 warning: T9 is v7 pre-design decision only and does not start v7 implementation.
 5. Read the T10 warning: T10 is productization roadmap only and does not start product implementation.
-6. Read the Comprehensive Audit Report conclusion to understand the current safe next step and reader-path risk.
+6. Read the IDG.0-IDG.4 subsection above in order and finish with IDG.4 `DEFER` / `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`.
+7. Read the Comprehensive Audit Report conclusion to understand the reader-path risk without treating navigation or recommendations as authority.
 
 Do not use the 10-minute path to approve implementation, product deployment, v7 work, dependencies, adapters, runtime behavior, Memory Graph mutation, durable memory writing, authorization semantics, or execution semantics.
 
@@ -341,7 +407,8 @@ Before any future docs work, read:
 - `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md`;
 - `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md`;
 - `docs/CIVILIZATION_CORE_RELEASE_BOOK.md`;
-- `docs/CIVILIZATION_CORE_HANDOFF_PACKAGE.md`.
+- `docs/CIVILIZATION_CORE_HANDOFF_PACKAGE.md`;
+- the complete IDG.0-IDG.4 chain in Section 5, including the final IDG.4 `DEFER` / no-authorization state.
 
 Before any future v7 design discussion, also read:
 
@@ -427,3 +494,8 @@ Future work must preserve the boundary and require explicit human approval.
 | `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md` | T9 decision | Record v7 pre-design decision material. | Mistaken for v7 implementation authorization. | Pre-design decision only. |
 | `docs/CIVILIZATION_CORE_PRODUCTIZATION_ROADMAP.md` | T10 roadmap | Record productization directions and future gates. | Mistaken for MVP or product implementation approval. | Roadmap-only product narrative. |
 | `docs/CIVILIZATION_CORE_COMPREHENSIVE_AUDIT_REPORT.md` | Audit | Audit the post-terminal document set and safe next steps. | Mistaken for remediation permission. | Audit-only findings and recommendations. |
+| `docs/CIVILIZATION_CORE_IMPLEMENTATION_DECISION_GATE_ENTRY_REVIEW.md` | IDG.0 entry review | Gate separate IDG.1 consideration. | Mistaken for authorization or implementation entry. | Consideration eligibility only. |
+| `docs/CIVILIZATION_CORE_IMPLEMENTATION_EVIDENCE_PACKAGE.md` | IDG.1 evidence package | Assemble documentary evidence and register missing evidence. | Mistaken for new substantive evidence or satisfied thresholds. | Documentary trace and gap register only. |
+| `docs/CIVILIZATION_CORE_V7_VERSION_LINE_DESIGNATION_DECISION.md` | IDG.2 designation decision | Confirm the documentary V7 version-line designation. | Mistaken for version change, runtime activation, release, or tag authority. | Documentary designation only. |
+| `docs/CIVILIZATION_CORE_INDEPENDENT_IMPLEMENTATION_READINESS_REVIEW.md` | IDG.3 readiness review | Record independent readiness finding `NOT-ESTABLISHED`. | Mistaken for readiness or implementation authority. | Completed documentary review, not readiness. |
+| `docs/CIVILIZATION_CORE_HUMAN_OWNER_IMPLEMENTATION_DECISION.md` | IDG.4 Human Owner decision | Record `DEFER` and no authorization. | Mistaken for implementation permission or successor start. | Final outcome `IMPLEMENTATION-DECISION-DEFERRED-NO-AUTHORIZATION`. |
