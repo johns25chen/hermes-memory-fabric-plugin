@@ -79,7 +79,7 @@ The fixed corpus is closed to the following exact tracked sources. Each locator 
 | `docs/CIVILIZATION_CORE_BOUNDARY_CONSTITUTION.md` | 296 lines; SHA-256 `bc2ab92dab3e569ac7f7ec643016ba38efca4714a551339fc54ded3b010c4c11` | Sections 4, 6-8, 12-16 |
 | `docs/CIVILIZATION_CORE_V7_PRE_DESIGN_DECISION.md` | 398 lines; SHA-256 `d6f1743e418d21850eefb3052ab5d0936ecea4a40e1e7daed768e9fd50a63a58` | Sections 4-7, 13-18 |
 | `docs/CIVILIZATION_CORE_V7_DESIGN_ONLY_CHARTER.md` | 229 lines; SHA-256 `75727bdbc7b52a8fddd2b1e142c1758240bb1664332ea2ae24a4ee67d8fedc33` | Sections 3-7, 11-18 |
-| `pyproject.toml` | 34 lines; SHA-256 `7136c871d48ba61b28a87c76daf5a851e0f7663251c04f740da06cb3ed0b8eb1` | Project field `version = "6.16.0"` (line 3) |
+| `pyproject.toml` | 34 lines; SHA-256 `7136c871d48ba61b28a87c76daf5a851e0f7663251c04f740da06cb3ed0b8eb1` | Project field `version = "6.16.0"` (line 7) |
 
 No source outside this table contributes evidence or a decision premise.
 
@@ -158,7 +158,7 @@ These boundaries are source-traceable to `docs/CIVILIZATION_CORE_BOUNDARY_CONSTI
 
 ## 11. Version, Runtime, Release, and Tag Boundaries / 版本、运行时、发布与标签边界
 
-The package version remains `6.16.0`, as recorded by `pyproject.toml`, project field `version` (line 3), and the independent readiness review machine field `PACKAGE_VERSION` (line 214).
+The package version remains `6.16.0`, as recorded by `pyproject.toml`, project field `version` (line 7), and the independent readiness review machine field `PACKAGE_VERSION` (line 214).
 
 `V6_CONTINUATION=NEVER` remains unchanged. The historical closure and V7 boundary are preserved; this record does not reopen V6.
 
