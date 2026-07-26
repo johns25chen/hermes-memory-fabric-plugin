@@ -1,92 +1,177 @@
-# Civilization Core Post-IDG Master Execution Roadmap
+# Civilization Core POST-IDG Master Execution Roadmap
 
 ## Purpose
 
-This document establishes the single execution control roadmap after IDG closure.
+This document is the single execution control roadmap after IDG closure.
 
-It prevents:
-- roadmap drift;
-- documentation activity replacing product progress;
-- design completion being mistaken for implementation authorization;
-- automatic successor execution.
+It defines:
+
+- allowed execution sequence;
+- stage boundaries;
+- entry conditions;
+- exit conditions;
+- authorization boundaries;
+- drift correction rules.
+
+Documentation completion is not implementation completion.
+
+Design completion is not implementation authorization.
+
+## Stage Sequence
+
+R0:
+Stable Kernel and Governance Closure
+
+STATUS=COMPLETE
+
+
+R1:
+POST-IDG Master Roadmap Lock
+
+STATUS=ACTIVE
+
+
+R2:
+Product Direction and MVP Decision
+
+STATUS=NOT_STARTED
+
+
+R3:
+Pre-Implementation Evidence and Readiness
+
+STATUS=NOT_STARTED
+
+
+R4:
+Implementation Readiness Reassessment and Human Owner Decision
+
+STATUS=NOT_STARTED
+
+
+R5:
+Bounded Implementation Authorization
+
+STATUS=NOT_STARTED
+
+
+R6:
+Core Runtime Vertical Slice
+
+STATUS=NOT_STARTED
+
+
+R7:
+Integration and Product Surfaces
+
+STATUS=NOT_STARTED
+
+
+R8:
+SEC-GOV Security Governance
+
+STATUS=NOT_STARTED
+
+
+R9:
+System Validation and Pilot Readiness
+
+STATUS=NOT_STARTED
+
+
+R10:
+MVP Real Pilot
+
+STATUS=NOT_STARTED
+
+
+R11:
+REL Release Decision
+
+STATUS=NOT_STARTED
+
+
+R12:
+Product Portfolio Expansion
+
+STATUS=NOT_STARTED
+
+
+R13:
+Higher Memory Runtime Evolution
+
+STATUS=NOT_STARTED
+
 
 ---
 
-# Current Baseline
+# Governance Rules
 
-R0_STABLE_KERNEL_AND_DESIGN_CLOSURE=COMPLETE
+Every future task must map to one roadmap stage.
 
-PACKAGE_VERSION=6.16.0
+A task without roadmap mapping is drift.
 
-V6_CONTINUATION=NEVER
+No stage skip.
 
-IMPLEMENTATION_AUTHORITY=NONE
+No automatic successor work.
 
----
+Documentation volume is not product progress.
 
-# Stage Map
+Design completion is not implementation completion.
 
-R0_STABLE_KERNEL_AND_DESIGN_CLOSURE=COMPLETE
+Human Owner decisions remain required at authority transitions.
 
-R1_POST_IDG_MASTER_ROADMAP=ACTIVE
+After every merged PR:
 
-R2_PRODUCT_AND_MVP_DECISION=NOT_STARTED
-
-R3_PRE_IMPLEMENTATION_EVIDENCE=NOT_STARTED
-
-R4_READINESS_REASSESSMENT_AND_HUMAN_OWNER_DECISION=NOT_STARTED
-
-R5_BOUNDED_IMPLEMENTATION_AUTHORIZATION=NOT_STARTED
-
-R6_CORE_RUNTIME_VERTICAL_SLICE=NOT_STARTED
-
-R7_INTEGRATION_AND_PRODUCT_SURFACES=NOT_STARTED
-
-R8_SEC_GOV=NOT_STARTED
-
-R9_SYSTEM_VALIDATION=NOT_STARTED
-
-R10_MVP_PILOT=NOT_STARTED
-
-R11_REL_RELEASE_DECISION=NOT_STARTED
-
-R12_PRODUCT_PORTFOLIO_EXPANSION=NOT_STARTED
-
-R13_HIGHER_MEMORY_RUNTIME_EVOLUTION=NOT_STARTED
-
----
-
-# Execution Gates
-
-NO_STAGE_SKIP=TRUE
-
-R2_REQUIRES:
-R1_ROADMAP_LOCKED=TRUE
-
-R3_REQUIRES:
-R2_PRODUCT_DECISION_COMPLETE=NOT_STARTED
-
-R4_REQUIRES:
-R3_EVIDENCE_THRESHOLD_MET=TRUE
-
-R5_REQUIRES:
-HUMAN_OWNER_IMPLEMENTATION_AUTHORIZATION=TRUE
+- compare actual output with roadmap;
+- verify stage alignment;
+- verify authorization boundary.
 
 ---
 
 # Forbidden Actions
 
+The roadmap does not authorize:
+
 - automatic implementation;
-- runtime creation without authorization;
+- runtime creation;
 - v7 version creation;
 - tag creation;
 - release actions;
+- deployment;
 - dependency adoption without decision;
-- adapter creation without scope approval.
+- adapter creation without approved scope.
 
 ---
 
-# Current State
+# Authority State
+
+IMPLEMENTATION_READINESS=NOT_ESTABLISHED
+
+IMPLEMENTATION_START=NO
+
+PRODUCT_IMPLEMENTATION=NOT_AUTHORIZED
+
+IMPLEMENTATION_AUTHORITY=NONE
+
+DEPLOYMENT_AUTHORITY=NONE
+
+LAUNCH_AUTHORITY=NONE
+
+RELEASE_AUTHORITY=NONE
+
+VERSION_AUTHORITY=NONE
+
+TAG_AUTHORITY=NONE
+
+AUTOMATIC_SUCCESSOR_WORK=NONE
+
+
+---
+
+# Current Machine State
+
+ROADMAP_ID=POST-IDG-MASTER-EXECUTION-ROADMAP
 
 MASTER_ROADMAP_STATUS=ACTIVE
 
@@ -94,4 +179,29 @@ CURRENT_STAGE=R1
 
 NEXT_ALLOWED_STAGE=R2
 
+R2_START_REQUIRES_SEPARATE_DECISION=TRUE
+
 ROADMAP_DRIFT_CONTROL=ACTIVE
+
+NO_STAGE_SKIP=TRUE
+
+NO_AUTOMATIC_SUCCESSOR_WORK=TRUE
+
+HUMAN_OWNER_GATE_REQUIRED=TRUE
+
+
+---
+
+# R1 Exit Condition
+
+R1 completion requires:
+
+MASTER_ROADMAP_RECORDED=YES
+
+ROADMAP_DRIFT_CONTROL=ACTIVE
+
+CURRENT_STAGE=R1
+
+NEXT_ALLOWED_STAGE=R2
+
+R2_START_REQUIRES_SEPARATE_DECISION=TRUE
