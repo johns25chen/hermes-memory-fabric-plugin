@@ -11,7 +11,6 @@ R2 does not authorize implementation.
 
 ## Primary Product Direction
 
-PRIMARY_PRODUCT_DIRECTION=
 CIVILIZATION_CORE_GOVERNED_MEMORY_CONTROL_PLANE
 
 Rationale:
@@ -24,7 +23,6 @@ scoped adoption, correction, revocation, and auditability.
 
 ## Target Users
 
-TARGET_USER=
 AI Agent builders and advanced operators requiring governed memory workflows
 
 Secondary future users:
@@ -37,19 +35,14 @@ Enterprise deployment is not included in MVP scope.
 
 ## MVP Core Workflows
 
-CORE_WORKFLOW_1=
 Memory Candidate Creation
 
-CORE_WORKFLOW_2=
 Evidence Attachment
 
-CORE_WORKFLOW_3=
 Human Review Decision
 
-CORE_WORKFLOW_4=
 Scoped Memory Adoption
 
-CORE_WORKFLOW_5=
 Correction Revoke Delete Lifecycle
 
 ---
