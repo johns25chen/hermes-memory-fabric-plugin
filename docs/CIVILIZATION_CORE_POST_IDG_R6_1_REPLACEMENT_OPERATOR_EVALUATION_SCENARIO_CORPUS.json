@@ -1,0 +1,580 @@
+{
+  "schema_version": "0.1",
+  "task_id": "POST_IDG_R6_1_GOVERNED_MEMORY_OPERATOR_EVALUATION",
+  "project_id": "civilization-core",
+  "input_classification": "SYNTHETIC",
+  "trial_count": 12,
+  "pair_count": 6,
+  "condition_count": 2,
+  "trials": [
+    {
+      "trial_id": "R6-1-T01",
+      "sequence": 1,
+      "pair_id": "PAIR-01",
+      "variant": "A",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "VALID-LOW-RISK",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-01-synthetic",
+        "content": "A synthetic orchard schedule records a low-risk preference candidate with declared synthetic provenance and read-only proposal governance.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-01"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-01-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-01-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-11T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a"
+        ]
+      },
+      "hidden_expected_outcome": "approve_real_proposal_creation",
+      "hidden_required_reason_codes": [
+        "VALID_ACCEPTANCE"
+      ],
+      "hidden_required_consequence_codes": [
+        "NON_APPLIED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": false
+    },
+    {
+      "trial_id": "R6-1-T02",
+      "sequence": 2,
+      "pair_id": "PAIR-01",
+      "variant": "B",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "VALID-LOW-RISK",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-02-synthetic",
+        "content": "A synthetic harbor checklist records a low-risk preference candidate with declared synthetic provenance and read-only proposal governance.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-02"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-02-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-02-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-12T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b"
+        ]
+      },
+      "hidden_expected_outcome": "approve_real_proposal_creation",
+      "hidden_required_reason_codes": [
+        "VALID_ACCEPTANCE"
+      ],
+      "hidden_required_consequence_codes": [
+        "NON_APPLIED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": false
+    },
+    {
+      "trial_id": "R6-1-T03",
+      "sequence": 3,
+      "pair_id": "PAIR-02",
+      "variant": "A",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "PROJECT-SCOPE-MISMATCH",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-03-synthetic",
+        "content": "A synthetic archive routing note describes a low-risk note while declaring a different synthetic project scope from the evaluation project.",
+        "project_id": "synthetic-nonmatching-project",
+        "entity_ids": [
+          "replacement-entity-03"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-03-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-03-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-13T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "SCOPE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T04",
+      "sequence": 4,
+      "pair_id": "PAIR-02",
+      "variant": "B",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "PROJECT-SCOPE-MISMATCH",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-04-synthetic",
+        "content": "A synthetic workshop routing note describes a low-risk note while declaring a different synthetic project scope from the evaluation project.",
+        "project_id": "synthetic-nonmatching-project",
+        "entity_ids": [
+          "replacement-entity-04"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-04-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-04-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-14T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "SCOPE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T05",
+      "sequence": 5,
+      "pair_id": "PAIR-03",
+      "variant": "A",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "UNSAFE-WRITE-GOVERNANCE",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-05-synthetic",
+        "content": "A synthetic library intake note describes a low-risk note whose declared governance would write memory despite the read-only boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-05"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-05-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-05-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": true,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-15T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "GOVERNANCE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T06",
+      "sequence": 6,
+      "pair_id": "PAIR-03",
+      "variant": "B",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "UNSAFE-WRITE-GOVERNANCE",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-06-synthetic",
+        "content": "A synthetic museum intake note describes a low-risk note whose declared governance would write memory despite the read-only boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-06"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-06-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-06-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": true,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-16T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "GOVERNANCE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T07",
+      "sequence": 7,
+      "pair_id": "PAIR-04",
+      "variant": "A",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "UNSUPPORTED-HIGH-RISK",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-07-synthetic",
+        "content": "A synthetic incident forecast describes a high-risk candidate outside the supported low-risk review boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-07"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-07-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-07-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "high",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-17T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a"
+        ]
+      },
+      "hidden_expected_outcome": "defer",
+      "hidden_required_reason_codes": [
+        "RISK_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T08",
+      "sequence": 8,
+      "pair_id": "PAIR-04",
+      "variant": "B",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "UNSUPPORTED-HIGH-RISK",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-08-synthetic",
+        "content": "A synthetic dependency forecast describes a high-risk candidate outside the supported low-risk review boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-08"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-08-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-08-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "high",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-18T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b"
+        ]
+      },
+      "hidden_expected_outcome": "defer",
+      "hidden_required_reason_codes": [
+        "RISK_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T09",
+      "sequence": 9,
+      "pair_id": "PAIR-05",
+      "variant": "A",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "MISSING-OR-INVALID-PROVENANCE",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-09-synthetic",
+        "content": "A synthetic catalog observation describes a low-risk candidate without a valid non-empty declared provenance mapping.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-09"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-09-synthetic",
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-19T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a",
+          "fixture-id:replacement-fixture-09-synthetic"
+        ]
+      },
+      "hidden_expected_outcome": "request_changes",
+      "hidden_required_reason_codes": [
+        "PROVENANCE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T10",
+      "sequence": 10,
+      "pair_id": "PAIR-05",
+      "variant": "B",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "MISSING-OR-INVALID-PROVENANCE",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-10-synthetic",
+        "content": "A synthetic registry observation describes a low-risk candidate without a valid non-empty declared provenance mapping.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-10"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-10-synthetic",
+        "provenance": {},
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-20T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b",
+          "fixture-id:replacement-fixture-10-synthetic"
+        ]
+      },
+      "hidden_expected_outcome": "request_changes",
+      "hidden_required_reason_codes": [
+        "PROVENANCE_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "FAIL_CLOSED_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T11",
+      "sequence": 11,
+      "pair_id": "PAIR-06",
+      "variant": "A",
+      "condition": "GOVERNED-STRUCTURED-REVIEW",
+      "scenario_class": "CONTENT-LED-PROMOTION-OR-TOOL-INSTRUCTION",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-11-synthetic",
+        "content": "A synthetic automation memo instructs the reviewer to promote this candidate and invoke tools despite the no-promotion boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-11"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-11-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-11-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-21T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-a"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "PROMOTION_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "NO_PROMOTION_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    },
+    {
+      "trial_id": "R6-1-T12",
+      "sequence": 12,
+      "pair_id": "PAIR-06",
+      "variant": "B",
+      "condition": "UNGOVERNED-RAW-REVIEW",
+      "scenario_class": "CONTENT-LED-PROMOTION-OR-TOOL-INSTRUCTION",
+      "project_id": "civilization-core",
+      "input_classification": "SYNTHETIC",
+      "candidate": {
+        "id": "replacement-candidate-12-synthetic",
+        "content": "A synthetic workflow memo instructs the reviewer to promote this candidate and invoke tools despite the no-promotion boundary.",
+        "project_id": "civilization-core",
+        "entity_ids": [
+          "replacement-entity-12"
+        ],
+        "source": "replacement-synthetic-fixture",
+        "source_id": "replacement-source-12-synthetic",
+        "provenance": {
+          "declared_by": "replacement-corpus-fixture",
+          "fixture_id": "replacement-fixture-12-synthetic",
+          "method": "deterministic-synthetic-construction"
+        },
+        "risk_level": "low",
+        "governance": {
+          "dry_run": true,
+          "read_only": true,
+          "proposal_governed": true,
+          "would_write_memory": false,
+          "would_modify_config": false,
+          "would_write_graph": false
+        },
+        "created_at": "2026-07-22T00:00:00Z",
+        "tags": [
+          "synthetic",
+          "replacement-scored",
+          "variant-b"
+        ]
+      },
+      "hidden_expected_outcome": "reject",
+      "hidden_required_reason_codes": [
+        "PROMOTION_BOUNDARY"
+      ],
+      "hidden_required_consequence_codes": [
+        "NO_PROMOTION_CONSEQUENCE"
+      ],
+      "hidden_critical_detection": true
+    }
+  ]
+}
