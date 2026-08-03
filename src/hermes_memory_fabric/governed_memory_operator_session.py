@@ -7,8 +7,12 @@ promotion, execution, or continuation.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import sys
 import time
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from hermes_memory_fabric.governed_memory_operator_evaluation import (
@@ -90,11 +94,12 @@ class _OperatorSessionError(Exception):
 class _OperatorSession:
     """Mutable state exists only inside this in-memory object."""
 
-    def __init__(self, corpus: Mapping[str, Any], project_id: str, operator_id: str, clock: Callable[[], float]) -> None:
+    def __init__(self, corpus: Mapping[str, Any], project_id: str, operator_id: str, clock: Callable[[], float], corpus_sha256: str) -> None:
         self._evaluation = prepare_governed_memory_operator_evaluation(
             corpus, project_id=project_id, operator_id=operator_id
         )
         self._clock = clock
+        self._corpus_sha256 = corpus_sha256
         self._operator_id = operator_id
         self._practice_records: list[dict[str, Any]] = []
         self._observations: list[dict[str, Any]] = []
@@ -113,7 +118,7 @@ class _OperatorSession:
             "practice_count": PRACTICE_COUNT,
             "scored_trial_count": TRIAL_COUNT,
             "matched_pair_count": PAIR_COUNT,
-            "corpus_sha256": self._evaluation["corpus_sha256"],
+            "corpus_sha256": self._corpus_sha256,
             "outcome_choices": deepcopy(OUTCOME_CHOICES),
             "glossary": deepcopy(GLOSSARY),
             "onboarding": deepcopy(ONBOARDING),
@@ -400,7 +405,179 @@ def governed_memory_operator_session(
         clock = lambda: time.monotonic_ns() / 1_000_000
     if not callable(clock):
         raise _OperatorSessionError("monotonic_clock_required")
-    return _OperatorSession(deepcopy(corpus), project_id, operator_id, clock)
+    trusted_corpus, corpus_sha256 = _read_default_corpus()
+    if corpus is not None and (
+        not isinstance(corpus, Mapping) or dict(corpus) != trusted_corpus
+    ):
+        raise _OperatorSessionError("corpus_mismatch")
+    return _OperatorSession(
+        deepcopy(trusted_corpus), project_id, operator_id, clock, corpus_sha256
+    )
+
+
+_DEFAULT_CORPUS = (
+    Path(__file__).parents[2]
+    / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_SCENARIO_CORPUS.json"
+)
+_ELIGIBILITY_PROMPTS = (
+    "ELIGIBLE_INDEPENDENT_HUMAN_NOT_REPOSITORY_OWNER=yes/no: ",
+    "ELIGIBLE_NOT_ASSISTANT_AI_MODEL_OR_AUTOMATION=yes/no: ",
+    "ELIGIBLE_NO_SCORED_CORPUS_ANSWER_KEY_DIFF_OR_PRIOR_ATTEMPT_EXPOSURE=yes/no: ",
+    "ELIGIBLE_NO_OUTSIDE_ASSISTANCE_DURING_SCORED_SESSION=yes/no: ",
+)
+
+
+def _compact_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _read_default_corpus() -> tuple[Any, str]:
+    raw_bytes = _DEFAULT_CORPUS.read_bytes()
+    return json.loads(raw_bytes), hashlib.sha256(raw_bytes).hexdigest()
+
+
+def _ask(input_fn: Callable[[str], str], prompt: str) -> str:
+    value = input_fn(prompt)
+    if not isinstance(value, str) or not value.strip():
+        raise _OperatorSessionError("terminal_input_required")
+    return value.strip()
+
+
+def _yes(input_fn: Callable[[str], str], prompt: str) -> bool:
+    return _ask(input_fn, prompt) == "yes"
+
+
+def _reason_codes(input_fn: Callable[[str], str], prompt: str) -> list[str]:
+    raw = _ask(input_fn, prompt)
+    values = raw.split(",")
+    if any(not value or value != value.strip() for value in values):
+        raise _OperatorSessionError("terminal_reason_codes_malformed")
+    return values
+
+
+def _rating(input_fn: Callable[[str], str], prompt: str) -> int:
+    raw = _ask(input_fn, prompt)
+    if raw not in {"1", "2", "3", "4", "5"}:
+        raise _OperatorSessionError("terminal_rating_invalid")
+    return int(raw)
+
+
+def _preflight(session: _OperatorSession, output_fn: Callable[[str], None]) -> int:
+    plan = session.plan()
+    lines = (
+        f"RUNTIME_SURFACE={plan['runtime_surface']}",
+        f"STATUS={plan['status']}",
+        f"PROJECT_ID={plan['project_id']}",
+        f"INPUT_CLASSIFICATION={plan['input_classification']}",
+        f"PRACTICE_COUNT={plan['practice_count']}",
+        f"SCORED_TRIAL_COUNT={plan['scored_trial_count']}",
+        f"MATCHED_PAIR_COUNT={plan['matched_pair_count']}",
+        f"CORPUS_SHA256={plan['corpus_sha256']}",
+        f"EVIDENCE_DOCUMENT_STATUS={plan['evidence_document_status']}",
+        f"ACTUAL_HUMAN_OPERATOR_SESSION_STATUS={plan['actual_human_operator_session_status']}",
+        "CONTINUATION_AUTHORIZED=FALSE",
+        "IN_MEMORY_ONLY=TRUE",
+        f"PROVIDER_TOOL_COUNT={len(plan['provider_tools'])}",
+    )
+    for line in lines:
+        output_fn(line)
+    return 0
+
+
+def _interactive(
+    session: _OperatorSession,
+    *,
+    input_fn: Callable[[str], str],
+    output_fn: Callable[[str], None],
+) -> int:
+    plan = session.plan()
+    output_fn("ONBOARDING=" + _compact_json(plan["onboarding"]))
+    for _ in range(PRACTICE_COUNT):
+        output_fn("PRACTICE_PACKET=" + _compact_json(session.practice_packet()))
+        feedback = session.submit_practice(
+            outcome=_ask(input_fn, "PRACTICE_OUTCOME: "),
+            reason_codes=_reason_codes(input_fn, "PRACTICE_REASON_CODES_COMMA_SEPARATED: "),
+            rationale=_ask(input_fn, "PRACTICE_RATIONALE: "),
+        )
+        output_fn("PRACTICE_FEEDBACK=" + _compact_json(feedback))
+
+    for _ in range(TRIAL_COUNT):
+        current = session.start_next_trial()
+        output_fn("SCORED_PACKET=" + _compact_json(current["packet"]))
+        while True:
+            if _yes(input_fn, "OPEN_GLOSSARY=yes/no: "):
+                output_fn("GLOSSARY=" + _compact_json(session.open_glossary()))
+                if not _yes(input_fn, "CLOSE_GLOSSARY=yes/no: "):
+                    raise _OperatorSessionError("glossary_close_confirmation_required")
+                session.close_glossary()
+            session.submit_outcome(_ask(input_fn, "SCORED_OUTCOME: "))
+            session.submit_reason_boundaries(
+                _reason_codes(input_fn, "SCORED_REASON_CODES_COMMA_SEPARATED: ")
+            )
+            rationale = _ask(input_fn, "SCORED_RATIONALE: ")
+            if not _yes(input_fn, "CONFIRM_INDEPENDENTLY_WRITTEN_RATIONALE=yes/no: "):
+                raise _OperatorSessionError("rationale_confirmation_required")
+            session.submit_rationale(rationale, confirmed=True)
+            output_fn("FINAL_REVIEW=" + _compact_json(session.review()))
+            if _yes(input_fn, "FINAL_LOCK_CONFIRMATION=yes/no: "):
+                session.confirm_lock(True)
+                break
+            session.confirm_lock(False)
+
+    for condition in CONDITIONS:
+        session.set_condition_scores(
+            condition,
+            usefulness=_rating(input_fn, f"{condition}_USEFULNESS_1_TO_5: "),
+            burden=_rating(input_fn, f"{condition}_BURDEN_1_TO_5: "),
+        )
+    session.attest(
+        no_answer_key_viewed=_yes(input_fn, "ATTEST_NO_ANSWER_KEY_VIEWED=yes/no: "),
+        no_outside_assistance=_yes(input_fn, "ATTEST_NO_OUTSIDE_ASSISTANCE=yes/no: "),
+    )
+    output_fn("SESSION_RESULT_JSON=" + _compact_json(session.finalize()))
+    return 0
+
+
+def main(
+    argv: list[str] | None = None,
+    *,
+    input_fn: Callable[[str], str] | None = None,
+    output_fn: Callable[[str], None] | None = None,
+    clock: Callable[[], float] | None = None,
+    corpus_loader: Callable[[], Any] | None = None,
+) -> int:
+    """Run the fail-closed local terminal interface without persistence."""
+
+    args = list(sys.argv[1:] if argv is None else argv)
+    input_fn = input if input_fn is None else input_fn
+    output_fn = print if output_fn is None else output_fn
+    try:
+        if args == ["--preflight"]:
+            session = governed_memory_operator_session(
+                None if corpus_loader is None else corpus_loader(),
+                project_id="civilization-core",
+                operator_id="preflight-validation-only",
+                clock=clock,
+            )
+            return _preflight(session, output_fn)
+        if len(args) != 2 or args[0] != "--operator-id" or not args[1].strip():
+            return 2
+        for prompt in _ELIGIBILITY_PROMPTS:
+            if not _yes(input_fn, prompt):
+                return 1
+        session = governed_memory_operator_session(
+            None if corpus_loader is None else corpus_loader(),
+            project_id="civilization-core",
+            operator_id=args[1],
+            clock=clock,
+        )
+        return _interactive(session, input_fn=input_fn, output_fn=output_fn)
+    except (KeyboardInterrupt, Exception):
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 
 
 __all__ = ["governed_memory_operator_session"]
