@@ -419,6 +419,7 @@ _DEFAULT_CORPUS = (
     Path(__file__).parents[2]
     / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_SCENARIO_CORPUS.json"
 )
+_EXPECTED_DEFAULT_CORPUS_RAW_SHA256 = "76574906ab6c989c0159d88b64c961f16b78a1dfd5b1dc347c0b62ccf34dcf77"
 _ELIGIBILITY_PROMPTS = (
     "ELIGIBLE_INDEPENDENT_HUMAN_NOT_REPOSITORY_OWNER=yes/no: ",
     "ELIGIBLE_NOT_ASSISTANT_AI_MODEL_OR_AUTOMATION=yes/no: ",
@@ -433,7 +434,10 @@ def _compact_json(value: Any) -> str:
 
 def _read_default_corpus() -> tuple[Any, str]:
     raw_bytes = _DEFAULT_CORPUS.read_bytes()
-    return json.loads(raw_bytes), hashlib.sha256(raw_bytes).hexdigest()
+    raw_sha256 = hashlib.sha256(raw_bytes).hexdigest()
+    if raw_sha256 != _EXPECTED_DEFAULT_CORPUS_RAW_SHA256:
+        raise _OperatorSessionError("corpus_raw_sha256_mismatch")
+    return json.loads(raw_bytes), raw_sha256
 
 
 def _ask(input_fn: Callable[[str], str], prompt: str) -> str:

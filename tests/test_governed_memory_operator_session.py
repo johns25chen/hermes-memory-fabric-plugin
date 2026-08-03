@@ -20,6 +20,7 @@ NEW_CORPUS = ROOT / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_E
 EVIDENCE_RELATIVE = Path(
     "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_EVIDENCE.md"
 )
+EXPECTED_CORPUS_RAW_SHA256 = "76574906ab6c989c0159d88b64c961f16b78a1dfd5b1dc347c0b62ccf34dcf77"
 
 
 def corpus():
@@ -62,7 +63,7 @@ def test_exact_surface_plan_practice_and_fixed_chinese_semantics(monkeypatch):
     canonical_json_sha = hashlib.sha256(
         json.dumps(corpus(), ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
-    assert expected_raw_sha == "76574906ab6c989c0159d88b64c961f16b78a1dfd5b1dc347c0b62ccf34dcf77"
+    assert expected_raw_sha == EXPECTED_CORPUS_RAW_SHA256
     assert canonical_json_sha != expected_raw_sha
     assert session_module.__all__ == ["governed_memory_operator_session"]
     session = make_session()
@@ -139,6 +140,55 @@ def test_exact_surface_plan_practice_and_fixed_chinese_semantics(monkeypatch):
     assert packet["feedback"] is None
     complete_practice(session)
     assert_error("practice_complete", session.practice_packet)
+
+
+def test_default_corpus_raw_sha_mismatch_fails_closed_before_session(tmp_path, monkeypatch):
+    original_raw = NEW_CORPUS.read_bytes()
+    tampered_corpus = tmp_path / "scenario-corpus.json"
+    tampered_corpus.write_bytes(original_raw + b" ")
+    tampered_raw = tampered_corpus.read_bytes()
+
+    assert json.loads(tampered_raw) == json.loads(original_raw)
+    tampered_sha = hashlib.sha256(tampered_raw).hexdigest()
+    assert tampered_sha != EXPECTED_CORPUS_RAW_SHA256
+
+    evaluation_calls = []
+    interactive_calls = []
+    monkeypatch.setattr(session_module, "_DEFAULT_CORPUS", tampered_corpus)
+    monkeypatch.setattr(
+        session_module,
+        "prepare_governed_memory_operator_evaluation",
+        lambda *args, **kwargs: evaluation_calls.append((args, kwargs)),
+    )
+    monkeypatch.setattr(
+        session_module,
+        "_interactive",
+        lambda *args, **kwargs: interactive_calls.append((args, kwargs)),
+    )
+
+    with pytest.raises(Exception) as captured:
+        governed_memory_operator_session(
+            None,
+            project_id="civilization-core",
+            operator_id="synthetic-tampered-corpus-test",
+        )
+    assert captured.value.code == "corpus_raw_sha256_mismatch"
+    assert evaluation_calls == []
+
+    preflight_outputs = []
+    assert session_module.main(["--preflight"], output_fn=preflight_outputs.append) != 0
+    assert not any(tampered_sha in output for output in preflight_outputs)
+
+    eligibility = iter(["yes"] * 4)
+    interactive_outputs = []
+    assert session_module.main(
+        ["--operator-id", "synthetic-tampered-corpus-test"],
+        input_fn=lambda _prompt: next(eligibility),
+        output_fn=interactive_outputs.append,
+    ) != 0
+    assert interactive_calls == []
+    assert interactive_outputs == []
+    assert evaluation_calls == []
 
 
 def test_replacement_corpus_exact_matrix_and_new_identities():
