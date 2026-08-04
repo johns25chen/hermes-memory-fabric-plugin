@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -16,8 +17,10 @@ from hermes_memory_fabric.governed_memory_operator_session import (
 
 ROOT = Path(__file__).parents[1]
 NEW_CORPUS = ROOT / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_SCENARIO_CORPUS.json"
-ORIGINAL_CORPUS = ROOT / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_OPERATOR_EVALUATION_SCENARIO_CORPUS.json"
-EVIDENCE = ROOT / "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_EVIDENCE.md"
+EVIDENCE_RELATIVE = Path(
+    "docs/CIVILIZATION_CORE_POST_IDG_R6_1_REPLACEMENT_OPERATOR_EVALUATION_EVIDENCE.md"
+)
+EXPECTED_CORPUS_RAW_SHA256 = "76574906ab6c989c0159d88b64c961f16b78a1dfd5b1dc347c0b62ccf34dcf77"
 
 
 def corpus():
@@ -55,7 +58,13 @@ def assert_error(code, call):
     assert captured.value.code == code
 
 
-def test_exact_surface_plan_practice_and_fixed_chinese_semantics():
+def test_exact_surface_plan_practice_and_fixed_chinese_semantics(monkeypatch):
+    expected_raw_sha = hashlib.sha256(NEW_CORPUS.read_bytes()).hexdigest()
+    canonical_json_sha = hashlib.sha256(
+        json.dumps(corpus(), ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    assert expected_raw_sha == EXPECTED_CORPUS_RAW_SHA256
+    assert canonical_json_sha != expected_raw_sha
     assert session_module.__all__ == ["governed_memory_operator_session"]
     session = make_session()
     first = session.plan()
@@ -65,6 +74,58 @@ def test_exact_surface_plan_practice_and_fixed_chinese_semantics():
     assert first["practice_count"] == 4
     assert first["scored_trial_count"] == 12
     assert first["matched_pair_count"] == 6
+    assert first["corpus_sha256"] == expected_raw_sha
+    supplied = corpus()
+    prepared_corpora = []
+    prepare = session_module.prepare_governed_memory_operator_evaluation
+
+    def capture_prepared_corpus(value, **kwargs):
+        prepared_corpora.append(value)
+        return prepare(value, **kwargs)
+
+    monkeypatch.setattr(
+        session_module, "prepare_governed_memory_operator_evaluation", capture_prepared_corpus
+    )
+    equal_session = governed_memory_operator_session(
+        supplied,
+        project_id="civilization-core",
+        operator_id="synthetic-test-operator",
+    )
+    assert equal_session.plan()["corpus_sha256"] == expected_raw_sha
+    assert prepared_corpora[-1] == supplied
+    assert prepared_corpora[-1] is not supplied
+
+    different = deepcopy(supplied)
+    different["trials"][0]["candidate"]["content"] += " 内容不同但结构仍有效。"
+    assert_error(
+        "corpus_mismatch",
+        lambda: governed_memory_operator_session(
+            different,
+            project_id="civilization-core",
+            operator_id="synthetic-test-operator",
+        ),
+    )
+
+    class ForgedDigestCorpus(dict):
+        _raw_sha256 = "0" * 64
+
+    forged_equal = ForgedDigestCorpus(supplied)
+    forged_session = governed_memory_operator_session(
+        forged_equal,
+        project_id="civilization-core",
+        operator_id="synthetic-test-operator",
+    )
+    assert forged_session.plan()["corpus_sha256"] == expected_raw_sha
+    assert type(prepared_corpora[-1]) is dict
+    forged_different = ForgedDigestCorpus(different)
+    assert_error(
+        "corpus_mismatch",
+        lambda: governed_memory_operator_session(
+            forged_different,
+            project_id="civilization-core",
+            operator_id="synthetic-test-operator",
+        ),
+    )
     assert first["input_classification"] == "SYNTHETIC"
     assert first["evidence_document_status"] == "NOT-CREATED"
     assert tuple(value for _, value, _ in first["outcome_choices"]) == (
@@ -81,7 +142,56 @@ def test_exact_surface_plan_practice_and_fixed_chinese_semantics():
     assert_error("practice_complete", session.practice_packet)
 
 
-def test_replacement_corpus_exact_matrix_new_identities_and_opaque_original_digest_overlap():
+def test_default_corpus_raw_sha_mismatch_fails_closed_before_session(tmp_path, monkeypatch):
+    original_raw = NEW_CORPUS.read_bytes()
+    tampered_corpus = tmp_path / "scenario-corpus.json"
+    tampered_corpus.write_bytes(original_raw + b" ")
+    tampered_raw = tampered_corpus.read_bytes()
+
+    assert json.loads(tampered_raw) == json.loads(original_raw)
+    tampered_sha = hashlib.sha256(tampered_raw).hexdigest()
+    assert tampered_sha != EXPECTED_CORPUS_RAW_SHA256
+
+    evaluation_calls = []
+    interactive_calls = []
+    monkeypatch.setattr(session_module, "_DEFAULT_CORPUS", tampered_corpus)
+    monkeypatch.setattr(
+        session_module,
+        "prepare_governed_memory_operator_evaluation",
+        lambda *args, **kwargs: evaluation_calls.append((args, kwargs)),
+    )
+    monkeypatch.setattr(
+        session_module,
+        "_interactive",
+        lambda *args, **kwargs: interactive_calls.append((args, kwargs)),
+    )
+
+    with pytest.raises(Exception) as captured:
+        governed_memory_operator_session(
+            None,
+            project_id="civilization-core",
+            operator_id="synthetic-tampered-corpus-test",
+        )
+    assert captured.value.code == "corpus_raw_sha256_mismatch"
+    assert evaluation_calls == []
+
+    preflight_outputs = []
+    assert session_module.main(["--preflight"], output_fn=preflight_outputs.append) != 0
+    assert not any(tampered_sha in output for output in preflight_outputs)
+
+    eligibility = iter(["yes"] * 4)
+    interactive_outputs = []
+    assert session_module.main(
+        ["--operator-id", "synthetic-tampered-corpus-test"],
+        input_fn=lambda _prompt: next(eligibility),
+        output_fn=interactive_outputs.append,
+    ) != 0
+    assert interactive_calls == []
+    assert interactive_outputs == []
+    assert evaluation_calls == []
+
+
+def test_replacement_corpus_exact_matrix_and_new_identities():
     value = corpus()
     prepared = engine.prepare_governed_memory_operator_evaluation(
         value, project_id="civilization-core", operator_id="synthetic-test-operator"
@@ -99,12 +209,7 @@ def test_replacement_corpus_exact_matrix_new_identities_and_opaque_original_dige
     ]
     candidates = [trial["candidate"] for trial in value["trials"]]
     digests = {engine._canonical_sha256(candidate) for candidate in candidates}
-    original = json.loads(ORIGINAL_CORPUS.read_text(encoding="utf-8"))
-    original_digests = {
-        engine._canonical_sha256(trial["candidate"]) for trial in original["trials"]
-    }
     assert len(digests) == 12
-    assert len(digests & original_digests) == 0
     identities = {
         next(tag for tag in candidate["tags"] if tag.startswith("fixture:v3-sealed-"))
         for candidate in candidates
@@ -171,7 +276,6 @@ def test_blank_confirmation_incomplete_attestation_and_scores_fail_closed():
         "condition_scores_invalid",
         lambda: session.set_condition_scores(engine.CONDITIONS[0], usefulness=0, burden=5),
     )
-    assert not EVIDENCE.exists()
 
 
 def test_no_mutation_no_storage_network_model_proposal_execution_or_promotion(tmp_path, monkeypatch):
@@ -223,4 +327,184 @@ def test_operator_smoke_harness_ready_without_starting_human_session():
     assert plan["status"] == "HARNESS-READY-OPERATOR-SESSION-PENDING"
     assert plan["actual_human_operator_session_status"] == "NOT-STARTED"
     assert plan["evidence_document_status"] == "NOT-CREATED"
-    assert not EVIDENCE.exists()
+
+
+def terminal_inputs(*, reject_first_lock=False, open_glossary=False):
+    values = ["yes"] * 4
+    for outcome in (
+        "approve_real_proposal_creation", "request_changes", "reject", "defer"
+    ):
+        values.extend((outcome, "OUTCOME_ONLY", "独立完成的合成练习理由。"))
+    for index in range(12):
+        values.append("yes" if open_glossary and index == 0 else "no")
+        if open_glossary and index == 0:
+            values.append("yes")
+        values.extend(("defer", "OUTCOME_ONLY", f"第{index + 1}项独立人工理由。", "yes"))
+        if reject_first_lock and index == 0:
+            values.append("no")
+            values.extend(
+                ("no", "reject", "GOVERNANCE_BOUNDARY", "编辑后的独立人工理由。", "yes")
+            )
+        values.append("yes")
+    values.extend(("4", "2", "5", "3", "yes", "yes"))
+    return values
+
+
+def run_terminal(values, *, argv=None, cwd=None):
+    outputs = []
+    iterator = iter(values)
+    tick = iter(float(value) for value in range(1000, 5000, 100)).__next__
+    if cwd is None:
+        return_code = session_module.main(
+            argv or ["--operator-id", "opaque-human-operator"],
+            input_fn=lambda _prompt: next(iterator),
+            output_fn=outputs.append,
+            clock=tick,
+            corpus_loader=corpus,
+        )
+    else:
+        old_cwd = Path.cwd()
+        try:
+            __import__("os").chdir(cwd)
+            return_code = session_module.main(
+                argv or ["--operator-id", "opaque-human-operator"],
+                input_fn=lambda _prompt: next(iterator),
+                output_fn=outputs.append,
+                clock=tick,
+                corpus_loader=corpus,
+            )
+        finally:
+            __import__("os").chdir(old_cwd)
+    return return_code, outputs
+
+
+def test_preflight_exact_output_and_no_exposure():
+    expected_raw_sha = hashlib.sha256(NEW_CORPUS.read_bytes()).hexdigest()
+    expected_plan = make_session().plan()
+    return_code, outputs = run_terminal([], argv=["--preflight"])
+    assert return_code == 0
+    assert outputs == [
+        "RUNTIME_SURFACE=governed_memory_operator_session",
+        "STATUS=HARNESS-READY-OPERATOR-SESSION-PENDING",
+        "PROJECT_ID=civilization-core",
+        "INPUT_CLASSIFICATION=SYNTHETIC",
+        "PRACTICE_COUNT=4",
+        "SCORED_TRIAL_COUNT=12",
+        "MATCHED_PAIR_COUNT=6",
+        f"CORPUS_SHA256={expected_raw_sha}",
+        "EVIDENCE_DOCUMENT_STATUS=NOT-CREATED",
+        "ACTUAL_HUMAN_OPERATOR_SESSION_STATUS=NOT-STARTED",
+        "CONTINUATION_AUTHORIZED=FALSE",
+        "IN_MEMORY_ONLY=TRUE",
+        "PROVIDER_TOOL_COUNT=0",
+    ]
+    rendered = "\n".join(outputs)
+    corpus_sha256_lines = [
+        line for line in outputs if line.startswith("CORPUS_SHA256=")
+    ]
+    assert len(corpus_sha256_lines) == 1
+    corpus_sha256 = corpus_sha256_lines[0].removeprefix("CORPUS_SHA256=")
+    assert corpus_sha256 == expected_raw_sha
+    assert expected_plan["corpus_sha256"] == expected_raw_sha
+    assert re.fullmatch(r"[0-9a-f]{64}", corpus_sha256)
+    assert len(expected_plan["corpus_sha256"]) == 64
+    assert expected_plan["corpus_sha256"] == expected_plan["corpus_sha256"].lower()
+    assert "candidate" not in rendered.lower()
+    assert "hidden_" not in rendered.lower()
+    assert "correct" not in rendered.lower()
+
+
+def test_eligibility_rejection_precedes_corpus_loading_and_exposure():
+    outputs = []
+    loaded = []
+    return_code = session_module.main(
+        ["--operator-id", "opaque-human-operator"],
+        input_fn=lambda _prompt: "no",
+        output_fn=outputs.append,
+        corpus_loader=lambda: loaded.append(True),
+    )
+    assert return_code != 0
+    assert outputs == []
+    assert loaded == []
+
+
+@pytest.mark.parametrize("failure", [EOFError(), KeyboardInterrupt()])
+def test_terminal_eof_and_interrupt_fail_closed_without_result(failure):
+    outputs = []
+
+    def fail(_prompt):
+        raise failure
+
+    return_code = session_module.main(
+        ["--operator-id", "opaque-human-operator"],
+        input_fn=fail,
+        output_fn=outputs.append,
+        corpus_loader=corpus,
+    )
+    assert return_code != 0
+    assert not any(line.startswith("SESSION_RESULT_JSON=") for line in outputs)
+
+
+def test_complete_terminal_flow_glossary_edit_declined_lock_and_final_payload():
+    return_code, outputs = run_terminal(
+        terminal_inputs(reject_first_lock=True, open_glossary=True)
+    )
+    assert return_code == 0
+    assert sum(line.startswith("PRACTICE_PACKET=") for line in outputs) == 4
+    assert sum(line.startswith("PRACTICE_FEEDBACK=") for line in outputs) == 4
+    assert sum(line.startswith("SCORED_PACKET=") for line in outputs) == 12
+    assert sum(line.startswith("GLOSSARY=") for line in outputs) == 1
+    markers = [line for line in outputs if line.startswith("SESSION_RESULT_JSON=")]
+    assert len(markers) == 1
+    assert outputs[-1] == markers[0]
+    marker_suffix = outputs[-1].removeprefix("SESSION_RESULT_JSON=")
+    payload = json.loads(marker_suffix)
+    assert json.dumps(
+        payload, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+    ) == marker_suffix
+    result = payload["result"]
+    observations = result["observations"]
+    assert [item["trial_id"] for item in observations] == [f"R6-1-T{i:02d}" for i in range(1, 13)]
+    assert result["status"] == "complete_in_memory_non_authoritative_measurement"
+    assert result["OPERATOR_SESSION_STATUS"] == "COMPLETE-IN-MEMORY-INPUT-SUPPLIED"
+    assert payload["evidence_document_status"] == "NOT-CREATED"
+    assert payload["continuation_authorized"] is False
+    assert payload["non_persisted"] is True
+    assert observations[0]["correction_rework_count"] == 4
+    rendered = markers[0]
+    for forbidden in (
+        "hidden_expected_outcome", "hidden_required_reason_codes",
+        "hidden_required_consequence_codes", "hidden_critical_detection",
+    ):
+        assert forbidden not in rendered
+    pending = [payload]
+    keys = set()
+    while pending:
+        item = pending.pop()
+        if isinstance(item, dict):
+            keys.update(item)
+            pending.extend(item.values())
+        elif isinstance(item, list):
+            pending.extend(item)
+    assert "candidate" not in keys
+    assert "content" not in keys
+
+
+def test_terminal_and_preflight_create_no_files_and_preserve_evidence_sentinel(tmp_path):
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert run_terminal([], argv=["--preflight"], cwd=empty)[0] == 0
+    assert run_terminal(terminal_inputs(), cwd=empty)[0] == 0
+    assert list(empty.rglob("*")) == []
+
+    workspace = tmp_path / "sentinel-workspace"
+    evidence = workspace / EVIDENCE_RELATIVE
+    evidence.parent.mkdir(parents=True)
+    sentinel = b"future-checkpoint-b-evidence-sentinel\x00\xff"
+    evidence.write_bytes(sentinel)
+    before = {path.relative_to(workspace) for path in workspace.rglob("*") if path.is_file()}
+    assert run_terminal([], argv=["--preflight"], cwd=workspace)[0] == 0
+    assert run_terminal(terminal_inputs(), cwd=workspace)[0] == 0
+    after = {path.relative_to(workspace) for path in workspace.rglob("*") if path.is_file()}
+    assert after == before == {EVIDENCE_RELATIVE}
+    assert evidence.read_bytes() == sentinel
