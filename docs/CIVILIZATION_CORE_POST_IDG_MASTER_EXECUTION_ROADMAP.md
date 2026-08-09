@@ -53,7 +53,7 @@ candidate-memory
 → correct
 → revoke
 
-This is the R7 product-loop scope definition, not a current implementation. Any later implementation requires new explicit authorization. Every state must be traceable, and the boundaries for human confirmation, correction, and revocation must be preserved.
+This is the R7 product-loop scope definition, not a current implementation. Any later R7 implementation requires a new explicit, bounded Human Owner authorization. Every state must be traceable, and the boundaries for human confirmation, correction, and revocation must be preserved.
 
 Automatic approval, automatic adoption, automatic execution, and automatic continuation are not allowed.
 
@@ -92,13 +92,26 @@ The following exit rules apply:
 3. A later R7 decision may be PASS, HOLD, or STOP.
 4. No result automatically starts R8.
 5. R7 exit requires a new Human Owner closeout decision.
-6. Only after the R7 exit decision is complete does R8 become eligible for a new entry decision.
+6. Only an R7 exit decision of PASS makes R8 eligible for a new entry decision. HOLD preserves R7 without successor entry eligibility, and STOP closes the route without successor entry eligibility.
 
-## 9. R8-R13 boundary
+## 9. Remaining engineering-stage sequence and entry gates
 
-R8-R13 have not started. R8 is not an automatic successor stage to R7 and requires a separate entry and scope decision. There is currently no implementation authority for R8 or any later stage.
+R8-R13 remain reserved engineering stages. They are engineering planning and control identifiers, not mappings to the fifteen-layer product axis:
 
-Merging this roadmap must not automatically create any task, branch, experiment, or implementation.
+- R8 — SEC-GOV Security Governance;
+- R9 — System Validation and Pilot Readiness;
+- R10 — MVP Real Pilot;
+- R11 — REL Release Decision;
+- R12 — Product Portfolio Expansion;
+- R13 — Higher Memory Runtime Evolution.
+
+These definitions preserve planning boundaries and stage order only. They do not approve detailed scope, implementation, product-layer mapping, or automatic successor work.
+
+Every future task must map to exactly one engineering stage. A task without a stage mapping, or a task that enters a non-adjacent stage, is roadmap drift. Beginning with the R7 exit decision, and only for transitions R7→R8 through R12→R13, the immediately next stage becomes eligible for an entry decision only after the preceding stage receives a PASS exit decision. HOLD preserves the current stage without successor entry eligibility, and STOP closes the route without successor entry eligibility. This prospective rule does not retroactively alter the already-recorded R6→R7 transition; R7 entry eligibility remains available after the R6 exit decision. Entry eligibility is not implementation authority. Every authority transition requires a separate explicit, bounded Human Owner decision.
+
+R8-R13 have not started. R8 is not an automatic successor stage to R7, and no implementation authority exists for R8 or any later stage.
+
+Merging this correction must not automatically create any task, branch, experiment, implementation, or successor work.
 
 ## 10. Machine-readable roadmap state
 
@@ -124,6 +137,7 @@ R7_STATUS=NOT-STARTED
 R7_ENTRY_DECISION=DEFINED
 R7_ENTRY_ELIGIBILITY=AVAILABLE-AFTER-R6-EXIT
 R7_IMPLEMENTATION_AUTHORITY=NONE
+R7_IMPLEMENTATION_REQUIRES_HUMAN_OWNER_AUTHORIZATION=TRUE
 R7_PRODUCT_SURFACE=PROJECT-CONTINUITY-CONTROL-SURFACE
 R7_PRODUCT_SURFACE_CLASS=MINIMUM-USEFUL-PRODUCT-SURFACE
 R7_REAL_PROJECT=CIVILIZATION-CORE
@@ -146,9 +160,37 @@ R7_TAG_AUTHORITY=NONE
 R7_GENERALIZABILITY_CLAIM=NONE
 R7_REQUIRED_VALUE_SIGNALS=TASK-COMPLETION-TRACEABILITY-ERROR-REDUCTION-RECOVERY-TIME-GOVERNANCE-BURDEN
 R7_EXIT_REQUIRES_HUMAN_OWNER_DECISION=TRUE
+R7_PASS_REQUIRED_FOR_R8_ENTRY_ELIGIBILITY=TRUE
+R7_HOLD_OR_STOP_GRANTS_R8_ENTRY_ELIGIBILITY=FALSE
+R8_STAGE_NAME=SEC-GOV-SECURITY-GOVERNANCE
 R8_STATUS=NOT-STARTED
 R8_ENTRY_DECISION_REQUIRED=TRUE
 R8_IMPLEMENTATION_AUTHORITY=NONE
+R9_STAGE_NAME=SYSTEM-VALIDATION-AND-PILOT-READINESS
+R9_STATUS=NOT-STARTED
+R9_IMPLEMENTATION_AUTHORITY=NONE
+R10_STAGE_NAME=MVP-REAL-PILOT
+R10_STATUS=NOT-STARTED
+R10_IMPLEMENTATION_AUTHORITY=NONE
+R11_STAGE_NAME=REL-RELEASE-DECISION
+R11_STATUS=NOT-STARTED
+R11_IMPLEMENTATION_AUTHORITY=NONE
+R12_STAGE_NAME=PRODUCT-PORTFOLIO-EXPANSION
+R12_STATUS=NOT-STARTED
+R12_IMPLEMENTATION_AUTHORITY=NONE
+R13_STAGE_NAME=HIGHER-MEMORY-RUNTIME-EVOLUTION
+R13_STATUS=NOT-STARTED
+R13_IMPLEMENTATION_AUTHORITY=NONE
+REMAINING_STAGE_SEQUENCE=R8-R9-R10-R11-R12-R13
+EVERY_TASK_REQUIRES_EXACTLY_ONE_STAGE_MAPPING=TRUE
+ENTRY_ELIGIBILITY_DOES_NOT_GRANT_IMPLEMENTATION_AUTHORITY=TRUE
+R6_TO_R7_ENTRY_ELIGIBILITY_PRESERVED=TRUE
+PASS_ONLY_SUCCESSOR_GATE_APPLIES_TO=R7-TO-R8-THROUGH-R12-TO-R13
+PASS_ONLY_SUCCESSOR_GATE_REQUIRES_PRECEDING_STAGE_PASS=TRUE
+PASS_ONLY_SUCCESSOR_GATE_HOLD_OR_STOP_GRANTS_ENTRY_ELIGIBILITY=FALSE
+ROADMAP_DRIFT_CONTROL=ACTIVE
+NO_STAGE_SKIP=TRUE
+HUMAN_OWNER_GATE_REQUIRED=TRUE
 CURRENT_IMPLEMENTATION_AUTHORITY_FOR_NEW_WORK=NONE
 AUTOMATIC_SUCCESSOR_WORK=NONE
 ```
