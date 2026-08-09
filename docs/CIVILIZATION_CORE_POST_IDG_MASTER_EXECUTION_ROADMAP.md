@@ -92,7 +92,7 @@ The following exit rules apply:
 3. A later R7 decision may be PASS, HOLD, or STOP.
 4. No result automatically starts R8.
 5. R7 exit requires a new Human Owner closeout decision.
-6. Only after the R7 exit decision is complete does R8 become eligible for a new entry decision.
+6. Only an R7 exit decision of PASS makes R8 eligible for a new entry decision. HOLD preserves R7 without successor entry eligibility, and STOP closes the route without successor entry eligibility.
 
 ## 9. Remaining engineering-stage sequence and entry gates
 
@@ -107,7 +107,7 @@ R8-R13 remain reserved engineering stages. They are engineering planning and con
 
 These definitions preserve planning boundaries and stage order only. They do not approve detailed scope, implementation, product-layer mapping, or automatic successor work.
 
-Every future task must map to exactly one engineering stage. A task without a stage mapping, or a task that enters a non-adjacent stage, is roadmap drift. Only the immediately next stage becomes eligible for an entry decision after the preceding stage has completed its exit decision. Entry eligibility is not implementation authority. Every authority transition requires a separate explicit, bounded Human Owner decision.
+Every future task must map to exactly one engineering stage. A task without a stage mapping, or a task that enters a non-adjacent stage, is roadmap drift. Only the immediately next stage becomes eligible for an entry decision after the preceding stage receives a PASS exit decision. HOLD preserves the current stage without successor entry eligibility, and STOP closes the route without successor entry eligibility. Entry eligibility is not implementation authority. Every authority transition requires a separate explicit, bounded Human Owner decision.
 
 R8-R13 have not started. R8 is not an automatic successor stage to R7, and no implementation authority exists for R8 or any later stage.
 
@@ -160,6 +160,8 @@ R7_TAG_AUTHORITY=NONE
 R7_GENERALIZABILITY_CLAIM=NONE
 R7_REQUIRED_VALUE_SIGNALS=TASK-COMPLETION-TRACEABILITY-ERROR-REDUCTION-RECOVERY-TIME-GOVERNANCE-BURDEN
 R7_EXIT_REQUIRES_HUMAN_OWNER_DECISION=TRUE
+R7_PASS_REQUIRED_FOR_R8_ENTRY_ELIGIBILITY=TRUE
+R7_HOLD_OR_STOP_GRANTS_R8_ENTRY_ELIGIBILITY=FALSE
 R8_STAGE_NAME=SEC-GOV-SECURITY-GOVERNANCE
 R8_STATUS=NOT-STARTED
 R8_ENTRY_DECISION_REQUIRED=TRUE
@@ -182,6 +184,8 @@ R13_IMPLEMENTATION_AUTHORITY=NONE
 REMAINING_STAGE_SEQUENCE=R8-R9-R10-R11-R12-R13
 EVERY_TASK_REQUIRES_EXACTLY_ONE_STAGE_MAPPING=TRUE
 ENTRY_ELIGIBILITY_DOES_NOT_GRANT_IMPLEMENTATION_AUTHORITY=TRUE
+SUCCESSOR_ENTRY_REQUIRES_PRECEDING_STAGE_PASS=TRUE
+HOLD_OR_STOP_GRANTS_SUCCESSOR_ENTRY_ELIGIBILITY=FALSE
 ROADMAP_DRIFT_CONTROL=ACTIVE
 NO_STAGE_SKIP=TRUE
 HUMAN_OWNER_GATE_REQUIRED=TRUE
