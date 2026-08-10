@@ -608,6 +608,9 @@ from .p4_m0_subspace_seed_approval_runbook import (
     seed_approval_runbook_as_dicts,
 )
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
+from .r7_project_continuity_control_surface import (
+    run_r7_project_continuity_control_surface,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1814,6 +1817,24 @@ def build_parser() -> argparse.ArgumentParser:
     _add_workspace_root(audit)
     audit.add_argument("--limit", type=int, default=50)
 
+    continuity = subparsers.add_parser("continuity")
+    _add_workspace_root(continuity)
+    continuity.add_argument("--project-id", required=True)
+    continuity.add_argument("--operator", required=True)
+    continuity.add_argument("--query", required=True)
+    continuity.add_argument("--candidate-json", required=True)
+    continuity.add_argument("--outcome", required=True)
+    continuity.add_argument("--rationale", required=True)
+    continuity.add_argument("--corrected-outcome", required=True)
+    continuity.add_argument("--correction-rationale", required=True)
+    continuity.add_argument("--revocation-rationale", required=True)
+    continuity.add_argument("--input-classification", required=True)
+    continuity.add_argument("--confirm-human-review", action="store_true")
+    continuity.add_argument("--confirm-scope-check", action="store_true")
+    continuity.add_argument("--confirm-correction", action="store_true")
+    continuity.add_argument("--confirm-revocation", action="store_true")
+    continuity.add_argument("--confirm-no-apply", action="store_true")
+
     return parser
 
 
@@ -1853,6 +1874,26 @@ def _add_workspace_root(parser: argparse.ArgumentParser) -> None:
 
 
 def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
+    if args.command == "continuity":
+        candidate = _parse_candidate_json_object(args.candidate_json)
+        return run_r7_project_continuity_control_surface(
+            candidate,
+            query=args.query,
+            project_id=args.project_id,
+            operator=args.operator,
+            outcome=args.outcome,
+            rationale=args.rationale,
+            corrected_outcome=args.corrected_outcome,
+            correction_rationale=args.correction_rationale,
+            revocation_rationale=args.revocation_rationale,
+            input_classification=args.input_classification,
+            confirm_human_review=args.confirm_human_review,
+            confirm_scope_check=args.confirm_scope_check,
+            confirm_correction=args.confirm_correction,
+            confirm_revocation=args.confirm_revocation,
+            confirm_no_apply=args.confirm_no_apply,
+        )
+
     if args.command == "propose":
         store = create_workspace_subspace_memory_store(Path(args.workspace_root))
         storage_root = str(store.storage_root)
@@ -4021,6 +4062,16 @@ def _required_text(value: object, field: str) -> str:
     if not cleaned:
         raise ValueError(f"{field}_must_be_non_empty")
     return cleaned
+
+
+def _parse_candidate_json_object(value: str) -> dict[str, Any]:
+    try:
+        candidate = json.loads(value)
+    except json.JSONDecodeError as exc:
+        raise ValueError("candidate_json_must_be_valid_json_object") from exc
+    if not isinstance(candidate, dict):
+        raise ValueError("candidate_json_must_be_json_object")
+    return candidate
 
 
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:
