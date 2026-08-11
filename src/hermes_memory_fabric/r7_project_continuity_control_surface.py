@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 from hermes_memory_fabric.governed_memory_learning_slice import (
     ALLOWED_INPUT_CLASSIFICATIONS,
+    GovernedMemoryLearningSliceError,
     TERMINAL_ARTIFACT,
     run_governed_memory_learning_slice,
 )
@@ -113,14 +114,24 @@ def run_r7_project_continuity_control_surface(
         "confirm_human_review",
         "human-review",
     )
-    governed_slice = run_governed_memory_learning_slice(
-        deepcopy(candidate_snapshot),
-        project_id=R7_PROJECT_ID,
-        reviewer=R7_OPERATOR,
-        outcome=outcome,
-        rationale=rationale,
-        input_classification=input_classification,
-    )
+    governed_slice_rejected = False
+    try:
+        governed_slice = run_governed_memory_learning_slice(
+            deepcopy(candidate_snapshot),
+            project_id=R7_PROJECT_ID,
+            reviewer=R7_OPERATOR,
+            outcome=outcome,
+            rationale=rationale,
+            input_classification=input_classification,
+        )
+    except GovernedMemoryLearningSliceError:
+        governed_slice_rejected = True
+    if governed_slice_rejected:
+        _fail(
+            "governed_slice_rejected",
+            "human-review",
+            ("governed_slice_rejection_details_withheld",),
+        )
     _validate_governed_slice(governed_slice)
 
     _require_confirmation(
@@ -481,6 +492,18 @@ def _validate_non_applied_flags(
             errors.append(f"{field}_must_be_true")
     if record.get("continuation_authorized") is not False:
         errors.append("continuation_authorized_must_be_false")
+    for field in (
+        "authoritative",
+        "applied",
+        "persisted",
+        "approved",
+        "adopted",
+        "executed",
+        "created_real_proposal",
+        "creates_real_proposal",
+    ):
+        if record.get(field) is True:
+            errors.append(f"{field}_must_not_be_true")
 
 
 def _correction_id(record: Mapping[str, Any]) -> str:

@@ -4066,12 +4066,19 @@ def _required_text(value: object, field: str) -> str:
 
 def _parse_candidate_json_object(value: str) -> dict[str, Any]:
     try:
-        candidate = json.loads(value)
+        candidate = json.loads(
+            value,
+            parse_constant=_reject_non_finite_json_constant,
+        )
     except json.JSONDecodeError as exc:
         raise ValueError("candidate_json_must_be_valid_json_object") from exc
     if not isinstance(candidate, dict):
         raise ValueError("candidate_json_must_be_json_object")
     return candidate
+
+
+def _reject_non_finite_json_constant(_value: str) -> None:
+    raise ValueError("candidate_json_non_finite_constant_not_allowed")
 
 
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:
