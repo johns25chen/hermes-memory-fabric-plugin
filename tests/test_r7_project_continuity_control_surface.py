@@ -22,6 +22,7 @@ from hermes_memory_fabric.r7_project_continuity_control_surface import (
 
 PROJECT_ID = "CIVILIZATION-CORE"
 OPERATOR = "FOUNDER-OPERATOR"
+LARGE_INTEGER_FIXTURE = 10**400
 
 
 def _candidate() -> dict[str, Any]:
@@ -75,6 +76,28 @@ def _kwargs(**overrides: Any) -> dict[str, Any]:
     return values
 
 
+def _real_use_result_snapshot(
+    *,
+    baseline_available: bool = True,
+) -> dict[str, Any]:
+    snapshot = {
+        "task_completed": True,
+        "state_traceable": True,
+        "human_correction_count": 1,
+        "recovery_time_seconds": 600.0,
+        "governance_burden_worthwhile": True,
+        "baseline_available": baseline_available,
+    }
+    if baseline_available:
+        snapshot.update(
+            {
+                "baseline_human_correction_count": 3,
+                "baseline_recovery_time_seconds": 900.0,
+            }
+        )
+    return snapshot
+
+
 def _run(candidate: dict[str, Any] | None = None, **overrides: Any) -> dict[str, Any]:
     return run_r7_project_continuity_control_surface(
         _candidate() if candidate is None else candidate,
@@ -86,9 +109,10 @@ def _cli_argv(
     workspace: Path,
     *,
     candidate_json: str | None = None,
+    real_use_result_json: str | None = None,
 ) -> list[str]:
     values = _kwargs()
-    return [
+    argv = [
         "continuity",
         "--workspace-root",
         str(workspace),
@@ -102,6 +126,11 @@ def _cli_argv(
         candidate_json
         if candidate_json is not None
         else json.dumps(_candidate(), sort_keys=True, separators=(",", ":")),
+    ]
+    if real_use_result_json is not None:
+        argv.extend(["--real-use-result-json", real_use_result_json])
+    argv.extend(
+        [
         "--outcome",
         values["outcome"],
         "--rationale",
@@ -119,22 +148,366 @@ def _cli_argv(
         "--confirm-correction",
         "--confirm-revocation",
         "--confirm-no-apply",
-    ]
+        ]
+    )
+    return argv
 
 
 def _run_cli(
     workspace: Path,
     *,
     candidate_json: str | None = None,
+    real_use_result_json: str | None = None,
 ) -> tuple[int, str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
     exit_code = run_operator_command(
-        _cli_argv(workspace, candidate_json=candidate_json),
+        _cli_argv(
+            workspace,
+            candidate_json=candidate_json,
+            real_use_result_json=real_use_result_json,
+        ),
         stdout=stdout,
         stderr=stderr,
     )
     return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
+def test_value_signal_with_baseline_uses_real_governed_chain():
+    snapshot = _real_use_result_snapshot()
+
+    result = _run(real_use_result_snapshot=snapshot)
+
+    assert result["real_use_result_snapshot"] == snapshot
+    assert result["value_signal_assessment"] == {
+        "assessment_status": "validated",
+        "baseline_available": True,
+        "task_completion": True,
+        "state_traceability": True,
+        "reduced_human_correction": True,
+        "shortened_recovery_time": True,
+        "governance_burden_worthwhile": True,
+        "benefit_inference_allowed": False,
+    }
+    assert result["active_context_validation"] == {"valid": True, "errors": []}
+    governed = result["governed_memory_learning_slice"]
+    assert governed["terminal_artifact"] == "human_review_outcome_candidate"
+    assert result["correction_record"]["supersedes_outcome_id"] == governed[
+        "human_review_outcome_candidate"
+    ]["outcome_id"]
+    assert result["revocation_record"]["outcome_lineage"][1]["record_id"] == (
+        result["correction_record"]["correction_id"]
+    )
+    assert result["terminal"] is True
+    assert result["non_applied"] is True
+    assert result["non_persisted"] is True
+    assert result["continuation_authorized"] is False
+
+
+def test_value_signal_without_baseline_is_deterministic_non_comparative():
+    snapshot = _real_use_result_snapshot(baseline_available=False)
+    snapshot["recovery_time_seconds"] = LARGE_INTEGER_FIXTURE
+
+    first = _run(real_use_result_snapshot=snapshot)
+    second = _run(real_use_result_snapshot=snapshot)
+
+    expected = {
+        "assessment_status": "baseline-unavailable",
+        "baseline_available": False,
+        "task_completion": True,
+        "state_traceability": True,
+        "reduced_human_correction": None,
+        "shortened_recovery_time": None,
+        "governance_burden_worthwhile": True,
+        "benefit_inference_allowed": False,
+    }
+    assert first["real_use_result_snapshot"] == snapshot
+    assert second["real_use_result_snapshot"] == snapshot
+    assert first["value_signal_assessment"] == expected
+    assert second["value_signal_assessment"] == expected
+
+
+def test_baseline_unavailable_is_not_validation_failure():
+    result = _run(
+        real_use_result_snapshot=_real_use_result_snapshot(
+            baseline_available=False
+        )
+    )
+    assert result["value_signal_assessment"]["assessment_status"] == (
+        "baseline-unavailable"
+    )
+    without_snapshot = _run()
+    assert "real_use_result_snapshot" not in without_snapshot
+    assert "value_signal_assessment" not in without_snapshot
+
+    invalid = _real_use_result_snapshot()
+    invalid.pop("baseline_recovery_time_seconds")
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        _run(real_use_result_snapshot=invalid)
+    assert captured.value.code == "real-use-result-snapshot-invalid"
+    assert captured.value.stage == "value-signal-validation"
+    assert captured.value.reasons == ("field-set-invalid",)
+
+    invalid_candidate = _candidate()
+    invalid_candidate["project_id"] = "another-project"
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as candidate_only:
+        _run(invalid_candidate)
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as dual_invalid:
+        _run(invalid_candidate, real_use_result_snapshot=invalid)
+    assert (
+        dual_invalid.value.code,
+        dual_invalid.value.stage,
+        dual_invalid.value.reasons,
+    ) == (
+        candidate_only.value.code,
+        candidate_only.value.stage,
+        candidate_only.value.reasons,
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as no_apply:
+        _run(confirm_no_apply=False, real_use_result_snapshot=invalid)
+    assert no_apply.value.code == "confirm_no_apply_required"
+    assert no_apply.value.stage == "no-apply"
+    assert no_apply.value.reasons == ()
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_reasons"),
+    [
+        ("missing", ("field-set-invalid",)),
+        ("unknown", ("field-set-invalid",)),
+        ("boolean", ("task-completed-invalid",)),
+        (
+            "numeric",
+            (
+                "human-correction-count-invalid",
+                "recovery-time-seconds-invalid",
+                "baseline-human-correction-count-invalid",
+                "baseline-recovery-time-seconds-invalid",
+            ),
+        ),
+    ],
+)
+def test_real_use_snapshot_schema_rejections_are_stable_and_sanitized(
+    mutation: str,
+    expected_reasons: tuple[str, ...],
+    tmp_path: Path,
+    monkeypatch,
+):
+    deepcopy_calls = 0
+
+    class DeepcopyTrap:
+        def __deepcopy__(self, memo: dict[int, Any]) -> Any:
+            nonlocal deepcopy_calls
+            deepcopy_calls += 1
+            raise AssertionError("unvalidated snapshot value was deep-copied")
+
+    snapshot = _real_use_result_snapshot()
+    if mutation == "missing":
+        snapshot.pop("task_completed")
+    elif mutation == "unknown":
+        snapshot["governance_burden_seconds"] = 17
+    elif mutation == "boolean":
+        snapshot["task_completed"] = DeepcopyTrap()
+    else:
+        snapshot["human_correction_count"] = -1
+        snapshot["recovery_time_seconds"] = "invalid-sensitive-value"
+        snapshot["baseline_human_correction_count"] = -2
+        snapshot["baseline_recovery_time_seconds"] = -3.0
+    before = dict(snapshot)
+    candidate = _candidate()
+    candidate["content"] = "snapshot-candidate-content-must-not-leak"
+    calls = {
+        "provider": 0,
+        "governed": 0,
+        "correction_validation": 0,
+        "revocation_validation": 0,
+    }
+
+    def unexpected_provider(*args: Any, **kwargs: Any) -> Any:
+        calls["provider"] += 1
+        raise AssertionError("provider called for invalid snapshot")
+
+    def unexpected_governed(*args: Any, **kwargs: Any) -> Any:
+        calls["governed"] += 1
+        raise AssertionError("governed chain called for invalid snapshot")
+
+    def unexpected_correction_validation(*args: Any, **kwargs: Any) -> Any:
+        calls["correction_validation"] += 1
+        raise AssertionError("correction validation called for invalid snapshot")
+
+    def unexpected_revocation_validation(*args: Any, **kwargs: Any) -> Any:
+        calls["revocation_validation"] += 1
+        raise AssertionError("revocation validation called for invalid snapshot")
+
+    monkeypatch.setattr(
+        surface_module.MemoryFabricProvider,
+        "build_active_context",
+        unexpected_provider,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "run_governed_memory_learning_slice",
+        unexpected_governed,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "validate_correction_record",
+        unexpected_correction_validation,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "validate_revocation_record",
+        unexpected_revocation_validation,
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        _run(candidate, real_use_result_snapshot=snapshot)
+
+    error = captured.value
+    assert error.code == "real-use-result-snapshot-invalid"
+    assert error.stage == "value-signal-validation"
+    assert error.reasons == expected_reasons
+    assert snapshot == before
+    assert deepcopy_calls == 0
+    assert calls == {
+        "provider": 0,
+        "governed": 0,
+        "correction_validation": 0,
+        "revocation_validation": 0,
+    }
+    assert error.__context__ is None
+    assert error.__cause__ is None
+    rendered = str(error)
+    assert "governance_burden_seconds" not in rendered
+    assert "invalid-sensitive-value" not in rendered
+    assert candidate["content"] not in rendered
+    formatted_traceback = "".join(
+        traceback.format_exception(type(error), error, error.__traceback__)
+    )
+    assert "AssertionError" not in formatted_traceback
+    assert "unvalidated snapshot value was deep-copied" not in formatted_traceback
+    assert candidate["content"] not in formatted_traceback
+
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    cli_snapshot = dict(snapshot)
+    if mutation == "boolean":
+        cli_snapshot["task_completed"] = 1
+    exit_code, stdout, stderr = _run_cli(
+        workspace,
+        candidate_json=json.dumps(candidate, separators=(",", ":")),
+        real_use_result_json=json.dumps(cli_snapshot, separators=(",", ":")),
+    )
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == f"{error}\n"
+    assert "governance_burden_seconds" not in stderr
+    assert "invalid-sensitive-value" not in stderr
+    assert candidate["content"] not in stderr
+    assert deepcopy_calls == 0
+    assert calls == {
+        "provider": 0,
+        "governed": 0,
+        "correction_validation": 0,
+        "revocation_validation": 0,
+    }
+    assert list(workspace.iterdir()) == []
+
+
+@pytest.mark.parametrize("non_finite", [float("nan"), float("inf"), float("-inf")])
+def test_real_use_snapshot_rejects_non_finite_api_and_cli(
+    non_finite: float,
+    tmp_path: Path,
+):
+    snapshot = _real_use_result_snapshot()
+    snapshot["recovery_time_seconds"] = non_finite
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        _run(real_use_result_snapshot=snapshot)
+    assert captured.value.code == "real-use-result-snapshot-invalid"
+    assert captured.value.stage == "value-signal-validation"
+    assert captured.value.reasons == ("recovery-time-seconds-invalid",)
+
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    exit_code, stdout, stderr = _run_cli(
+        workspace,
+        real_use_result_json=json.dumps(snapshot, separators=(",", ":")),
+    )
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == "real_use_result_json_non_finite_constant_not_allowed\n"
+    assert list(workspace.iterdir()) == []
+
+
+def test_real_use_snapshot_is_unchanged_deep_copied_and_repeatable():
+    snapshot = _real_use_result_snapshot()
+    before = deepcopy(snapshot)
+
+    first = _run(real_use_result_snapshot=snapshot)
+    second = _run(real_use_result_snapshot=snapshot)
+
+    assert snapshot == before
+    assert first == second
+    assert first["real_use_result_snapshot"] is not snapshot
+    first["real_use_result_snapshot"]["human_correction_count"] = 99
+    assert snapshot == before
+    assert second["real_use_result_snapshot"] == before
+
+
+def test_continuity_cli_value_signal_single_json_and_zero_storage(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    def forbidden_store(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("continuity route must not construct a persistent store")
+
+    monkeypatch.setattr(
+        operator_module,
+        "create_workspace_subspace_memory_store",
+        forbidden_store,
+    )
+    snapshot = _real_use_result_snapshot(baseline_available=False)
+    snapshot["recovery_time_seconds"] = LARGE_INTEGER_FIXTURE
+    snapshot_json = json.dumps(snapshot, sort_keys=True, separators=(",", ":"))
+
+    exit_code, stdout, stderr = _run_cli(
+        workspace,
+        real_use_result_json=snapshot_json,
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert stdout.endswith("\n")
+    assert len(stdout.splitlines()) == 1
+    payload = json.loads(stdout)
+    assert payload["real_use_result_snapshot"] == snapshot
+    assert payload["real_use_result_snapshot"]["recovery_time_seconds"] == (
+        LARGE_INTEGER_FIXTURE
+    )
+    assert payload["value_signal_assessment"]["assessment_status"] == (
+        "baseline-unavailable"
+    )
+    assert payload["value_signal_assessment"]["benefit_inference_allowed"] is False
+    assert payload["terminal"] is True
+    assert payload["non_persisted"] is True
+    assert payload["continuation_authorized"] is False
+    assert "formal_closure_eligible" not in payload
+    assert list(workspace.iterdir()) == []
+
+    for invalid_json_object in ("[]", "0", "null"):
+        invalid_exit, invalid_stdout, invalid_stderr = _run_cli(
+            workspace,
+            real_use_result_json=invalid_json_object,
+        )
+        assert invalid_exit == 1
+        assert invalid_stdout == ""
+        assert invalid_stderr == "real_use_result_json_must_be_json_object\n"
+        assert list(workspace.iterdir()) == []
 
 
 def test_civilization_core_only_and_single_candidate_workflow():

@@ -1823,6 +1823,7 @@ def build_parser() -> argparse.ArgumentParser:
     continuity.add_argument("--operator", required=True)
     continuity.add_argument("--query", required=True)
     continuity.add_argument("--candidate-json", required=True)
+    continuity.add_argument("--real-use-result-json")
     continuity.add_argument("--outcome", required=True)
     continuity.add_argument("--rationale", required=True)
     continuity.add_argument("--corrected-outcome", required=True)
@@ -1876,6 +1877,11 @@ def _add_workspace_root(parser: argparse.ArgumentParser) -> None:
 def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
     if args.command == "continuity":
         candidate = _parse_candidate_json_object(args.candidate_json)
+        real_use_result_snapshot = (
+            None
+            if args.real_use_result_json is None
+            else _parse_real_use_result_json_object(args.real_use_result_json)
+        )
         return run_r7_project_continuity_control_surface(
             candidate,
             query=args.query,
@@ -1892,6 +1898,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             confirm_correction=args.confirm_correction,
             confirm_revocation=args.confirm_revocation,
             confirm_no_apply=args.confirm_no_apply,
+            real_use_result_snapshot=real_use_result_snapshot,
         )
 
     if args.command == "propose":
@@ -4077,8 +4084,25 @@ def _parse_candidate_json_object(value: str) -> dict[str, Any]:
     return candidate
 
 
+def _parse_real_use_result_json_object(value: str) -> dict[str, Any]:
+    try:
+        snapshot = json.loads(
+            value,
+            parse_constant=_reject_non_finite_real_use_result_json_constant,
+        )
+    except json.JSONDecodeError:
+        raise ValueError("real_use_result_json_must_be_valid_json_object") from None
+    if not isinstance(snapshot, dict):
+        raise ValueError("real_use_result_json_must_be_json_object")
+    return snapshot
+
+
 def _reject_non_finite_json_constant(_value: str) -> None:
     raise ValueError("candidate_json_non_finite_constant_not_allowed")
+
+
+def _reject_non_finite_real_use_result_json_constant(_value: str) -> None:
+    raise ValueError("real_use_result_json_non_finite_constant_not_allowed")
 
 
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from copy import deepcopy
 from typing import Any, Mapping
 
@@ -35,6 +36,23 @@ _WORKFLOW = (
 )
 _CORRECTION_RECORD_TYPE = "project_continuity_correction"
 _REVOCATION_RECORD_TYPE = "project_continuity_revocation"
+_REAL_USE_REQUIRED_FIELDS = frozenset(
+    {
+        "task_completed",
+        "state_traceable",
+        "human_correction_count",
+        "recovery_time_seconds",
+        "governance_burden_worthwhile",
+        "baseline_available",
+    }
+)
+_REAL_USE_BASELINE_FIELDS = frozenset(
+    {
+        "baseline_human_correction_count",
+        "baseline_recovery_time_seconds",
+    }
+)
+_REAL_USE_ALL_FIELDS = _REAL_USE_REQUIRED_FIELDS | _REAL_USE_BASELINE_FIELDS
 
 
 class R7ProjectContinuityControlSurfaceError(ValueError):
@@ -73,6 +91,7 @@ def run_r7_project_continuity_control_surface(
     confirm_correction: bool,
     confirm_revocation: bool,
     confirm_no_apply: bool,
+    real_use_result_snapshot: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one explicit candidate through the terminal non-applied workflow."""
 
@@ -89,6 +108,12 @@ def run_r7_project_continuity_control_surface(
         input_classification=input_classification,
     )
     _require_confirmation(confirm_no_apply, "confirm_no_apply", "no-apply")
+
+    validated_real_use_snapshot: dict[str, Any] | None = None
+    if real_use_result_snapshot is not None:
+        validated_real_use_snapshot = _validate_real_use_result_snapshot(
+            real_use_result_snapshot
+        )
 
     provider = MemoryFabricProvider()
     active_context_packet = provider.build_active_context(
@@ -179,6 +204,12 @@ def run_r7_project_continuity_control_surface(
             revocation_validation.get("errors", ()),
         )
 
+    value_signal_assessment = (
+        _build_value_signal_assessment(validated_real_use_snapshot)
+        if validated_real_use_snapshot is not None
+        else None
+    )
+
     result = {
         "version": R7_PROJECT_CONTINUITY_CONTROL_SURFACE_VERSION,
         "runtime_surface": _RUNTIME_SURFACE,
@@ -213,7 +244,141 @@ def run_r7_project_continuity_control_surface(
         "automatic_execution": False,
         "automatic_continuation": False,
     }
+    if validated_real_use_snapshot is not None:
+        result["real_use_result_snapshot"] = deepcopy(validated_real_use_snapshot)
+        result["value_signal_assessment"] = deepcopy(value_signal_assessment)
     return deepcopy(result)
+
+
+def _validate_real_use_result_snapshot(
+    snapshot: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not isinstance(snapshot, Mapping):
+        _fail(
+            "real-use-result-snapshot-invalid",
+            "value-signal-validation",
+            ("snapshot-not-object",),
+        )
+
+    source: dict[Any, Any] | None = None
+    try:
+        source = dict(snapshot)
+    except Exception:
+        pass
+    if source is None:
+        _fail(
+            "real-use-result-snapshot-invalid",
+            "value-signal-validation",
+            ("snapshot-read-failed",),
+        )
+
+    fields = frozenset(source)
+    baseline_available = source.get("baseline_available")
+    if type(baseline_available) is bool:
+        expected_fields = (
+            _REAL_USE_ALL_FIELDS
+            if baseline_available
+            else _REAL_USE_REQUIRED_FIELDS
+        )
+        field_set_invalid = fields != expected_fields
+    else:
+        field_set_invalid = fields not in (
+            _REAL_USE_REQUIRED_FIELDS,
+            _REAL_USE_ALL_FIELDS,
+        )
+
+    reasons: list[str] = []
+    if field_set_invalid:
+        reasons.append("field-set-invalid")
+    if "task_completed" in source and type(source["task_completed"]) is not bool:
+        reasons.append("task-completed-invalid")
+    if "state_traceable" in source and type(source["state_traceable"]) is not bool:
+        reasons.append("state-traceable-invalid")
+    if "human_correction_count" in source and not _valid_nonnegative_integer(
+        source["human_correction_count"]
+    ):
+        reasons.append("human-correction-count-invalid")
+    if "recovery_time_seconds" in source and not _valid_nonnegative_number(
+        source["recovery_time_seconds"]
+    ):
+        reasons.append("recovery-time-seconds-invalid")
+    if (
+        "governance_burden_worthwhile" in source
+        and type(source["governance_burden_worthwhile"]) is not bool
+    ):
+        reasons.append("governance-burden-worthwhile-invalid")
+    if "baseline_available" in source and type(baseline_available) is not bool:
+        reasons.append("baseline-available-invalid")
+    if (
+        "baseline_human_correction_count" in source
+        and not _valid_nonnegative_integer(
+            source["baseline_human_correction_count"]
+        )
+    ):
+        reasons.append("baseline-human-correction-count-invalid")
+    if (
+        "baseline_recovery_time_seconds" in source
+        and not _valid_nonnegative_number(
+            source["baseline_recovery_time_seconds"]
+        )
+    ):
+        reasons.append("baseline-recovery-time-seconds-invalid")
+    if reasons:
+        _fail(
+            "real-use-result-snapshot-invalid",
+            "value-signal-validation",
+            reasons,
+        )
+    validated = {
+        "task_completed": source["task_completed"],
+        "state_traceable": source["state_traceable"],
+        "human_correction_count": source["human_correction_count"],
+        "recovery_time_seconds": source["recovery_time_seconds"],
+        "governance_burden_worthwhile": source[
+            "governance_burden_worthwhile"
+        ],
+        "baseline_available": baseline_available,
+    }
+    if baseline_available:
+        validated.update(
+            {
+                "baseline_human_correction_count": source[
+                    "baseline_human_correction_count"
+                ],
+                "baseline_recovery_time_seconds": source[
+                    "baseline_recovery_time_seconds"
+                ],
+            }
+        )
+    return validated
+
+
+def _build_value_signal_assessment(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    baseline_available = snapshot["baseline_available"]
+    return {
+        "assessment_status": (
+            "validated" if baseline_available else "baseline-unavailable"
+        ),
+        "baseline_available": baseline_available,
+        "task_completion": snapshot["task_completed"],
+        "state_traceability": snapshot["state_traceable"],
+        "reduced_human_correction": (
+            snapshot["human_correction_count"]
+            < snapshot["baseline_human_correction_count"]
+            if baseline_available
+            else None
+        ),
+        "shortened_recovery_time": (
+            snapshot["recovery_time_seconds"]
+            < snapshot["baseline_recovery_time_seconds"]
+            if baseline_available
+            else None
+        ),
+        "governance_burden_worthwhile": snapshot[
+            "governance_burden_worthwhile"
+        ],
+        "benefit_inference_allowed": False,
+    }
 
 
 def create_correction_record(
@@ -579,6 +744,18 @@ def _stable_digest(value: Mapping[str, Any]) -> str:
 
 def _non_blank(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _valid_nonnegative_integer(value: Any) -> bool:
+    return type(value) is int and value >= 0
+
+
+def _valid_nonnegative_number(value: Any) -> bool:
+    if type(value) is int:
+        return value >= 0
+    if type(value) is float:
+        return math.isfinite(value) and value >= 0
+    return False
 
 
 def _dedupe(values: list[str]) -> list[str]:
