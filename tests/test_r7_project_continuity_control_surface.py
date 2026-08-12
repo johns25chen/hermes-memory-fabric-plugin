@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import traceback
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -81,7 +82,11 @@ def _run(candidate: dict[str, Any] | None = None, **overrides: Any) -> dict[str,
     )
 
 
-def _cli_argv(workspace: Path) -> list[str]:
+def _cli_argv(
+    workspace: Path,
+    *,
+    candidate_json: str | None = None,
+) -> list[str]:
     values = _kwargs()
     return [
         "continuity",
@@ -94,7 +99,9 @@ def _cli_argv(workspace: Path) -> list[str]:
         "--query",
         values["query"],
         "--candidate-json",
-        json.dumps(_candidate(), sort_keys=True, separators=(",", ":")),
+        candidate_json
+        if candidate_json is not None
+        else json.dumps(_candidate(), sort_keys=True, separators=(",", ":")),
         "--outcome",
         values["outcome"],
         "--rationale",
@@ -115,11 +122,15 @@ def _cli_argv(workspace: Path) -> list[str]:
     ]
 
 
-def _run_cli(workspace: Path) -> tuple[int, str, str]:
+def _run_cli(
+    workspace: Path,
+    *,
+    candidate_json: str | None = None,
+) -> tuple[int, str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
     exit_code = run_operator_command(
-        _cli_argv(workspace),
+        _cli_argv(workspace, candidate_json=candidate_json),
         stdout=stdout,
         stderr=stderr,
     )
@@ -365,3 +376,146 @@ def test_continuity_cli_does_not_construct_persistent_store(tmp_path, monkeypatc
         ["audit", "--workspace-root", str(workspace)]
     )
     assert parsed_existing.command == "audit"
+
+
+def test_governed_slice_rejection_is_translated_to_route_error(tmp_path):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    expected_stderr = (
+        "r7_project_continuity_control_surface_error:"
+        "code=governed_slice_rejected;stage=human-review;"
+        "reasons=governed_slice_rejection_details_withheld\n"
+    )
+
+    governance_candidate = _candidate()
+    governance_candidate["content"] = "candidate-content-must-not-leak"
+    governance_candidate["governance"]["dry_run"] = False
+
+    risk_level_sentinel = "r7-review-001-risk-sentinel-9f8a"
+    injected_field = "injected_field=r7-review-001-must-not-appear"
+    dynamic_risk_level = f"blocked-{risk_level_sentinel}\n{injected_field}"
+    risk_candidate = _candidate()
+    risk_candidate["content"] = "dynamic-candidate-content-must-not-leak"
+    risk_candidate["risk_level"] = dynamic_risk_level
+
+    scenarios = (
+        (governance_candidate, (governance_candidate["content"],)),
+        (
+            risk_candidate,
+            (
+                risk_candidate["content"],
+                risk_level_sentinel,
+                injected_field,
+                f"risk_level_not_allowed:{dynamic_risk_level}",
+                "risk_level_not_allowed",
+            ),
+        ),
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as exc_info:
+        _run(risk_candidate)
+
+    error = exc_info.value
+    assert error.code == "governed_slice_rejected"
+    assert error.stage == "human-review"
+    assert error.reasons == ("governed_slice_rejection_details_withheld",)
+    assert error.__context__ is None
+    assert error.__cause__ is None
+
+    formatted_traceback = "".join(
+        traceback.format_exception(type(error), error, error.__traceback__)
+    )
+    assert "GovernedMemoryLearningSliceError" not in formatted_traceback
+    assert "governed_memory_learning_slice_error" not in formatted_traceback
+    assert risk_level_sentinel not in formatted_traceback
+    assert injected_field not in formatted_traceback
+    assert risk_candidate["content"] not in formatted_traceback
+    assert formatted_traceback.count(
+        "r7_project_continuity_control_surface_error:"
+    ) == 1
+    assert str(error) in formatted_traceback
+
+    for candidate, forbidden_fragments in scenarios:
+        exit_code, stdout, stderr = _run_cli(
+            workspace,
+            candidate_json=json.dumps(candidate, sort_keys=True, separators=(",", ":")),
+        )
+
+        assert exit_code == 1
+        assert stdout == ""
+        assert stderr == expected_stderr
+        assert "Traceback" not in stderr
+        for forbidden_fragment in forbidden_fragments:
+            assert forbidden_fragment not in stderr
+        assert list(workspace.iterdir()) == []
+
+
+def test_record_validators_reject_contradictory_affirmative_state_flags():
+    result = _run()
+    records_and_validators = (
+        (result["correction_record"], validate_correction_record),
+        (result["revocation_record"], validate_revocation_record),
+    )
+    contradictory_fields = (
+        "authoritative",
+        "applied",
+        "persisted",
+        "approved",
+        "adopted",
+        "executed",
+        "created_real_proposal",
+        "creates_real_proposal",
+    )
+
+    for original, validator in records_and_validators:
+        original_snapshot = deepcopy(original)
+        assert validator(original) == {"valid": True, "errors": []}
+
+        for field in contradictory_fields:
+            contradictory = deepcopy(original)
+            contradictory[field] = True
+            before_validation = deepcopy(contradictory)
+
+            validation = validator(contradictory)
+
+            assert validation["valid"] is False
+            assert f"{field}_must_not_be_true" in validation["errors"]
+            assert contradictory == before_validation
+
+            non_contradictory = deepcopy(original)
+            non_contradictory[field] = False
+            assert validator(non_contradictory) == {"valid": True, "errors": []}
+            assert non_contradictory.get("correction_id") == original.get(
+                "correction_id"
+            )
+            assert non_contradictory.get("revocation_id") == original.get(
+                "revocation_id"
+            )
+            assert non_contradictory.get("outcome_lineage") == original.get(
+                "outcome_lineage"
+            )
+
+        assert original == original_snapshot
+
+
+def test_continuity_cli_rejects_non_finite_json_constants(tmp_path):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    for non_finite in (float("nan"), float("inf"), float("-inf")):
+        candidate = _candidate()
+        candidate["content"] = "non-finite-candidate-content-must-not-leak"
+        candidate["non_finite"] = non_finite
+        candidate_json = json.dumps(candidate, sort_keys=True, separators=(",", ":"))
+
+        exit_code, stdout, stderr = _run_cli(
+            workspace,
+            candidate_json=candidate_json,
+        )
+
+        assert exit_code == 1
+        assert stdout == ""
+        assert stderr == "candidate_json_non_finite_constant_not_allowed\n"
+        assert "Traceback" not in stderr
+        assert candidate["content"] not in stderr
+        assert list(workspace.iterdir()) == []
