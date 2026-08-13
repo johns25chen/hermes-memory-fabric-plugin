@@ -609,11 +609,12 @@ from .p4_m0_subspace_seed_approval_runbook import (
 )
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 from .r7_project_continuity_control_surface import (
+    run_r7_real_use_observation,
     run_r7_project_continuity_control_surface,
 )
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(*, continuity_legacy_required: bool = True) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="p4-m0-subspace-operator",
         description="Manual local operator commands for the P4-M0 Subspace Memory store.",
@@ -1821,20 +1822,28 @@ def build_parser() -> argparse.ArgumentParser:
     _add_workspace_root(continuity)
     continuity.add_argument("--project-id", required=True)
     continuity.add_argument("--operator", required=True)
-    continuity.add_argument("--query", required=True)
-    continuity.add_argument("--candidate-json", required=True)
+    continuity.add_argument("--query", required=continuity_legacy_required)
+    continuity.add_argument("--candidate-json", required=continuity_legacy_required)
     continuity.add_argument("--real-use-result-json")
-    continuity.add_argument("--outcome", required=True)
-    continuity.add_argument("--rationale", required=True)
-    continuity.add_argument("--corrected-outcome", required=True)
-    continuity.add_argument("--correction-rationale", required=True)
-    continuity.add_argument("--revocation-rationale", required=True)
-    continuity.add_argument("--input-classification", required=True)
+    continuity.add_argument("--real-use-observation-json")
+    continuity.add_argument("--outcome", required=continuity_legacy_required)
+    continuity.add_argument("--rationale", required=continuity_legacy_required)
+    continuity.add_argument("--corrected-outcome", required=continuity_legacy_required)
+    continuity.add_argument("--correction-rationale", required=continuity_legacy_required)
+    continuity.add_argument("--revocation-rationale", required=continuity_legacy_required)
+    continuity.add_argument(
+        "--input-classification",
+        required=continuity_legacy_required,
+    )
     continuity.add_argument("--confirm-human-review", action="store_true")
     continuity.add_argument("--confirm-scope-check", action="store_true")
     continuity.add_argument("--confirm-correction", action="store_true")
     continuity.add_argument("--confirm-revocation", action="store_true")
     continuity.add_argument("--confirm-no-apply", action="store_true")
+    continuity.add_argument(
+        "--confirm-real-use-observation",
+        action="store_true",
+    )
 
     return parser
 
@@ -1847,7 +1856,13 @@ def run_operator_command(
 ) -> int:
     out = stdout if stdout is not None else sys.stdout
     err = stderr if stderr is not None else sys.stderr
-    parser = build_parser()
+    observation_cli = any(
+        argument == "--real-use-observation-json"
+        or argument.startswith("--real-use-observation-json=")
+        or argument == "--confirm-real-use-observation"
+        for argument in argv
+    )
+    parser = build_parser(continuity_legacy_required=not observation_cli)
 
     try:
         with redirect_stderr(err):
@@ -1876,6 +1891,33 @@ def _add_workspace_root(parser: argparse.ArgumentParser) -> None:
 
 def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
     if args.command == "continuity":
+        if args.real_use_observation_json is not None:
+            observation = _parse_real_use_observation_json_object(
+                args.real_use_observation_json
+            )
+            if args.real_use_result_json is not None:
+                raise ValueError(
+                    "real_use_observation_and_result_json_are_mutually_exclusive"
+                )
+            return run_r7_real_use_observation(
+                observation,
+                project_id=args.project_id,
+                operator=args.operator,
+                confirm_real_use_observation=args.confirm_real_use_observation,
+                legacy_confirmations_provided=any(
+                    (
+                        args.confirm_human_review,
+                        args.confirm_scope_check,
+                        args.confirm_correction,
+                        args.confirm_revocation,
+                        args.confirm_no_apply,
+                    )
+                ),
+            )
+        if args.confirm_real_use_observation:
+            raise ValueError(
+                "confirm_real_use_observation_requires_observation_mode"
+            )
         candidate = _parse_candidate_json_object(args.candidate_json)
         real_use_result_snapshot = (
             None
@@ -4097,12 +4139,31 @@ def _parse_real_use_result_json_object(value: str) -> dict[str, Any]:
     return snapshot
 
 
+def _parse_real_use_observation_json_object(value: str) -> dict[str, Any]:
+    try:
+        observation = json.loads(
+            value,
+            parse_constant=_reject_non_finite_real_use_observation_json_constant,
+        )
+    except json.JSONDecodeError:
+        raise ValueError(
+            "real_use_observation_json_must_be_valid_json_object"
+        ) from None
+    if not isinstance(observation, dict):
+        raise ValueError("real_use_observation_json_must_be_json_object")
+    return observation
+
+
 def _reject_non_finite_json_constant(_value: str) -> None:
     raise ValueError("candidate_json_non_finite_constant_not_allowed")
 
 
 def _reject_non_finite_real_use_result_json_constant(_value: str) -> None:
     raise ValueError("real_use_result_json_non_finite_constant_not_allowed")
+
+
+def _reject_non_finite_real_use_observation_json_constant(_value: str) -> None:
+    raise ValueError("real_use_observation_json_non_finite_constant_not_allowed")
 
 
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:

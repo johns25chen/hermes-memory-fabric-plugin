@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import traceback
+from collections.abc import Iterator, Mapping
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,61 @@ from hermes_memory_fabric.r7_project_continuity_control_surface import (
 PROJECT_ID = "CIVILIZATION-CORE"
 OPERATOR = "FOUNDER-OPERATOR"
 LARGE_INTEGER_FIXTURE = 10**400
+SECRET_MARKER = "R7-SECRET-MUST-NOT-LEAK-92471"
+
+
+class _SecretException(Exception):
+    pass
+
+
+class _SecretBaseException(BaseException):
+    pass
+
+
+class _MaterializationTrap(Mapping[str, Any]):
+    def __getitem__(self, key: str) -> Any:
+        raise _SecretException(f"{SECRET_MARKER}:getitem:{key}")
+
+    def __iter__(self) -> Iterator[str]:
+        raise _SecretException(f"{SECRET_MARKER}:iter")
+
+    def __len__(self) -> int:
+        return 1
+
+
+class _CandidateCopyTrap:
+    def __deepcopy__(self, memo: dict[int, Any]) -> Any:
+        raise _SecretException(f"{SECRET_MARKER}:deepcopy:{self!r}")
+
+    def __repr__(self) -> str:
+        return f"candidate-copy-trap:{SECRET_MARKER}"
+
+
+class _ResultProjectionTrap(dict[str, Any]):
+    def get(self, key: str, default: Any = None) -> Any:
+        raise _SecretException(f"{SECRET_MARKER}:result-get:{key}")
+
+
+def _assert_sanitized_error(
+    error: R7ProjectContinuityControlSurfaceError,
+    *,
+    code: str,
+    stage: str,
+    reasons: tuple[str, ...],
+) -> None:
+    assert error.code == code
+    assert error.stage == stage
+    assert error.reasons == reasons
+    assert error.__context__ is None
+    assert error.__cause__ is None
+    rendered = (
+        str(error),
+        repr(error),
+        repr(error.args),
+        repr(error.reasons),
+        "".join(traceback.format_exception(error)),
+    )
+    assert all(SECRET_MARKER not in value for value in rendered)
 
 
 def _candidate() -> dict[str, Any]:
@@ -96,6 +152,46 @@ def _real_use_result_snapshot(
             }
         )
     return snapshot
+
+
+def _real_use_observation(
+    *,
+    human_correction_count: int = 0,
+    recovery_time_seconds: int | float = 100,
+    baseline_available: bool = True,
+) -> dict[str, Any]:
+    observation = {
+        "candidate": _candidate(),
+        "query": _kwargs()["query"],
+        "input_classification": _kwargs()["input_classification"],
+        "human_review": {
+            "outcome": _kwargs()["outcome"],
+            "rationale": _kwargs()["rationale"],
+        },
+        "correction": {
+            "corrected_outcome": _kwargs()["corrected_outcome"],
+            "rationale": _kwargs()["correction_rationale"],
+        },
+        "revocation": {
+            "rationale": _kwargs()["revocation_rationale"],
+        },
+        "measurement": {
+            "human_correction_count": human_correction_count,
+            "recovery_time_seconds": recovery_time_seconds,
+            "measurement_scope": "SYNTHETIC-COMMAND-INVOCATION-TO-TERMINAL",
+            "caller_observed": True,
+        },
+        "governance_burden_worthwhile": False,
+        "baseline": {"available": baseline_available},
+    }
+    if baseline_available:
+        observation["baseline"].update(
+            {
+                "baseline_human_correction_count": 1,
+                "baseline_recovery_time_seconds": 131,
+            }
+        )
+    return observation
 
 
 def _run(candidate: dict[str, Any] | None = None, **overrides: Any) -> dict[str, Any]:
@@ -173,6 +269,43 @@ def _run_cli(
     return exit_code, stdout.getvalue(), stderr.getvalue()
 
 
+def _run_observation_cli(
+    workspace: Path,
+    *,
+    observation_json: str | None = None,
+    confirm: bool = True,
+    legacy_snapshot_json: str | None = None,
+    legacy_confirmation: str | None = None,
+) -> tuple[int, str, str]:
+    argv = [
+        "continuity",
+        "--workspace-root",
+        str(workspace),
+        "--project-id",
+        PROJECT_ID,
+        "--operator",
+        OPERATOR,
+        "--real-use-observation-json",
+        observation_json
+        if observation_json is not None
+        else json.dumps(
+            _real_use_observation(),
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    ]
+    if legacy_snapshot_json is not None:
+        argv.extend(["--real-use-result-json", legacy_snapshot_json])
+    if legacy_confirmation is not None:
+        argv.append(legacy_confirmation)
+    if confirm:
+        argv.append("--confirm-real-use-observation")
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
 def test_value_signal_with_baseline_uses_real_governed_chain():
     snapshot = _real_use_result_snapshot()
 
@@ -239,6 +372,7 @@ def test_baseline_unavailable_is_not_validation_failure():
     without_snapshot = _run()
     assert "real_use_result_snapshot" not in without_snapshot
     assert "value_signal_assessment" not in without_snapshot
+    assert "observation_provenance" not in without_snapshot
 
     invalid = _real_use_result_snapshot()
     invalid.pop("baseline_recovery_time_seconds")
@@ -493,6 +627,7 @@ def test_continuity_cli_value_signal_single_json_and_zero_storage(
         "baseline-unavailable"
     )
     assert payload["value_signal_assessment"]["benefit_inference_allowed"] is False
+    assert "observation_provenance" not in payload
     assert payload["terminal"] is True
     assert payload["non_persisted"] is True
     assert payload["continuation_authorized"] is False
@@ -508,6 +643,659 @@ def test_continuity_cli_value_signal_single_json_and_zero_storage(
         assert invalid_stdout == ""
         assert invalid_stderr == "real_use_result_json_must_be_json_object\n"
         assert list(workspace.iterdir()) == []
+
+
+def test_real_use_observation_mode_runs_continuity_exactly_once(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    calls = 0
+    original = surface_module.run_r7_project_continuity_control_surface
+
+    def tracked(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        tracked,
+    )
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert len(stdout.splitlines()) == 1
+    assert calls == 1
+
+
+def test_real_use_observation_mode_builds_snapshot_without_manual_calculation(
+    tmp_path,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    observation = _real_use_observation(
+        human_correction_count=0,
+        recovery_time_seconds=100,
+        baseline_available=False,
+    )
+
+    exit_code, stdout, stderr = _run_observation_cli(
+        workspace,
+        observation_json=json.dumps(observation, separators=(",", ":")),
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    payload = json.loads(stdout)
+    assert payload["real_use_result_snapshot"] == {
+        "task_completed": True,
+        "state_traceable": True,
+        "human_correction_count": 0,
+        "recovery_time_seconds": 100,
+        "governance_burden_worthwhile": False,
+        "baseline_available": False,
+    }
+    assert payload["value_signal_assessment"]["assessment_status"] == (
+        "baseline-unavailable"
+    )
+
+
+def test_real_use_observation_mode_never_infers_human_correction_count_from_workflow_correction(
+    tmp_path,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 0
+    assert stderr == ""
+    payload = json.loads(stdout)
+    assert payload["correction_validation"] == {"valid": True, "errors": []}
+    assert payload["correction_record"]["record_type"] == (
+        "project_continuity_correction"
+    )
+    assert payload["real_use_result_snapshot"]["human_correction_count"] == 0
+    assert "correction_record_count" not in payload["real_use_result_snapshot"]
+    assert "workflow_correction_count" not in payload["real_use_result_snapshot"]
+
+
+def test_real_use_observation_mode_preserves_caller_human_correction_count_zero(
+    tmp_path,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 0
+    assert stderr == ""
+    payload = json.loads(stdout)
+    assert payload["real_use_result_snapshot"]["human_correction_count"] == 0
+    assert payload["observation_provenance"][
+        "human_correction_count_source"
+    ] == "caller-observed-measurement"
+
+
+def test_real_use_observation_mode_accepts_prior_validated_caller_baseline(
+    tmp_path,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    observation = _real_use_observation()
+    observation["baseline"] = {
+        "available": True,
+        "baseline_human_correction_count": 1,
+        "baseline_recovery_time_seconds": 131,
+    }
+
+    exit_code, stdout, stderr = _run_observation_cli(
+        workspace,
+        observation_json=json.dumps(observation, separators=(",", ":")),
+    )
+
+    assert exit_code == 0
+    assert stderr == ""
+    payload = json.loads(stdout)
+    snapshot = payload["real_use_result_snapshot"]
+    assert snapshot["baseline_human_correction_count"] == 1
+    assert snapshot["baseline_recovery_time_seconds"] == 131
+    assert payload["value_signal_assessment"]["reduced_human_correction"] is True
+    assert payload["value_signal_assessment"]["shortened_recovery_time"] is True
+
+
+def test_real_use_observation_mode_requires_single_composite_confirmation(
+    tmp_path,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace, confirm=False)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert "code=confirm_real_use_observation_required" in stderr
+    assert "stage=observation-confirmation" in stderr
+
+    confirmed_exit, confirmed_stdout, confirmed_stderr = _run_observation_cli(
+        workspace
+    )
+    assert confirmed_exit == 0
+    assert confirmed_stderr == ""
+    assert json.loads(confirmed_stdout)["confirmation_snapshot"] == {
+        "confirm_human_review": True,
+        "confirm_scope_check": True,
+        "confirm_correction": True,
+        "confirm_revocation": True,
+        "confirm_no_apply": True,
+    }
+
+    legacy_argv = _cli_argv(workspace)
+    legacy_argv.append("--confirm-real-use-observation")
+    legacy_stdout = io.StringIO()
+    legacy_stderr = io.StringIO()
+    legacy_exit = run_operator_command(
+        legacy_argv,
+        stdout=legacy_stdout,
+        stderr=legacy_stderr,
+    )
+    assert legacy_exit == 1
+    assert legacy_stdout.getvalue() == ""
+    assert legacy_stderr.getvalue() == (
+        "confirm_real_use_observation_requires_observation_mode\n"
+    )
+
+
+def test_real_use_observation_mode_is_mutually_exclusive_with_legacy_snapshot(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    calls = 0
+
+    def forbidden(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("workflow must not run")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        forbidden,
+    )
+    exit_code, stdout, stderr = _run_observation_cli(
+        workspace,
+        legacy_snapshot_json=json.dumps(_real_use_result_snapshot()),
+    )
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == (
+        "real_use_observation_and_result_json_are_mutually_exclusive\n"
+    )
+    assert calls == 0
+
+
+def test_real_use_observation_mode_rejects_legacy_confirmation_flags(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    calls = 0
+
+    def forbidden(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("workflow must not run")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        forbidden,
+    )
+    for flag in (
+        "--confirm-human-review",
+        "--confirm-scope-check",
+        "--confirm-correction",
+        "--confirm-revocation",
+        "--confirm-no-apply",
+    ):
+        exit_code, stdout, stderr = _run_observation_cli(
+            workspace,
+            legacy_confirmation=flag,
+        )
+        assert exit_code == 1
+        assert stdout == ""
+        assert "real_use_observation_legacy_confirmations_not_allowed" in stderr
+    assert calls == 0
+
+
+def test_real_use_observation_mode_rejects_unknown_missing_and_wrong_type_fields(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    observations: list[Any] = []
+
+    unknown = _real_use_observation()
+    unknown["project_id"] = PROJECT_ID
+    observations.append(unknown)
+
+    missing = _real_use_observation()
+    missing.pop("measurement")
+    observations.append(missing)
+
+    forbidden_measurement = _real_use_observation()
+    forbidden_measurement["measurement"]["task_completed"] = True
+    observations.append(forbidden_measurement)
+
+    wrong_count = _real_use_observation()
+    wrong_count["measurement"]["human_correction_count"] = True
+    observations.append(wrong_count)
+
+    caller_not_true = _real_use_observation()
+    caller_not_true["measurement"]["caller_observed"] = 1
+    observations.append(caller_not_true)
+
+    incomplete_baseline = _real_use_observation()
+    incomplete_baseline["baseline"].pop("baseline_recovery_time_seconds")
+    observations.append(incomplete_baseline)
+
+    calls = 0
+
+    def forbidden(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("workflow must not run")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        forbidden,
+    )
+    for observation in observations:
+        exit_code, stdout, stderr = _run_observation_cli(
+            workspace,
+            observation_json=json.dumps(observation, separators=(",", ":")),
+        )
+        assert exit_code == 1
+        assert stdout == ""
+        assert "code=real-use-observation-invalid" in stderr
+
+    for not_object in ("[]", "0", "null"):
+        exit_code, stdout, stderr = _run_observation_cli(
+            workspace,
+            observation_json=not_object,
+        )
+        assert exit_code == 1
+        assert stdout == ""
+        assert stderr == "real_use_observation_json_must_be_json_object\n"
+    assert calls == 0
+
+
+def test_real_use_observation_mode_rejects_nonfinite_numbers(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    calls = 0
+
+    def forbidden(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("workflow must not run")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        forbidden,
+    )
+    for non_finite in (float("nan"), float("inf"), float("-inf")):
+        observation = _real_use_observation()
+        observation["measurement"]["recovery_time_seconds"] = non_finite
+        exit_code, stdout, stderr = _run_observation_cli(
+            workspace,
+            observation_json=json.dumps(observation, separators=(",", ":")),
+        )
+        assert exit_code == 1
+        assert stdout == ""
+        assert stderr == (
+            "real_use_observation_json_non_finite_constant_not_allowed\n"
+        )
+    assert calls == 0
+
+
+def test_real_use_observation_mode_preserves_non_applied_zero_storage_boundary(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    def forbidden_store(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("continuity route must not construct a persistent store")
+
+    monkeypatch.setattr(
+        operator_module,
+        "create_workspace_subspace_memory_store",
+        forbidden_store,
+    )
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 0
+    assert stderr == ""
+    payload = json.loads(stdout)
+    assert payload["terminal"] is True
+    assert payload["non_applied"] is True
+    assert payload["non_persisted"] is True
+    assert payload["continuation_authorized"] is False
+    assert list(workspace.iterdir()) == []
+
+
+def test_real_use_observation_mode_reports_exact_provenance(tmp_path):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 0
+    assert stderr == ""
+    assert json.loads(stdout)["observation_provenance"] == {
+        "task_completed_source": "terminal-workflow-result",
+        "state_traceable_source": "validated-workflow-lineage",
+        "human_correction_count_source": "caller-observed-measurement",
+        "recovery_time_seconds_source": "caller-observed-measurement",
+        "governance_burden_worthwhile_source": "human-owner-explicit",
+        "baseline_source": "caller-provided-real-use-data",
+        "measurement_scope": "SYNTHETIC-COMMAND-INVOCATION-TO-TERMINAL",
+    }
+
+
+def test_real_use_observation_failure_does_not_build_snapshot_or_retry_workflow(
+    monkeypatch,
+):
+    calls = {"workflow": 0, "snapshot": 0, "assessment": 0}
+
+    def failed_workflow(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["workflow"] += 1
+        raise R7ProjectContinuityControlSurfaceError(
+            "synthetic-workflow-failure",
+            "revoke",
+        )
+
+    def unexpected_snapshot(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["snapshot"] += 1
+        raise AssertionError("snapshot must not be built")
+
+    def unexpected_assessment(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["assessment"] += 1
+        raise AssertionError("assessment must not be built")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        failed_workflow,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_validate_real_use_result_snapshot",
+        unexpected_snapshot,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_build_value_signal_assessment",
+        unexpected_assessment,
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        surface_module.run_r7_real_use_observation(
+            _real_use_observation(),
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    assert captured.value.code == "synthetic-workflow-failure"
+    assert calls == {"workflow": 1, "snapshot": 0, "assessment": 0}
+
+
+def test_real_use_observation_sanitizes_mapping_materialization_exception():
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        surface_module.run_r7_real_use_observation(
+            _MaterializationTrap(),
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    _assert_sanitized_error(
+        captured.value,
+        code="real-use-observation-invalid",
+        stage="observation-validation",
+        reasons=("observation-read-failed",),
+    )
+
+
+def test_real_use_observation_sanitizes_nested_candidate_copy_exception():
+    observation = _real_use_observation()
+    observation["candidate"]["content"] = _CandidateCopyTrap()
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        surface_module.run_r7_real_use_observation(
+            observation,
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    _assert_sanitized_error(
+        captured.value,
+        code="real-use-observation-invalid",
+        stage="observation-validation",
+        reasons=("observation-read-failed",),
+    )
+
+
+def test_real_use_observation_sanitizes_unexpected_workflow_exception_without_retry(
+    monkeypatch,
+):
+    calls = {"workflow": 0, "snapshot": 0, "assessment": 0}
+
+    def failed_workflow(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["workflow"] += 1
+        raise _SecretException(f"{SECRET_MARKER}:workflow")
+
+    def unexpected_snapshot(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["snapshot"] += 1
+        raise AssertionError("snapshot must not be built")
+
+    def unexpected_assessment(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["assessment"] += 1
+        raise AssertionError("assessment must not be built")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        failed_workflow,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_validate_real_use_result_snapshot",
+        unexpected_snapshot,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_build_value_signal_assessment",
+        unexpected_assessment,
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        surface_module.run_r7_real_use_observation(
+            _real_use_observation(),
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    _assert_sanitized_error(
+        captured.value,
+        code="real-use-observation-execution-failed",
+        stage="observation-execution",
+        reasons=("workflow-failed",),
+    )
+    assert calls == {"workflow": 1, "snapshot": 0, "assessment": 0}
+
+
+def test_real_use_observation_sanitizes_unexpected_result_projection_exception(
+    monkeypatch,
+):
+    calls = {"workflow": 0, "snapshot": 0, "assessment": 0}
+
+    def trapped_result(*args: Any, **kwargs: Any) -> Mapping[str, Any]:
+        calls["workflow"] += 1
+        return _ResultProjectionTrap()
+
+    def unexpected_snapshot(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["snapshot"] += 1
+        raise AssertionError("snapshot must not be built")
+
+    def unexpected_assessment(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        calls["assessment"] += 1
+        raise AssertionError("assessment must not be built")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        trapped_result,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_validate_real_use_result_snapshot",
+        unexpected_snapshot,
+    )
+    monkeypatch.setattr(
+        surface_module,
+        "_build_value_signal_assessment",
+        unexpected_assessment,
+    )
+
+    with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+        surface_module.run_r7_real_use_observation(
+            _real_use_observation(),
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    _assert_sanitized_error(
+        captured.value,
+        code="real-use-observation-result-invalid",
+        stage="observation-result-validation",
+        reasons=("result-validation-failed",),
+    )
+    assert calls == {"workflow": 1, "snapshot": 0, "assessment": 0}
+
+
+def test_real_use_observation_preserves_expected_r7_errors(monkeypatch):
+    boundaries = (
+        ("_validate_and_copy_inputs", "observation-validation"),
+        ("run_r7_project_continuity_control_surface", "observation-execution"),
+        ("_validate_observation_workflow_result", "observation-result-validation"),
+    )
+
+    for attribute, stage in boundaries:
+        expected = R7ProjectContinuityControlSurfaceError(
+            "expected-r7-error",
+            stage,
+            ("stable-reason",),
+        )
+
+        def raise_expected(*args: Any, **kwargs: Any) -> Any:
+            raise expected
+
+        with monkeypatch.context() as scoped:
+            scoped.setattr(surface_module, attribute, raise_expected)
+            if attribute == "_validate_observation_workflow_result":
+                scoped.setattr(
+                    surface_module,
+                    "run_r7_project_continuity_control_surface",
+                    lambda *args, **kwargs: {},
+                )
+            with pytest.raises(R7ProjectContinuityControlSurfaceError) as captured:
+                surface_module.run_r7_real_use_observation(
+                    _real_use_observation(),
+                    project_id=PROJECT_ID,
+                    operator=OPERATOR,
+                    confirm_real_use_observation=True,
+                )
+        assert captured.value is expected
+
+
+def test_real_use_observation_does_not_catch_base_exception(monkeypatch):
+    def raise_base_exception(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise _SecretBaseException(SECRET_MARKER)
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        raise_base_exception,
+    )
+
+    with pytest.raises(_SecretBaseException) as captured:
+        surface_module.run_r7_real_use_observation(
+            _real_use_observation(),
+            project_id=PROJECT_ID,
+            operator=OPERATOR,
+            confirm_real_use_observation=True,
+        )
+
+    assert str(captured.value) == SECRET_MARKER
+
+
+def test_real_use_observation_operator_error_contains_no_source_exception_data(
+    tmp_path,
+    monkeypatch,
+):
+    workspace = tmp_path / "fresh-workspace"
+    workspace.mkdir()
+    calls = 0
+
+    def failed_workflow(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal calls
+        calls += 1
+        raise OSError(f"{SECRET_MARKER}:source-os-error")
+
+    monkeypatch.setattr(
+        surface_module,
+        "run_r7_project_continuity_control_surface",
+        failed_workflow,
+    )
+
+    exit_code, stdout, stderr = _run_observation_cli(workspace)
+
+    assert exit_code == 1
+    assert stdout == ""
+    assert stderr == (
+        "r7_project_continuity_control_surface_error:"
+        "code=real-use-observation-execution-failed;"
+        "stage=observation-execution;reasons=workflow-failed\n"
+    )
+    assert len(stderr.splitlines()) == 1
+    assert SECRET_MARKER not in stdout
+    assert SECRET_MARKER not in stderr
+    assert "OSError" not in stderr
+    assert "Traceback" not in stderr
+    assert calls == 1
+    assert list(workspace.iterdir()) == []
 
 
 def test_civilization_core_only_and_single_candidate_workflow():

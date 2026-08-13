@@ -18,6 +18,9 @@ from hermes_memory_fabric.memory_human_review_outcome_gate import (
     SUPPORTED_HUMAN_REVIEW_OUTCOMES,
     validate_human_review_outcome_candidate,
 )
+from hermes_memory_fabric.memory_candidate_proposal_dry_run import (
+    validate_candidate_for_proposal_dry_run,
+)
 from hermes_memory_fabric.provider import MemoryFabricProvider
 
 
@@ -53,6 +56,27 @@ _REAL_USE_BASELINE_FIELDS = frozenset(
     }
 )
 _REAL_USE_ALL_FIELDS = _REAL_USE_REQUIRED_FIELDS | _REAL_USE_BASELINE_FIELDS
+_REAL_USE_OBSERVATION_FIELDS = frozenset(
+    {
+        "candidate",
+        "query",
+        "input_classification",
+        "human_review",
+        "correction",
+        "revocation",
+        "measurement",
+        "governance_burden_worthwhile",
+        "baseline",
+    }
+)
+_REAL_USE_OBSERVATION_MEASUREMENT_FIELDS = frozenset(
+    {
+        "human_correction_count",
+        "recovery_time_seconds",
+        "measurement_scope",
+        "caller_observed",
+    }
+)
 
 
 class R7ProjectContinuityControlSurfaceError(ValueError):
@@ -248,6 +272,372 @@ def run_r7_project_continuity_control_surface(
         result["real_use_result_snapshot"] = deepcopy(validated_real_use_snapshot)
         result["value_signal_assessment"] = deepcopy(value_signal_assessment)
     return deepcopy(result)
+
+
+def run_r7_real_use_observation(
+    observation: Mapping[str, Any],
+    *,
+    project_id: str,
+    operator: str,
+    confirm_real_use_observation: bool,
+    legacy_confirmations_provided: bool = False,
+) -> dict[str, Any]:
+    """Validate one caller observation around exactly one continuity run."""
+
+    validated = _validate_real_use_observation(observation)
+    if legacy_confirmations_provided:
+        _fail(
+            "real_use_observation_legacy_confirmations_not_allowed",
+            "observation-confirmation",
+        )
+    _require_confirmation(
+        confirm_real_use_observation,
+        "confirm_real_use_observation",
+        "observation-confirmation",
+    )
+
+    workflow_failed = False
+    result: Mapping[str, Any] = {}
+    try:
+        result = run_r7_project_continuity_control_surface(
+            validated["candidate"],
+            query=validated["query"],
+            project_id=project_id,
+            operator=operator,
+            outcome=validated["human_review"]["outcome"],
+            rationale=validated["human_review"]["rationale"],
+            corrected_outcome=validated["correction"]["corrected_outcome"],
+            correction_rationale=validated["correction"]["rationale"],
+            revocation_rationale=validated["revocation"]["rationale"],
+            input_classification=validated["input_classification"],
+            confirm_human_review=True,
+            confirm_scope_check=True,
+            confirm_correction=True,
+            confirm_revocation=True,
+            confirm_no_apply=True,
+        )
+    except R7ProjectContinuityControlSurfaceError:
+        raise
+    except Exception:
+        workflow_failed = True
+    if workflow_failed:
+        _fail(
+            "real-use-observation-execution-failed",
+            "observation-execution",
+            ("workflow-failed",),
+        )
+
+    projection_failed = False
+    projected_result: dict[str, Any] = {}
+    try:
+        projected_result = _build_real_use_observation_result(result, validated)
+    except R7ProjectContinuityControlSurfaceError:
+        raise
+    except Exception:
+        projection_failed = True
+    if projection_failed:
+        _fail(
+            "real-use-observation-result-invalid",
+            "observation-result-validation",
+            ("result-validation-failed",),
+        )
+    return projected_result
+
+
+def _validate_real_use_observation(
+    observation: Mapping[str, Any],
+) -> dict[str, Any]:
+    source = _exact_mapping(
+        observation,
+        _REAL_USE_OBSERVATION_FIELDS,
+        "observation",
+    )
+    human_review = _exact_mapping(
+        source.get("human_review"),
+        frozenset({"outcome", "rationale"}),
+        "human-review",
+    )
+    correction = _exact_mapping(
+        source.get("correction"),
+        frozenset({"corrected_outcome", "rationale"}),
+        "correction",
+    )
+    revocation = _exact_mapping(
+        source.get("revocation"),
+        frozenset({"rationale"}),
+        "revocation",
+    )
+    measurement = _exact_mapping(
+        source.get("measurement"),
+        _REAL_USE_OBSERVATION_MEASUREMENT_FIELDS,
+        "measurement",
+    )
+    baseline = _validate_observation_baseline(source.get("baseline"))
+
+    candidate = source.get("candidate")
+    if not isinstance(candidate, Mapping):
+        _observation_fail("candidate-not-object")
+    candidate_read_failed = False
+    candidate_snapshot: dict[str, Any] = {}
+    candidate_accepted = False
+    try:
+        candidate_snapshot = _validate_and_copy_inputs(
+            candidate,
+            query=source.get("query"),
+            project_id=R7_PROJECT_ID,
+            operator=R7_OPERATOR,
+            outcome=human_review.get("outcome"),
+            rationale=human_review.get("rationale"),
+            corrected_outcome=correction.get("corrected_outcome"),
+            correction_rationale=correction.get("rationale"),
+            revocation_rationale=revocation.get("rationale"),
+            input_classification=source.get("input_classification"),
+        )
+        candidate_validation = validate_candidate_for_proposal_dry_run(
+            candidate_snapshot
+        )
+        candidate_accepted = (
+            candidate_validation.get("disposition") == "accepted"
+        )
+    except R7ProjectContinuityControlSurfaceError:
+        raise
+    except Exception:
+        candidate_read_failed = True
+    if candidate_read_failed:
+        _observation_fail("observation-read-failed")
+    if not candidate_accepted:
+        _observation_fail("candidate-invalid")
+
+    measurement_read_failed = False
+    try:
+        if not _valid_nonnegative_integer(
+            measurement.get("human_correction_count")
+        ):
+            _observation_fail("human-correction-count-invalid")
+        if not _valid_nonnegative_number(measurement.get("recovery_time_seconds")):
+            _observation_fail("recovery-time-seconds-invalid")
+        if not _non_blank(measurement.get("measurement_scope")):
+            _observation_fail("measurement-scope-invalid")
+        if measurement.get("caller_observed") is not True:
+            _observation_fail("caller-observed-must-be-true")
+        if type(source.get("governance_burden_worthwhile")) is not bool:
+            _observation_fail("governance-burden-worthwhile-invalid")
+    except R7ProjectContinuityControlSurfaceError:
+        raise
+    except Exception:
+        measurement_read_failed = True
+    if measurement_read_failed:
+        _observation_fail("observation-read-failed")
+
+    return {
+        "candidate": candidate_snapshot,
+        "query": source["query"],
+        "input_classification": source["input_classification"],
+        "human_review": human_review,
+        "correction": correction,
+        "revocation": revocation,
+        "measurement": measurement,
+        "governance_burden_worthwhile": source[
+            "governance_burden_worthwhile"
+        ],
+        "baseline": baseline,
+    }
+
+
+def _validate_observation_baseline(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        _observation_fail("baseline-not-object")
+    source: dict[str, Any] | None = None
+    read_succeeded = False
+    available: Any = None
+    field_set_valid = False
+    human_correction_count_valid = False
+    recovery_time_seconds_valid = False
+    try:
+        source = dict(value)
+        available = source.get("available")
+        expected = (
+            frozenset(
+                {
+                    "available",
+                    "baseline_human_correction_count",
+                    "baseline_recovery_time_seconds",
+                }
+            )
+            if available is True
+            else frozenset({"available"})
+        )
+        field_set_valid = frozenset(source) == expected
+        human_correction_count_valid = _valid_nonnegative_integer(
+            source.get("baseline_human_correction_count")
+        )
+        recovery_time_seconds_valid = _valid_nonnegative_number(
+            source.get("baseline_recovery_time_seconds")
+        )
+        read_succeeded = True
+    except Exception:
+        pass
+    if not read_succeeded or source is None:
+        _observation_fail("observation-read-failed")
+    if type(available) is not bool:
+        _observation_fail("baseline-available-invalid")
+    if not field_set_valid:
+        _observation_fail("baseline-field-set-invalid")
+    if available:
+        if not human_correction_count_valid:
+            _observation_fail("baseline-human-correction-count-invalid")
+        if not recovery_time_seconds_valid:
+            _observation_fail("baseline-recovery-time-seconds-invalid")
+    return source
+
+
+def _exact_mapping(
+    value: Any,
+    expected_fields: frozenset[str],
+    field: str,
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        _observation_fail(f"{field}-not-object")
+    source: dict[str, Any] | None = None
+    read_succeeded = False
+    field_set_valid = False
+    try:
+        source = dict(value)
+        field_set_valid = frozenset(source) == expected_fields
+        read_succeeded = True
+    except Exception:
+        pass
+    if not read_succeeded or source is None:
+        _observation_fail("observation-read-failed")
+    if not field_set_valid:
+        _observation_fail(f"{field}-field-set-invalid")
+    return source
+
+
+def _build_real_use_observation_result(
+    result: Mapping[str, Any],
+    observation: Mapping[str, Any],
+) -> dict[str, Any]:
+    _validate_observation_workflow_result(result, observation)
+
+    projected_result = deepcopy(dict(result))
+    measurement = observation["measurement"]
+    baseline = observation["baseline"]
+    snapshot = {
+        "task_completed": True,
+        "state_traceable": True,
+        "human_correction_count": measurement["human_correction_count"],
+        "recovery_time_seconds": measurement["recovery_time_seconds"],
+        "governance_burden_worthwhile": observation[
+            "governance_burden_worthwhile"
+        ],
+        "baseline_available": baseline["available"],
+    }
+    if baseline["available"]:
+        snapshot.update(
+            {
+                "baseline_human_correction_count": baseline[
+                    "baseline_human_correction_count"
+                ],
+                "baseline_recovery_time_seconds": baseline[
+                    "baseline_recovery_time_seconds"
+                ],
+            }
+        )
+    validated_snapshot = _validate_real_use_result_snapshot(snapshot)
+    value_signal_assessment = _build_value_signal_assessment(validated_snapshot)
+    provenance = {
+        "task_completed_source": "terminal-workflow-result",
+        "state_traceable_source": "validated-workflow-lineage",
+        "human_correction_count_source": "caller-observed-measurement",
+        "recovery_time_seconds_source": "caller-observed-measurement",
+        "governance_burden_worthwhile_source": "human-owner-explicit",
+        "baseline_source": (
+            "caller-provided-real-use-data"
+            if baseline["available"]
+            else "unavailable"
+        ),
+        "measurement_scope": measurement["measurement_scope"],
+    }
+    projected_result["real_use_result_snapshot"] = deepcopy(validated_snapshot)
+    projected_result["value_signal_assessment"] = deepcopy(
+        value_signal_assessment
+    )
+    projected_result["observation_provenance"] = deepcopy(provenance)
+    return deepcopy(projected_result)
+
+
+def _validate_observation_workflow_result(
+    result: Mapping[str, Any],
+    observation: Mapping[str, Any],
+) -> None:
+    errors: list[str] = []
+    if not isinstance(result, Mapping):
+        _fail(
+            "real-use-observation-workflow-invalid",
+            "observation-projection",
+            ("result-not-object",),
+        )
+    if result.get("status") != "complete-terminal-non-applied-revocation":
+        errors.append("terminal-status-invalid")
+    for field in ("terminal", "non_applied", "non_persisted"):
+        if result.get(field) is not True:
+            errors.append(f"{field}-invalid")
+    if result.get("continuation_authorized") is not False:
+        errors.append("continuation-authorized-invalid")
+    if result.get("candidate_snapshot") != observation["candidate"]:
+        errors.append("candidate-lineage-invalid")
+    if result.get("active_context_validation") != {"valid": True, "errors": []}:
+        errors.append("scope-validation-invalid")
+
+    governed = result.get("governed_memory_learning_slice")
+    if not isinstance(governed, Mapping):
+        errors.append("human-review-lineage-invalid")
+    else:
+        human_review = governed.get("human_review_outcome_candidate")
+        expected_review = observation["human_review"]
+        if (
+            not isinstance(human_review, Mapping)
+            or human_review.get("outcome") != expected_review["outcome"]
+            or human_review.get("rationale") != expected_review["rationale"]
+            or validate_human_review_outcome_candidate(human_review)
+            != {"valid": True, "errors": []}
+        ):
+            errors.append("human-review-lineage-invalid")
+
+    correction = result.get("correction_record")
+    if (
+        not isinstance(correction, Mapping)
+        or correction.get("corrected_outcome")
+        != observation["correction"]["corrected_outcome"]
+        or correction.get("rationale") != observation["correction"]["rationale"]
+        or validate_correction_record(correction) != {"valid": True, "errors": []}
+        or result.get("correction_validation") != {"valid": True, "errors": []}
+    ):
+        errors.append("correction-lineage-invalid")
+
+    revocation = result.get("revocation_record")
+    if (
+        not isinstance(revocation, Mapping)
+        or revocation.get("rationale") != observation["revocation"]["rationale"]
+        or validate_revocation_record(revocation) != {"valid": True, "errors": []}
+        or result.get("revocation_validation") != {"valid": True, "errors": []}
+    ):
+        errors.append("revocation-lineage-invalid")
+    if errors:
+        _fail(
+            "real-use-observation-workflow-invalid",
+            "observation-projection",
+            _dedupe(errors),
+        )
+
+
+def _observation_fail(reason: str) -> None:
+    _fail(
+        "real-use-observation-invalid",
+        "observation-validation",
+        (reason,),
+    )
 
 
 def _validate_real_use_result_snapshot(
@@ -777,6 +1167,7 @@ __all__ = [
     "R7ProjectContinuityControlSurfaceError",
     "create_correction_record",
     "create_revocation_record",
+    "run_r7_real_use_observation",
     "run_r7_project_continuity_control_surface",
     "validate_correction_record",
     "validate_revocation_record",
