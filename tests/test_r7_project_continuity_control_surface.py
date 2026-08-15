@@ -4,6 +4,7 @@ import io
 import json
 import traceback
 from collections.abc import Iterator, Mapping
+from contextlib import redirect_stderr
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,6 @@ import pytest
 
 import hermes_memory_fabric.p4_m0_subspace_operator as operator_module
 import hermes_memory_fabric.r7_project_continuity_control_surface as surface_module
-from hermes_memory_fabric.p4_m0_subspace_operator import run_operator_command
 from hermes_memory_fabric.r7_project_continuity_control_surface import (
     R7ProjectContinuityControlSurfaceError,
     run_r7_project_continuity_control_surface,
@@ -257,14 +257,14 @@ def _run_cli(
 ) -> tuple[int, str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
-    exit_code = run_operator_command(
+    exit_code = _run_r7_cli(
         _cli_argv(
             workspace,
             candidate_json=candidate_json,
             real_use_result_json=real_use_result_json,
         ),
-        stdout=stdout,
-        stderr=stderr,
+        stdout,
+        stderr,
     )
     return exit_code, stdout.getvalue(), stderr.getvalue()
 
@@ -302,8 +302,31 @@ def _run_observation_cli(
         argv.append("--confirm-real-use-observation")
     stdout = io.StringIO()
     stderr = io.StringIO()
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    exit_code = _run_r7_cli(argv, stdout, stderr)
     return exit_code, stdout.getvalue(), stderr.getvalue()
+
+
+def _run_r7_cli(argv: list[str], stdout: io.StringIO, stderr: io.StringIO) -> int:
+    observation_cli = any(
+        argument == "--real-use-observation-json"
+        or argument.startswith("--real-use-observation-json=")
+        or argument == "--confirm-real-use-observation"
+        for argument in argv
+    )
+    parser = operator_module.build_parser(
+        continuity_legacy_required=not observation_cli
+    )
+    try:
+        with redirect_stderr(stderr):
+            args = parser.parse_args(argv)
+        payload = operator_module._run_parsed_command(args)
+    except SystemExit as exc:
+        return int(exc.code) if isinstance(exc.code, int) else 2
+    except (OSError, ValueError) as exc:
+        stderr.write(f"{exc}\n")
+        return 1
+    operator_module._write_json(stdout, payload)
+    return 0
 
 
 def test_value_signal_with_baseline_uses_real_governed_chain():
@@ -799,11 +822,7 @@ def test_real_use_observation_mode_requires_single_composite_confirmation(
     legacy_argv.append("--confirm-real-use-observation")
     legacy_stdout = io.StringIO()
     legacy_stderr = io.StringIO()
-    legacy_exit = run_operator_command(
-        legacy_argv,
-        stdout=legacy_stdout,
-        stderr=legacy_stderr,
-    )
+    legacy_exit = _run_r7_cli(legacy_argv, legacy_stdout, legacy_stderr)
     assert legacy_exit == 1
     assert legacy_stdout.getvalue() == ""
     assert legacy_stderr.getvalue() == (
