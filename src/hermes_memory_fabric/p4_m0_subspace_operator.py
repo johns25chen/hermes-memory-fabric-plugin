@@ -612,6 +612,18 @@ from .r7_project_continuity_control_surface import (
     run_r7_real_use_observation,
     run_r7_project_continuity_control_surface,
 )
+from .r8_security_governance import (
+    LEGACY_OPERATION,
+    OBSERVATION_OPERATION,
+    R8StructuralError,
+    build_legacy_payload,
+    build_observation_payload,
+    evaluate_security_envelope,
+    minimized_operator_projection,
+    parse_strict_json_object,
+    policy_error_output,
+    structural_error_output,
+)
 
 
 def build_parser(*, continuity_legacy_required: bool = True) -> argparse.ArgumentParser:
@@ -1826,6 +1838,7 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     continuity.add_argument("--candidate-json", required=continuity_legacy_required)
     continuity.add_argument("--real-use-result-json")
     continuity.add_argument("--real-use-observation-json")
+    continuity.add_argument("--security-envelope-json")
     continuity.add_argument("--outcome", required=continuity_legacy_required)
     continuity.add_argument("--rationale", required=continuity_legacy_required)
     continuity.add_argument("--corrected-outcome", required=continuity_legacy_required)
@@ -1867,6 +1880,8 @@ def run_operator_command(
     try:
         with redirect_stderr(err):
             args = parser.parse_args(argv)
+        if args.command == "continuity":
+            return _run_r8_continuity_command(args, stdout=out, stderr=err)
         payload = _run_parsed_command(args)
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 2
@@ -4066,6 +4081,138 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
     raise ValueError(f"unsupported_command:{args.command}")
 
 
+def _run_r8_continuity_command(
+    args: argparse.Namespace,
+    *,
+    stdout: TextIO,
+    stderr: TextIO,
+) -> int:
+    try:
+        if args.confirm_real_use_observation and args.real_use_observation_json is None:
+            raise R8StructuralError("route_argument_conflict")
+        if args.real_use_observation_json is not None:
+            if args.real_use_result_json is not None or any(
+                (
+                    args.query is not None,
+                    args.candidate_json is not None,
+                    args.outcome is not None,
+                    args.rationale is not None,
+                    args.corrected_outcome is not None,
+                    args.correction_rationale is not None,
+                    args.revocation_rationale is not None,
+                    args.input_classification is not None,
+                    args.confirm_human_review,
+                    args.confirm_scope_check,
+                    args.confirm_correction,
+                    args.confirm_revocation,
+                    args.confirm_no_apply,
+                )
+            ):
+                raise R8StructuralError("route_argument_conflict")
+            observation = parse_strict_json_object(
+                args.real_use_observation_json,
+                field="real_use_observation_json",
+            )
+            selected_operation = OBSERVATION_OPERATION
+            payload = build_observation_payload(vars(args), observation)
+            input_classification = observation.get("input_classification")
+            measurement = observation.get("measurement")
+            baseline = observation.get("baseline")
+            measurement_scope = (
+                measurement.get("measurement_scope")
+                if isinstance(measurement, dict)
+                else None
+            )
+            baseline_available = (
+                baseline.get("available") if isinstance(baseline, dict) else None
+            )
+        else:
+            candidate = parse_strict_json_object(
+                args.candidate_json,
+                field="candidate_json",
+            )
+            real_use = (
+                None
+                if args.real_use_result_json is None
+                else parse_strict_json_object(
+                    args.real_use_result_json,
+                    field="real_use_result_json",
+                )
+            )
+            selected_operation = LEGACY_OPERATION
+            payload = build_legacy_payload(vars(args), candidate, real_use)
+            input_classification = args.input_classification
+            measurement_scope = None
+            baseline_available = None
+        envelope = parse_strict_json_object(
+            args.security_envelope_json,
+            field="security_envelope_json",
+        )
+        decision = evaluate_security_envelope(
+            envelope,
+            selected_operation=selected_operation,
+            payload=payload,
+            input_classification=input_classification,
+            measurement_scope=measurement_scope,
+            baseline_available=baseline_available,
+        )
+    except R8StructuralError as exc:
+        _write_compact_json(stderr, structural_error_output(exc))
+        return 2
+
+    if decision.disposition != "ALLOW":
+        _write_compact_json(stderr, policy_error_output(decision))
+        return 3 if decision.disposition == "REVIEW" else 2
+
+    try:
+        if selected_operation == OBSERVATION_OPERATION:
+            downstream = run_r7_real_use_observation(
+                observation,
+                project_id=args.project_id,
+                operator=args.operator,
+                confirm_real_use_observation=args.confirm_real_use_observation,
+                legacy_confirmations_provided=False,
+            )
+            baseline_measurement_scope = (
+                measurement_scope if baseline_available is True else None
+            )
+        else:
+            downstream = run_r7_project_continuity_control_surface(
+                candidate,
+                query=args.query,
+                project_id=args.project_id,
+                operator=args.operator,
+                outcome=args.outcome,
+                rationale=args.rationale,
+                corrected_outcome=args.corrected_outcome,
+                correction_rationale=args.correction_rationale,
+                revocation_rationale=args.revocation_rationale,
+                input_classification=args.input_classification,
+                confirm_human_review=args.confirm_human_review,
+                confirm_scope_check=args.confirm_scope_check,
+                confirm_correction=args.confirm_correction,
+                confirm_revocation=args.confirm_revocation,
+                confirm_no_apply=args.confirm_no_apply,
+                real_use_result_snapshot=real_use,
+            )
+            baseline_measurement_scope = None
+        projection = minimized_operator_projection(
+            decision,
+            downstream,
+            selected_operation=selected_operation,
+            measurement_scope=measurement_scope,
+            baseline_measurement_scope=baseline_measurement_scope,
+        )
+    except Exception:
+        _write_compact_json(
+            stderr,
+            {"code": "downstream_execution_failed", "disposition": "BLOCK"},
+        )
+        return 1
+    _write_compact_json(stdout, projection)
+    return 0
+
+
 def _seed_summary(seed: Any) -> dict[str, Any]:
     return {
         "seed_id": seed.seed_id,
@@ -4169,6 +4316,18 @@ def _reject_non_finite_real_use_observation_json_constant(_value: str) -> None:
 def _write_json(stdout: TextIO, payload: dict[str, Any]) -> None:
     json.dump(payload, stdout, ensure_ascii=False, sort_keys=True)
     stdout.write("\n")
+
+
+def _write_compact_json(stream: TextIO, payload: dict[str, Any]) -> None:
+    json.dump(
+        payload,
+        stream,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    stream.write("\n")
 
 
 if __name__ == "__main__":
