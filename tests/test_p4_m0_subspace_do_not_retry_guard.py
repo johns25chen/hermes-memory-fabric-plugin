@@ -8,7 +8,17 @@ from pathlib import Path
 
 import pytest
 
-from hermes_memory_fabric.p4_m0_subspace_memory import SubspaceMemoryStore
+from tests.test_p4_m0_subspace_memory import (
+    _Contract21TestStore as SubspaceMemoryStore,
+    _approve,
+    _adapt_mutation_argv,
+    _clear_do_not_retry,
+    _explicit_decision,
+    _lifecycle,
+    _propose,
+    _set_do_not_retry,
+)
+from hermes_memory_fabric.r8_local_persistence_governance import GovernanceError, _snapshot_digest, canonical_json
 from hermes_memory_fabric.p4_m0_subspace_operator import run_operator_command
 from hermes_memory_fabric.p4_m0_subspace_recall_pack import run_recall_pack_export
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
@@ -17,7 +27,7 @@ from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subsp
 def test_approved_memory_defaults_to_no_do_not_retry_metadata(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
 
-    memory = _approved_memory(store, content="Default do not retry metadata is absent.")
+    memory = _approved_memory(store, sequence=0, content="Default do not retry metadata is absent.")
 
     assert memory.do_not_retry is None
     result = store.recall("default metadata")[0]
@@ -27,25 +37,22 @@ def test_approved_memory_defaults_to_no_do_not_retry_metadata(tmp_path):
 
 def test_old_memory_record_without_do_not_retry_reads_as_no_warning(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Old do not retry record remains readable.")
+    memory = _approved_memory(store, sequence=0, content="Old do not retry record remains readable.")
     records = _memory_records(tmp_path)
     records[0].pop("do_not_retry", None)
     _write_memory_records(tmp_path, records)
 
     reopened = SubspaceMemoryStore(tmp_path)
-    result = reopened.recall("old readable")[0]
-
-    assert result.memory_id == memory.id
-    assert result.do_not_retry is None
-    assert result.do_not_retry_warning is None
+    with pytest.raises(GovernanceError, match="BLOCK_SNAPSHOT_INTEGRITY"):
+        reopened.recall("old readable")
 
 
 def test_set_do_not_retry_stores_reason_actor_alternative_and_updated_at(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Manual do not retry metadata memory.")
+    memory = _approved_memory(store, sequence=0, content="Manual do not retry metadata memory.")
 
-    updated = store.set_do_not_retry(
-        memory.id,
+    updated = _set_do_not_retry(
+        store, memory, 2, "set-dnr",
         reason="Tried before and failed.",
         actor="human",
         alternative="Use the documented fallback.",
@@ -62,14 +69,30 @@ def test_set_do_not_retry_stores_reason_actor_alternative_and_updated_at(tmp_pat
 
 def test_set_do_not_retry_requires_existing_memory_id(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
+    payload = {
+        "memory_id": "memory:missing", "reason": "manual reason",
+        "actor": "human", "alternative": None,
+    }
+    decision_id = "missing-memory-set-dnr"
 
     with pytest.raises(ValueError, match="memory_not_found"):
-        store.set_do_not_retry("memory:missing", reason="manual reason", actor="human")
+        store.set_do_not_retry(
+            "memory:missing", reason="manual reason", actor="human",
+            decision=_explicit_decision(
+                store, operation="SET_DO_NOT_RETRY", payload=payload,
+                project="hermes-memory-fabric", namespace="do-not-retry",
+                target="memory:missing", sequence=0, decision_id=decision_id,
+            ),
+        )
+
+    assert store.current_sequence == 0
+    assert store._governance.reconcile(decision_id)["decision_consumed"] is False
+    assert not store._governance.snapshot_path.exists()
 
 
 def test_set_do_not_retry_requires_non_empty_reason(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Reason validation memory.")
+    memory = _approved_memory(store, sequence=0, content="Reason validation memory.")
 
     with pytest.raises(ValueError, match="reason_must_be_non_empty"):
         store.set_do_not_retry(memory.id, reason=" ", actor="human")
@@ -77,7 +100,7 @@ def test_set_do_not_retry_requires_non_empty_reason(tmp_path):
 
 def test_set_do_not_retry_requires_non_empty_actor(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Actor validation memory.")
+    memory = _approved_memory(store, sequence=0, content="Actor validation memory.")
 
     with pytest.raises(ValueError, match="actor_must_be_non_empty"):
         store.set_do_not_retry(memory.id, reason="manual reason", actor=" ")
@@ -85,10 +108,10 @@ def test_set_do_not_retry_requires_non_empty_actor(tmp_path):
 
 def test_clear_do_not_retry_removes_metadata(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Clear do not retry metadata memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Clear do not retry metadata memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
 
-    cleared = store.clear_do_not_retry(memory.id, actor="human", reason="manual clear")
+    cleared = _clear_do_not_retry(store, memory, 3, "clear-dnr", actor="human", reason="manual clear")
 
     assert cleared.do_not_retry is None
     assert _memory_records(tmp_path)[0]["do_not_retry"] is None
@@ -97,17 +120,30 @@ def test_clear_do_not_retry_removes_metadata(tmp_path):
 
 def test_clear_do_not_retry_requires_existing_memory_id(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
+    payload = {"memory_id": "memory:missing", "actor": "human", "reason": None}
+    decision_id = "missing-memory-clear-dnr"
 
     with pytest.raises(ValueError, match="memory_not_found"):
-        store.clear_do_not_retry("memory:missing", actor="human")
+        store.clear_do_not_retry(
+            "memory:missing", actor="human",
+            decision=_explicit_decision(
+                store, operation="CLEAR_DO_NOT_RETRY", payload=payload,
+                project="hermes-memory-fabric", namespace="do-not-retry",
+                target="memory:missing", sequence=0, decision_id=decision_id,
+            ),
+        )
+
+    assert store.current_sequence == 0
+    assert store._governance.reconcile(decision_id)["decision_consumed"] is False
+    assert not store._governance.snapshot_path.exists()
 
 
 def test_set_do_not_retry_creates_audit_event(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Set audit event memory.")
+    memory = _approved_memory(store, sequence=0, content="Set audit event memory.")
 
-    store.set_do_not_retry(
-        memory.id,
+    _set_do_not_retry(
+        store, memory, 2, "set-dnr",
         reason="manual reason",
         actor="human",
         alternative="manual alternative",
@@ -125,10 +161,10 @@ def test_set_do_not_retry_creates_audit_event(tmp_path):
 
 def test_clear_do_not_retry_creates_audit_event(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Clear audit event memory.")
-    set_memory = store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Clear audit event memory.")
+    set_memory = _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
 
-    store.clear_do_not_retry(memory.id, actor="human", reason="manual clear")
+    _clear_do_not_retry(store, memory, 3, "clear-dnr", actor="human", reason="manual clear")
 
     event = store.list_audit_events()[-1]
     assert event.event_type == "memory_do_not_retry_cleared"
@@ -142,12 +178,12 @@ def test_clear_do_not_retry_creates_audit_event(tmp_path):
 
 def test_set_and_clear_do_not_create_proposal_or_memory_records(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Set and clear rewrites existing memory row.")
+    memory = _approved_memory(store, sequence=0, content="Set and clear rewrites existing memory row.")
     proposals_before = _line_count(tmp_path / "proposals.jsonl")
     memories_before = _line_count(tmp_path / "memories.jsonl")
 
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
-    store.clear_do_not_retry(memory.id, actor="human")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
+    _clear_do_not_retry(store, memory, 3, "clear-dnr", actor="human")
 
     assert _line_count(tmp_path / "proposals.jsonl") == proposals_before
     assert _line_count(tmp_path / "memories.jsonl") == memories_before
@@ -155,9 +191,9 @@ def test_set_and_clear_do_not_create_proposal_or_memory_records(tmp_path):
 
 def test_default_recall_includes_do_not_retry_warning_when_active(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Active retry warning recall memory.")
-    store.set_do_not_retry(
-        memory.id,
+    memory = _approved_memory(store, sequence=0, content="Active retry warning recall memory.")
+    _set_do_not_retry(
+        store, memory, 2, "set-dnr",
         reason="Tried before.",
         actor="human",
         alternative="Use the safe path.",
@@ -176,18 +212,18 @@ def test_default_recall_includes_do_not_retry_warning_when_active(tmp_path):
 
 def test_stale_do_not_retry_memory_is_excluded_by_default_lifecycle_rules(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Stale retry warning recall memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
-    store.set_memory_lifecycle(memory.id, "stale", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Stale retry warning recall memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
+    _lifecycle(store, memory, 3, "lifecycle-stale", lifecycle="stale", actor="human")
 
     assert store.recall("stale retry warning") == []
 
 
 def test_include_stale_recalls_stale_do_not_retry_memory_with_warning(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Include stale retry warning recall memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
-    store.set_memory_lifecycle(memory.id, "stale", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Include stale retry warning recall memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
+    _lifecycle(store, memory, 3, "lifecycle-stale", lifecycle="stale", actor="human")
 
     result = store.recall("include stale retry", include_stale=True)[0]
 
@@ -199,18 +235,18 @@ def test_include_stale_recalls_stale_do_not_retry_memory_with_warning(tmp_path):
 
 def test_archived_do_not_retry_memory_is_excluded_by_default_lifecycle_rules(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Archived retry warning recall memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
-    store.set_memory_lifecycle(memory.id, "archived", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Archived retry warning recall memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
+    _lifecycle(store, memory, 3, "lifecycle-archived", lifecycle="archived", actor="human")
 
     assert store.recall("archived retry warning") == []
 
 
 def test_include_archived_recalls_archived_do_not_retry_memory_with_warning(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Include archived retry warning recall memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
-    store.set_memory_lifecycle(memory.id, "archived", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Include archived retry warning recall memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
+    _lifecycle(store, memory, 3, "lifecycle-archived", lifecycle="archived", actor="human")
 
     result = store.recall("include archived retry", include_archived=True)[0]
 
@@ -222,7 +258,16 @@ def test_include_archived_recalls_archived_do_not_retry_memory_with_warning(tmp_
 
 def test_operator_set_command_outputs_deterministic_json_with_do_not_retry(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Operator set do not retry memory.")
+    memory = _approved_memory(store, sequence=0, content="Operator set do not retry memory.")
+    set_payload = {
+        "memory_id": memory.id, "reason": "operator reason", "actor": "human",
+        "alternative": "operator alternative",
+    }
+    decision = _explicit_decision(
+        store, operation="SET_DO_NOT_RETRY", payload=set_payload,
+        project=memory.project, namespace=memory.namespace, target=memory.id,
+        sequence=2, decision_id="operator-set-dnr",
+    )
 
     exit_code, payload, stderr = _run_operator(
         [
@@ -238,7 +283,8 @@ def test_operator_set_command_outputs_deterministic_json_with_do_not_retry(tmp_p
             "human",
             "--alternative",
             "operator alternative",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
@@ -255,7 +301,13 @@ def test_operator_set_command_outputs_deterministic_json_with_do_not_retry(tmp_p
 
 def test_operator_clear_command_outputs_deterministic_json_with_previous_do_not_retry(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Operator clear do not retry memory.")
+    memory = _approved_memory(store, sequence=0, content="Operator clear do not retry memory.")
+    set_decision = _explicit_decision(
+        store, operation="SET_DO_NOT_RETRY",
+        payload={"memory_id": memory.id, "reason": "operator reason", "actor": "human", "alternative": None},
+        project=memory.project, namespace=memory.namespace, target=memory.id,
+        sequence=2, decision_id="operator-set-dnr",
+    )
     set_payload = _run_operator(
         [
             "do-not-retry",
@@ -268,8 +320,16 @@ def test_operator_clear_command_outputs_deterministic_json_with_previous_do_not_
             "operator reason",
             "--actor",
             "human",
-        ]
+        ],
+        set_decision,
     )[1]
+
+    clear_decision = _explicit_decision(
+        store, operation="CLEAR_DO_NOT_RETRY",
+        payload={"memory_id": memory.id, "actor": "human", "reason": "operator clear"},
+        project=memory.project, namespace=memory.namespace, target=memory.id,
+        sequence=3, decision_id="operator-clear-dnr",
+    )
 
     exit_code, payload, stderr = _run_operator(
         [
@@ -283,7 +343,8 @@ def test_operator_clear_command_outputs_deterministic_json_with_previous_do_not_
             "human",
             "--reason",
             "operator clear",
-        ]
+        ],
+        clear_decision,
     )
 
     assert exit_code == 0
@@ -299,8 +360,8 @@ def test_operator_clear_command_outputs_deterministic_json_with_previous_do_not_
 
 def test_operator_recall_includes_do_not_retry_metadata_and_advisory_warning(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Operator recall retry warning metadata.")
-    store.set_do_not_retry(memory.id, reason="operator reason", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Operator recall retry warning metadata.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="operator reason", actor="human")
 
     exit_code, payload, stderr = _run_operator(
         ["recall", "--workspace-root", str(tmp_path), "--query", "operator recall retry"]
@@ -318,9 +379,9 @@ def test_operator_recall_includes_do_not_retry_metadata_and_advisory_warning(tmp
 
 def test_recall_pack_includes_do_not_retry_warning_section(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Recall pack retry warning section memory.")
-    store.set_do_not_retry(
-        memory.id,
+    memory = _approved_memory(store, sequence=0, content="Recall pack retry warning section memory.")
+    _set_do_not_retry(
+        store, memory, 2, "set-dnr",
         reason="pack reason",
         actor="human",
         alternative="pack alternative",
@@ -342,8 +403,8 @@ def test_recall_pack_includes_do_not_retry_warning_section(tmp_path):
 
 def test_explainable_trace_remains_present_when_do_not_retry_warning_is_present(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Trace remains with retry warning memory.")
-    store.set_do_not_retry(memory.id, reason="trace reason", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Trace remains with retry warning memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="trace reason", actor="human")
 
     result = store.recall("trace retry warning")[0]
     exit_code, pack, stderr = _run_recall_pack(
@@ -361,8 +422,8 @@ def test_explainable_trace_remains_present_when_do_not_retry_warning_is_present(
 
 def test_do_not_retry_recall_warning_generation_is_read_only(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Read only retry warning generation memory.")
-    store.set_do_not_retry(memory.id, reason="manual reason", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Read only retry warning generation memory.")
+    _set_do_not_retry(store, memory, 2, "set-dnr", reason="manual reason", actor="human")
     before = _store_files(tmp_path)
 
     result = store.recall("read only retry")[0]
@@ -394,40 +455,39 @@ def test_no_pyproject_entry_point_is_added_for_do_not_retry_guard():
     assert "p4_m0_subspace_do_not_retry" not in entry_points
 
 
-def _approved_memory(store: SubspaceMemoryStore, *, content: str):
-    proposal = store.propose_memory(
+def _approved_memory(store: SubspaceMemoryStore, *, sequence: int, content: str):
+    proposal = _propose(store, sequence, f"propose-{sequence}",
         project="hermes-memory-fabric",
         namespace="do-not-retry",
         content=content,
         source="do-not-retry-test",
     )
-    return store.approve_proposal(proposal.id, approver="human")
+    return _approve(store, proposal, sequence + 1, f"approve-{sequence + 1}", approver="human")
 
 
 def _memory_records(storage_root: Path) -> list[dict[str, object]]:
-    return [
-        json.loads(line)
-        for line in (storage_root / "memories.jsonl").read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    return json.loads((storage_root / "snapshot.json").read_text(encoding="utf-8"))["memories"]
 
 
 def _write_memory_records(storage_root: Path, records: list[dict[str, object]]) -> None:
-    (storage_root / "memories.jsonl").write_text(
-        "".join(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n" for record in records),
-        encoding="utf-8",
-    )
+    path = storage_root / "snapshot.json"
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    snapshot["memories"] = records
+    snapshot["snapshot_sha256"] = _snapshot_digest(snapshot)
+    path.write_text(canonical_json(snapshot) + "\n", encoding="utf-8")
 
 
 def _line_count(path: Path) -> int:
-    return len(path.read_text(encoding="utf-8").splitlines())
+    snapshot = json.loads((path.parent / "snapshot.json").read_text(encoding="utf-8"))
+    return len(snapshot[{"proposals.jsonl": "proposals", "memories.jsonl": "memories"}[path.name]])
 
 
-def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str]:
+def _run_operator(argv: list[str], decision=None) -> tuple[int, dict[str, object], str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    command = _adapt_mutation_argv(argv, decision) if decision is not None else argv
+    exit_code = run_operator_command(command, stdout=stdout, stderr=stderr)
 
     payload = json.loads(stdout.getvalue()) if stdout.getvalue() else {}
     return exit_code, payload, stderr.getvalue()

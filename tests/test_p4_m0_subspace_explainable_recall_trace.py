@@ -6,7 +6,12 @@ import tomllib
 from dataclasses import asdict
 from pathlib import Path
 
-from hermes_memory_fabric.p4_m0_subspace_memory import SubspaceMemoryStore
+from tests.test_p4_m0_subspace_memory import (
+    _Contract21TestStore as SubspaceMemoryStore,
+    _approve,
+    _lifecycle,
+    _propose,
+)
 from hermes_memory_fabric.p4_m0_subspace_operator import run_operator_command
 from hermes_memory_fabric.p4_m0_subspace_recall_pack import run_recall_pack_export
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
@@ -16,6 +21,7 @@ def test_recall_result_includes_explainable_trace_fields(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
     memory = _approved_memory(
         store,
+        sequence=0,
         project="hermes-memory-fabric",
         namespace="trace",
         content="Recall trace project namespace source lifecycle mechanics.",
@@ -61,12 +67,14 @@ def test_trace_rank_is_deterministic_and_starts_at_one(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
     first = _approved_memory(
         store,
+        sequence=0,
         project="hermes-memory-fabric",
         namespace="trace",
         content="Rank trace alpha beta gamma.",
     )
     second = _approved_memory(
         store,
+        sequence=2,
         project="hermes-memory-fabric",
         namespace="trace",
         content="Rank trace alpha.",
@@ -82,6 +90,7 @@ def test_trace_is_deterministic_for_same_store_and_query(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
     _approved_memory(
         store,
+        sequence=0,
         project="hermes-memory-fabric",
         namespace="trace",
         content="Deterministic trace repeats matched terms.",
@@ -95,11 +104,11 @@ def test_trace_is_deterministic_for_same_store_and_query(tmp_path):
 
 def test_trace_respects_lifecycle_default_and_include_flags(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    active = _approved_memory(store, project="p", namespace="n", content="Lifecycle trace active memory.")
-    stale = _approved_memory(store, project="p", namespace="n", content="Lifecycle trace stale memory.")
-    archived = _approved_memory(store, project="p", namespace="n", content="Lifecycle trace archived memory.")
-    store.set_memory_lifecycle(stale.id, "stale", actor="human")
-    store.set_memory_lifecycle(archived.id, "archived", actor="human")
+    active = _approved_memory(store, sequence=0, project="p", namespace="n", content="Lifecycle trace active memory.")
+    stale = _approved_memory(store, sequence=2, project="p", namespace="n", content="Lifecycle trace stale memory.")
+    archived = _approved_memory(store, sequence=4, project="p", namespace="n", content="Lifecycle trace archived memory.")
+    _lifecycle(store, stale, 6, "lifecycle-stale", lifecycle="stale", actor="human")
+    _lifecycle(store, archived, 7, "lifecycle-archived", lifecycle="archived", actor="human")
 
     default_results = store.recall("lifecycle trace")
     included_results = store.recall("lifecycle trace", include_stale=True, include_archived=True)
@@ -118,6 +127,7 @@ def test_operator_recall_includes_trace_metadata(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
     memory = _approved_memory(
         store,
+        sequence=0,
         project="hermes-memory-fabric",
         namespace="operator",
         content="Operator trace metadata source lifecycle.",
@@ -162,6 +172,7 @@ def test_recall_pack_export_includes_explainable_trace_metadata(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
     memory = _approved_memory(
         store,
+        sequence=0,
         project="hermes-memory-fabric",
         namespace="pack",
         content="Recall pack explainable trace metadata.",
@@ -194,7 +205,7 @@ def test_recall_pack_export_includes_explainable_trace_metadata(tmp_path):
 
 def test_recall_trace_generation_does_not_create_proposal_memory_or_audit_records(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    _approved_memory(store, project="p", namespace="n", content="Read only trace recall memory.")
+    _approved_memory(store, sequence=0, project="p", namespace="n", content="Read only trace recall memory.")
     before = _store_files(tmp_path)
 
     results = store.recall("read only trace")
@@ -228,18 +239,19 @@ def test_no_pyproject_entry_point_is_added_for_explainable_recall_trace():
 def _approved_memory(
     store: SubspaceMemoryStore,
     *,
+    sequence: int,
     project: str,
     namespace: str,
     content: str,
     source: str = "trace-test",
 ):
-    proposal = store.propose_memory(
+    proposal = _propose(store, sequence, f"propose-{sequence}",
         project=project,
         namespace=namespace,
         content=content,
         source=source,
     )
-    return store.approve_proposal(proposal.id, approver="human")
+    return _approve(store, proposal, sequence + 1, f"approve-{sequence + 1}", approver="human")
 
 
 def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str]:

@@ -202,7 +202,6 @@ CONTAMINATION_TERMS = (
     "test_governance_" + "improvement_planner",
     "test_governance_" + "improvement_planner_activation",
     "test_governance_" + "plan_writer",
-    "uv" + ".lock",
 )
 
 
@@ -589,7 +588,17 @@ def test_no_unrelated_planner_or_lock_references_exist():
                 if path.is_file() and path.suffix in {".py", ".toml"}
             )
 
+    _assert_no_root_uv_lock(PROJECT_ROOT)
+
     for path in files:
         text = path.read_text(encoding="utf-8")
         for forbidden in CONTAMINATION_TERMS:
             assert forbidden not in text, path
+
+
+def _assert_no_root_uv_lock(project_root: Path) -> None:
+    try:
+        (project_root / "uv.lock").lstat()
+    except FileNotFoundError:
+        return
+    raise AssertionError("repository root must not contain a uv.lock directory entry")

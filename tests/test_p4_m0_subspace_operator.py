@@ -9,6 +9,11 @@ import pytest
 
 import hermes_memory_fabric.p4_m0_subspace_operator as operator_module
 import hermes_memory_fabric.r7_project_continuity_control_surface as continuity_module
+from tests.test_p4_m0_subspace_memory import (
+    _adapt_mutation_argv,
+    _explicit_decision,
+    _logical_sha256,
+)
 from hermes_memory_fabric.p4_m0_subspace_operator import run_operator_command
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 from hermes_memory_fabric.r8_security_governance import (
@@ -20,17 +25,22 @@ from hermes_memory_fabric.r8_security_governance import (
 )
 
 
-def _run(argv: list[str]) -> tuple[int, dict[str, object], str]:
+def _run(argv: list[str], decision=None) -> tuple[int, dict[str, object], str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    command = _adapt_mutation_argv(argv, decision) if decision is not None else argv
+    exit_code = run_operator_command(command, stdout=stdout, stderr=stderr)
 
     payload = json.loads(stdout.getvalue()) if stdout.getvalue() else {}
     return exit_code, payload, stderr.getvalue()
 
 
 def test_propose_command_creates_pending_proposal_json_output_and_audit_event(tmp_path):
+    decision = _propose_decision(
+        tmp_path, content="Manual operator propose creates a pending proposal.",
+        source="unit-test", tags=["manual"], confidence=0.9,
+    )
     exit_code, payload, stderr = _run(
         [
             "propose",
@@ -48,7 +58,8 @@ def test_propose_command_creates_pending_proposal_json_output_and_audit_event(tm
             "manual",
             "--confidence",
             "0.9",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
@@ -63,6 +74,11 @@ def test_propose_command_creates_pending_proposal_json_output_and_audit_event(tm
 
 def test_approve_command_creates_approved_memory_json_output(tmp_path):
     proposal_id = _propose(tmp_path, content="Approve command creates approved memory.")
+    decision = _review_decision(
+        tmp_path, operation="APPROVE_PROPOSAL", proposal_id=proposal_id,
+        actor_field="approver", actor="human", optional_field="note",
+        optional_value="approved locally", sequence=1, decision_id="approve-1",
+    )
 
     exit_code, payload, stderr = _run(
         [
@@ -75,7 +91,8 @@ def test_approve_command_creates_approved_memory_json_output(tmp_path):
             "human",
             "--note",
             "approved locally",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
@@ -88,6 +105,11 @@ def test_approve_command_creates_approved_memory_json_output(tmp_path):
 
 def test_reject_command_rejects_proposal_and_rejected_content_is_not_recalled(tmp_path):
     proposal_id = _propose(tmp_path, content="Rejected operator content must not be recalled.")
+    decision = _review_decision(
+        tmp_path, operation="REJECT_PROPOSAL", proposal_id=proposal_id,
+        actor_field="reviewer", actor="human", optional_field="reason",
+        optional_value="not suitable", sequence=1, decision_id="reject-1",
+    )
 
     exit_code, payload, stderr = _run(
         [
@@ -100,7 +122,8 @@ def test_reject_command_rejects_proposal_and_rejected_content_is_not_recalled(tm
             "human",
             "--reason",
             "not suitable",
-        ]
+        ],
+        decision,
     )
     recall_code, recall_payload, recall_stderr = _run(
         [
@@ -128,6 +151,11 @@ def test_reject_command_rejects_proposal_and_rejected_content_is_not_recalled(tm
 
 def test_recall_command_returns_approved_memory_with_deterministic_json_output(tmp_path):
     proposal_id = _propose(tmp_path, content="Deterministic recall returns approved operator memory.")
+    decision = _review_decision(
+        tmp_path, operation="APPROVE_PROPOSAL", proposal_id=proposal_id,
+        actor_field="approver", actor="human", optional_field="note",
+        optional_value=None, sequence=1, decision_id="approve-1",
+    )
     _run(
         [
             "approve",
@@ -137,7 +165,8 @@ def test_recall_command_returns_approved_memory_with_deterministic_json_output(t
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        decision,
     )
 
     exit_code, payload, stderr = _run(
@@ -195,6 +224,11 @@ def test_recall_command_returns_approved_memory_with_deterministic_json_output(t
 
 def test_audit_command_returns_audit_events(tmp_path):
     proposal_id = _propose(tmp_path, content="Audit command lists events.")
+    decision = _review_decision(
+        tmp_path, operation="APPROVE_PROPOSAL", proposal_id=proposal_id,
+        actor_field="approver", actor="human", optional_field="note",
+        optional_value=None, sequence=1, decision_id="approve-1",
+    )
     _run(
         [
             "approve",
@@ -204,7 +238,8 @@ def test_audit_command_returns_audit_events(tmp_path):
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        decision,
     )
 
     exit_code, payload, stderr = _run(["audit", "--workspace-root", str(tmp_path)])
@@ -220,6 +255,9 @@ def test_audit_command_returns_audit_events(tmp_path):
 
 def test_default_workspace_root_uses_local_subspace_memory(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    decision = _propose_decision(
+        tmp_path, content="Default workspace root uses local subspace memory."
+    )
 
     exit_code, payload, stderr = _run(
         [
@@ -230,18 +268,22 @@ def test_default_workspace_root_uses_local_subspace_memory(tmp_path, monkeypatch
             "operator",
             "--content",
             "Default workspace root uses local subspace memory.",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
     assert stderr == ""
     assert payload["storage_root"] == str(tmp_path / ".local" / "subspace_memory")
-    assert (tmp_path / ".local" / "subspace_memory" / "proposals.jsonl").exists()
+    assert (tmp_path / ".local" / "subspace_memory" / "snapshot.json").exists()
 
 
 def test_explicit_workspace_root_works(tmp_path):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
+    decision = _propose_decision(
+        workspace, content="Explicit workspace root is honored."
+    )
 
     exit_code, payload, stderr = _run(
         [
@@ -254,17 +296,23 @@ def test_explicit_workspace_root_works(tmp_path):
             "operator",
             "--content",
             "Explicit workspace root is honored.",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
     assert stderr == ""
     assert payload["storage_root"] == str(workspace / ".local" / "subspace_memory")
-    assert (workspace / ".local" / "subspace_memory" / "proposals.jsonl").exists()
+    assert (workspace / ".local" / "subspace_memory" / "snapshot.json").exists()
 
 
 def test_recall_and_audit_commands_do_not_create_additional_memory_records(tmp_path):
     proposal_id = _propose(tmp_path, content="Read commands must not create memory records.")
+    decision = _review_decision(
+        tmp_path, operation="APPROVE_PROPOSAL", proposal_id=proposal_id,
+        actor_field="approver", actor="human", optional_field="note",
+        optional_value=None, sequence=1, decision_id="approve-1",
+    )
     _run(
         [
             "approve",
@@ -274,10 +322,11 @@ def test_recall_and_audit_commands_do_not_create_additional_memory_records(tmp_p
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        decision,
     )
-    memories_path = tmp_path / ".local" / "subspace_memory" / "memories.jsonl"
-    before = memories_path.read_text(encoding="utf-8")
+    snapshot_path = tmp_path / ".local" / "subspace_memory" / "snapshot.json"
+    before = snapshot_path.read_text(encoding="utf-8")
 
     recall_code, _, recall_stderr = _run(
         ["recall", "--workspace-root", str(tmp_path), "--query", "read commands"]
@@ -288,7 +337,7 @@ def test_recall_and_audit_commands_do_not_create_additional_memory_records(tmp_p
     assert recall_stderr == ""
     assert audit_code == 0
     assert audit_stderr == ""
-    assert memories_path.read_text(encoding="utf-8") == before
+    assert snapshot_path.read_text(encoding="utf-8") == before
 
 
 def test_missing_required_args_return_non_zero_with_stderr(tmp_path):
@@ -328,7 +377,58 @@ def test_no_pyproject_entry_point_is_added_for_operator():
     assert "p4_m0_subspace_operator" not in entry_points
 
 
+def _propose_decision(
+    workspace: Path,
+    *,
+    content: str,
+    source: str = "local",
+    tags=None,
+    confidence: float = 1.0,
+):
+    store = create_workspace_subspace_memory_store(workspace)
+    payload = {
+        "project": "hermes-memory-fabric",
+        "namespace": "operator",
+        "content": content,
+        "source": source,
+        "tags": list(tags or []),
+        "confidence": confidence,
+    }
+    return _explicit_decision(
+        store, operation="PROPOSE_MEMORY", payload=payload,
+        project="hermes-memory-fabric", namespace="operator",
+        target=f"proposal:{_logical_sha256(payload)[:32]}", sequence=0,
+        decision_id="propose-1",
+    )
+
+
+def _review_decision(
+    workspace: Path,
+    *,
+    operation: str,
+    proposal_id: str,
+    actor_field: str,
+    actor: str,
+    optional_field: str,
+    optional_value,
+    sequence: int,
+    decision_id: str,
+):
+    store = create_workspace_subspace_memory_store(workspace)
+    payload = {
+        "proposal_id": proposal_id,
+        actor_field: actor,
+        optional_field: optional_value,
+    }
+    return _explicit_decision(
+        store, operation=operation, payload=payload,
+        project="hermes-memory-fabric", namespace="operator", target=proposal_id,
+        sequence=sequence, decision_id=decision_id,
+    )
+
+
 def _propose(tmp_path: Path, *, content: str) -> str:
+    decision = _propose_decision(tmp_path, content=content, source="operator-test")
     exit_code, payload, stderr = _run(
         [
             "propose",
@@ -342,7 +442,8 @@ def _propose(tmp_path: Path, *, content: str) -> str:
             content,
             "--source",
             "operator-test",
-        ]
+        ],
+        decision,
     )
     assert exit_code == 0
     assert stderr == ""

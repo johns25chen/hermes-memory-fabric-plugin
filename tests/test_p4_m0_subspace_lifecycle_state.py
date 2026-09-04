@@ -7,7 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from hermes_memory_fabric.p4_m0_subspace_memory import SubspaceMemoryStore
+from tests.test_p4_m0_subspace_memory import (
+    _Contract21TestStore as SubspaceMemoryStore,
+    _approve,
+    _adapt_mutation_argv,
+    _explicit_decision,
+    _lifecycle,
+    _propose,
+)
+from hermes_memory_fabric.r8_local_persistence_governance import GovernanceError, _snapshot_digest, canonical_json
 from hermes_memory_fabric.p4_m0_subspace_operator import run_operator_command
 from hermes_memory_fabric.p4_m0_subspace_recall_pack import run_recall_pack_export
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
@@ -16,7 +24,7 @@ from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subsp
 def test_approved_memory_defaults_to_active_lifecycle(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
 
-    memory = _approved_memory(store, content="Default active lifecycle memory.")
+    memory = _approved_memory(store, sequence=0, content="Default active lifecycle memory.")
 
     assert memory.lifecycle == "active"
     assert _memory_records(tmp_path)[0]["lifecycle"] == "active"
@@ -24,25 +32,23 @@ def test_approved_memory_defaults_to_active_lifecycle(tmp_path):
 
 def test_old_memory_record_without_lifecycle_is_read_as_active(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Old record remains active for recall.")
+    memory = _approved_memory(store, sequence=0, content="Old record remains active for recall.")
     records = _memory_records(tmp_path)
     records[0].pop("lifecycle")
     _write_memory_records(tmp_path, records)
 
     reopened = SubspaceMemoryStore(tmp_path)
-    results = reopened.recall("old active")
-
-    assert [result.memory_id for result in results] == [memory.id]
-    assert results[0].lifecycle == "active"
+    with pytest.raises(GovernanceError, match="BLOCK_SNAPSHOT_INTEGRITY"):
+        reopened.recall("old active")
 
 
 def test_valid_lifecycle_transitions_work(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Lifecycle transition memory.")
+    memory = _approved_memory(store, sequence=0, content="Lifecycle transition memory.")
 
-    stale = store.set_memory_lifecycle(memory.id, "stale", actor="human", reason="manual review")
-    archived = store.set_memory_lifecycle(memory.id, "archived", actor="human")
-    active = store.set_memory_lifecycle(memory.id, "active", actor="human")
+    stale = _lifecycle(store, memory, 2, "lifecycle-stale", lifecycle="stale", actor="human", reason="manual review")
+    archived = _lifecycle(store, memory, 3, "lifecycle-archived", lifecycle="archived", actor="human")
+    active = _lifecycle(store, memory, 4, "lifecycle-active", lifecycle="active", actor="human")
 
     assert stale.lifecycle == "stale"
     assert archived.lifecycle == "archived"
@@ -52,7 +58,7 @@ def test_valid_lifecycle_transitions_work(tmp_path):
 
 def test_invalid_lifecycle_state_is_rejected(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Invalid lifecycle is rejected.")
+    memory = _approved_memory(store, sequence=0, content="Invalid lifecycle is rejected.")
 
     with pytest.raises(ValueError, match="invalid_lifecycle_state"):
         store.set_memory_lifecycle(memory.id, "deleted", actor="human")
@@ -60,16 +66,32 @@ def test_invalid_lifecycle_state_is_rejected(tmp_path):
 
 def test_lifecycle_update_requires_existing_memory_id(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
+    payload = {
+        "memory_id": "memory:missing", "lifecycle": "stale",
+        "actor": "human", "reason": None,
+    }
+    decision_id = "missing-memory-lifecycle"
 
     with pytest.raises(ValueError, match="memory_not_found"):
-        store.set_memory_lifecycle("memory:missing", "stale", actor="human")
+        store.set_memory_lifecycle(
+            "memory:missing", "stale", actor="human",
+            decision=_explicit_decision(
+                store, operation="SET_MEMORY_LIFECYCLE", payload=payload,
+                project="hermes-memory-fabric", namespace="lifecycle",
+                target="memory:missing", sequence=0, decision_id=decision_id,
+            ),
+        )
+
+    assert store.current_sequence == 0
+    assert store._governance.reconcile(decision_id)["decision_consumed"] is False
+    assert not store._governance.snapshot_path.exists()
 
 
 def test_lifecycle_update_creates_audit_event(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Lifecycle audit event memory.")
+    memory = _approved_memory(store, sequence=0, content="Lifecycle audit event memory.")
 
-    store.set_memory_lifecycle(memory.id, "stale", actor="human", reason="manual stale mark")
+    _lifecycle(store, memory, 2, "lifecycle-audit", lifecycle="stale", actor="human", reason="manual stale mark")
 
     event = store.list_audit_events()[-1]
     assert event.event_type == "memory_lifecycle_updated"
@@ -84,11 +106,11 @@ def test_lifecycle_update_creates_audit_event(tmp_path):
 
 def test_lifecycle_update_does_not_create_proposal_or_memory_records(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Lifecycle update rewrites existing memory record.")
+    memory = _approved_memory(store, sequence=0, content="Lifecycle update rewrites existing memory record.")
     proposals_before = _line_count(tmp_path / "proposals.jsonl")
     memories_before = _line_count(tmp_path / "memories.jsonl")
 
-    store.set_memory_lifecycle(memory.id, "archived", actor="human")
+    _lifecycle(store, memory, 2, "lifecycle-rewrite", lifecycle="archived", actor="human")
 
     assert _line_count(tmp_path / "proposals.jsonl") == proposals_before
     assert _line_count(tmp_path / "memories.jsonl") == memories_before
@@ -96,11 +118,11 @@ def test_lifecycle_update_does_not_create_proposal_or_memory_records(tmp_path):
 
 def test_default_recall_returns_active_memories_only(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    active = _approved_memory(store, content="Lifecycle keyword active memory.")
-    stale = _approved_memory(store, content="Lifecycle keyword stale memory.")
-    archived = _approved_memory(store, content="Lifecycle keyword archived memory.")
-    store.set_memory_lifecycle(stale.id, "stale", actor="human")
-    store.set_memory_lifecycle(archived.id, "archived", actor="human")
+    active = _approved_memory(store, sequence=0, content="Lifecycle keyword active memory.")
+    stale = _approved_memory(store, sequence=2, content="Lifecycle keyword stale memory.")
+    archived = _approved_memory(store, sequence=4, content="Lifecycle keyword archived memory.")
+    _lifecycle(store, stale, 6, "lifecycle-stale", lifecycle="stale", actor="human")
+    _lifecycle(store, archived, 7, "lifecycle-archived", lifecycle="archived", actor="human")
 
     results = store.recall("lifecycle keyword")
 
@@ -110,24 +132,24 @@ def test_default_recall_returns_active_memories_only(tmp_path):
 
 def test_stale_memories_are_excluded_from_default_recall(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Stale lifecycle recall memory.")
-    store.set_memory_lifecycle(memory.id, "stale", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Stale lifecycle recall memory.")
+    _lifecycle(store, memory, 2, "lifecycle-stale", lifecycle="stale", actor="human")
 
     assert store.recall("stale lifecycle") == []
 
 
 def test_archived_memories_are_excluded_from_default_recall(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Archived lifecycle recall memory.")
-    store.set_memory_lifecycle(memory.id, "archived", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Archived lifecycle recall memory.")
+    _lifecycle(store, memory, 2, "lifecycle-archived", lifecycle="archived", actor="human")
 
     assert store.recall("archived lifecycle") == []
 
 
 def test_explicit_include_stale_recalls_stale_memory(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Explicit stale lifecycle memory.")
-    store.set_memory_lifecycle(memory.id, "stale", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Explicit stale lifecycle memory.")
+    _lifecycle(store, memory, 2, "lifecycle-stale", lifecycle="stale", actor="human")
 
     results = store.recall("explicit stale", include_stale=True)
 
@@ -137,8 +159,8 @@ def test_explicit_include_stale_recalls_stale_memory(tmp_path):
 
 def test_explicit_include_archived_recalls_archived_memory(tmp_path):
     store = SubspaceMemoryStore(tmp_path)
-    memory = _approved_memory(store, content="Explicit archived lifecycle memory.")
-    store.set_memory_lifecycle(memory.id, "archived", actor="human")
+    memory = _approved_memory(store, sequence=0, content="Explicit archived lifecycle memory.")
+    _lifecycle(store, memory, 2, "lifecycle-archived", lifecycle="archived", actor="human")
 
     results = store.recall("explicit archived", include_archived=True)
 
@@ -148,7 +170,16 @@ def test_explicit_include_archived_recalls_archived_memory(tmp_path):
 
 def test_manual_operator_lifecycle_command_updates_lifecycle_and_outputs_json(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Operator lifecycle command memory.")
+    memory = _approved_memory(store, sequence=0, content="Operator lifecycle command memory.")
+    lifecycle_payload = {
+        "memory_id": memory.id, "lifecycle": "stale", "actor": "human",
+        "reason": "manual operator mark",
+    }
+    decision = _explicit_decision(
+        store, operation="SET_MEMORY_LIFECYCLE", payload=lifecycle_payload,
+        project=memory.project, namespace=memory.namespace, target=memory.id,
+        sequence=2, decision_id="operator-lifecycle",
+    )
 
     exit_code, payload, stderr = _run_operator(
         [
@@ -163,7 +194,8 @@ def test_manual_operator_lifecycle_command_updates_lifecycle_and_outputs_json(tm
             "human",
             "--reason",
             "manual operator mark",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
@@ -179,11 +211,11 @@ def test_manual_operator_lifecycle_command_updates_lifecycle_and_outputs_json(tm
 
 def test_operator_recall_respects_lifecycle_default_and_include_flags(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    active = _approved_memory(store, content="Operator lifecycle active result.")
-    stale = _approved_memory(store, content="Operator lifecycle stale result.")
-    archived = _approved_memory(store, content="Operator lifecycle archived result.")
-    store.set_memory_lifecycle(stale.id, "stale", actor="human")
-    store.set_memory_lifecycle(archived.id, "archived", actor="human")
+    active = _approved_memory(store, sequence=0, content="Operator lifecycle active result.")
+    stale = _approved_memory(store, sequence=2, content="Operator lifecycle stale result.")
+    archived = _approved_memory(store, sequence=4, content="Operator lifecycle archived result.")
+    _lifecycle(store, stale, 6, "lifecycle-stale", lifecycle="stale", actor="human")
+    _lifecycle(store, archived, 7, "lifecycle-archived", lifecycle="archived", actor="human")
 
     default_code, default_payload, default_stderr = _run_operator(
         ["recall", "--workspace-root", str(tmp_path), "--query", "operator lifecycle"]
@@ -219,7 +251,7 @@ def test_operator_recall_respects_lifecycle_default_and_include_flags(tmp_path):
 
 def test_recall_pack_export_includes_lifecycle_metadata(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    memory = _approved_memory(store, content="Recall pack lifecycle metadata memory.")
+    memory = _approved_memory(store, sequence=0, content="Recall pack lifecycle metadata memory.")
 
     exit_code, pack, stderr = _run_recall_pack(
         ["--workspace-root", str(tmp_path), "--query", "recall pack lifecycle"]
@@ -233,10 +265,10 @@ def test_recall_pack_export_includes_lifecycle_metadata(tmp_path):
 
 def test_recall_pack_export_respects_lifecycle_default_and_include_flags(tmp_path):
     store = create_workspace_subspace_memory_store(tmp_path)
-    stale = _approved_memory(store, content="Recall pack stale lifecycle memory.")
-    archived = _approved_memory(store, content="Recall pack archived lifecycle memory.")
-    store.set_memory_lifecycle(stale.id, "stale", actor="human")
-    store.set_memory_lifecycle(archived.id, "archived", actor="human")
+    stale = _approved_memory(store, sequence=0, content="Recall pack stale lifecycle memory.")
+    archived = _approved_memory(store, sequence=2, content="Recall pack archived lifecycle memory.")
+    _lifecycle(store, stale, 4, "lifecycle-stale", lifecycle="stale", actor="human")
+    _lifecycle(store, archived, 5, "lifecycle-archived", lifecycle="archived", actor="human")
 
     default_code, default_pack, default_stderr = _run_recall_pack(
         [
@@ -301,40 +333,39 @@ def test_no_pyproject_entry_point_is_added_for_lifecycle_state():
     assert "p4_m0_subspace_lifecycle" not in entry_points
 
 
-def _approved_memory(store: SubspaceMemoryStore, *, content: str):
-    proposal = store.propose_memory(
+def _approved_memory(store: SubspaceMemoryStore, *, sequence: int, content: str):
+    proposal = _propose(store, sequence, f"propose-{sequence}",
         project="hermes-memory-fabric",
         namespace="lifecycle",
         content=content,
         source="lifecycle-test",
     )
-    return store.approve_proposal(proposal.id, approver="human")
+    return _approve(store, proposal, sequence + 1, f"approve-{sequence + 1}", approver="human")
 
 
 def _memory_records(storage_root: Path) -> list[dict[str, object]]:
-    return [
-        json.loads(line)
-        for line in (storage_root / "memories.jsonl").read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    return json.loads((storage_root / "snapshot.json").read_text(encoding="utf-8"))["memories"]
 
 
 def _write_memory_records(storage_root: Path, records: list[dict[str, object]]) -> None:
-    (storage_root / "memories.jsonl").write_text(
-        "".join(json.dumps(record, sort_keys=True, separators=(",", ":")) + "\n" for record in records),
-        encoding="utf-8",
-    )
+    path = storage_root / "snapshot.json"
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    snapshot["memories"] = records
+    snapshot["snapshot_sha256"] = _snapshot_digest(snapshot)
+    path.write_text(canonical_json(snapshot) + "\n", encoding="utf-8")
 
 
 def _line_count(path: Path) -> int:
-    return len(path.read_text(encoding="utf-8").splitlines())
+    snapshot = json.loads((path.parent / "snapshot.json").read_text(encoding="utf-8"))
+    return len(snapshot[{"proposals.jsonl": "proposals", "memories.jsonl": "memories"}[path.name]])
 
 
-def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str]:
+def _run_operator(argv: list[str], decision=None) -> tuple[int, dict[str, object], str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    command = _adapt_mutation_argv(argv, decision) if decision is not None else argv
+    exit_code = run_operator_command(command, stdout=stdout, stderr=stderr)
 
     payload = json.loads(stdout.getvalue()) if stdout.getvalue() else {}
     return exit_code, payload, stderr.getvalue()

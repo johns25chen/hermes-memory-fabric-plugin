@@ -18,6 +18,7 @@ from hermes_memory_fabric.p4_m0_subspace_project_seed import (
     render_project_memory_seed_pack,
 )
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
+from tests.test_p4_m0_subspace_memory import _adapt_mutation_argv, _explicit_decision
 
 
 REQUIRED_SEED_IDS = (
@@ -161,6 +162,7 @@ def test_operator_project_seed_pack_returns_markdown(tmp_path):
 
 
 def test_operator_project_seed_propose_creates_exactly_one_pending_proposal(tmp_path):
+    decision = _seed_propose_decision(tmp_path, "civilization-core-identity", "human", sequence=0)
     exit_code, payload, stderr, _ = _run_operator(
         [
             "project-seed",
@@ -171,12 +173,13 @@ def test_operator_project_seed_propose_creates_exactly_one_pending_proposal(tmp_
             "civilization-core-identity",
             "--actor",
             "human",
-        ]
+        ],
+        decision,
     )
     store = create_workspace_subspace_memory_store(tmp_path)
-    proposals_path = tmp_path / ".local" / "subspace_memory" / "proposals.jsonl"
-    proposal_lines = _line_count(proposals_path)
-    proposal_record = json.loads(proposals_path.read_text(encoding="utf-8").splitlines()[0])
+    snapshot = json.loads((tmp_path / ".local" / "subspace_memory" / "snapshot.json").read_text(encoding="utf-8"))
+    proposal_lines = len(snapshot["proposals"])
+    proposal_record = snapshot["proposals"][0]
 
     assert exit_code == 0
     assert stderr == ""
@@ -197,6 +200,7 @@ def test_operator_project_seed_propose_creates_exactly_one_pending_proposal(tmp_
 
 
 def test_operator_project_seed_propose_does_not_create_approved_memory_record(tmp_path):
+    decision = _seed_propose_decision(tmp_path, "civilization-core-identity", "human", sequence=0)
     exit_code, _, stderr, _ = _run_operator(
         [
             "project-seed",
@@ -207,12 +211,14 @@ def test_operator_project_seed_propose_does_not_create_approved_memory_record(tm
             "civilization-core-identity",
             "--actor",
             "human",
-        ]
+        ],
+        decision,
     )
 
     assert exit_code == 0
     assert stderr == ""
-    assert not (tmp_path / ".local" / "subspace_memory" / "memories.jsonl").exists()
+    snapshot = json.loads((tmp_path / ".local" / "subspace_memory" / "snapshot.json").read_text(encoding="utf-8"))
+    assert snapshot["memories"] == []
 
 
 def test_operator_project_seed_propose_requires_actor(tmp_path):
@@ -244,7 +250,8 @@ def test_operator_project_seed_propose_requires_valid_seed_id(tmp_path):
             "missing-seed",
             "--actor",
             "human",
-        ]
+        ],
+        {},
     )
 
     assert exit_code == 1
@@ -256,6 +263,13 @@ def test_operator_project_seed_propose_requires_valid_seed_id(tmp_path):
 
 def test_proposed_seed_can_be_approved_later_by_existing_approve_command(tmp_path):
     proposal_id = _propose_seed(tmp_path, "p4-m0-human-gated-chain")
+    store = create_workspace_subspace_memory_store(tmp_path)
+    approve_decision = _explicit_decision(
+        store, operation="APPROVE_PROPOSAL",
+        payload={"proposal_id": proposal_id, "approver": "human", "note": None},
+        project="civilization-core", namespace="project-seed", target=proposal_id,
+        sequence=1, decision_id="approve-seed",
+    )
 
     exit_code, payload, stderr, _ = _run_operator(
         [
@@ -266,7 +280,8 @@ def test_proposed_seed_can_be_approved_later_by_existing_approve_command(tmp_pat
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        approve_decision,
     )
 
     assert exit_code == 0
@@ -321,6 +336,13 @@ def test_approved_seed_recall_includes_p4_m0_5_explainable_trace(tmp_path):
 
 def test_approved_seed_can_be_marked_stale_with_lifecycle_command(tmp_path):
     memory_id = _approve_seed(tmp_path, "manual-operator-validation-discipline")
+    store = create_workspace_subspace_memory_store(tmp_path)
+    lifecycle_decision = _explicit_decision(
+        store, operation="SET_MEMORY_LIFECYCLE",
+        payload={"memory_id": memory_id, "lifecycle": "stale", "actor": "human", "reason": None},
+        project="civilization-core", namespace="project-seed", target=memory_id,
+        sequence=2, decision_id="lifecycle-seed",
+    )
 
     exit_code, payload, stderr, _ = _run_operator(
         [
@@ -333,7 +355,8 @@ def test_approved_seed_can_be_marked_stale_with_lifecycle_command(tmp_path):
             "stale",
             "--actor",
             "human",
-        ]
+        ],
+        lifecycle_decision,
     )
 
     assert exit_code == 0
@@ -344,6 +367,13 @@ def test_approved_seed_can_be_marked_stale_with_lifecycle_command(tmp_path):
 
 def test_approved_seed_can_be_marked_do_not_retry_with_p4_m0_6_command(tmp_path):
     memory_id = _approve_seed(tmp_path, "do-not-retry-and-lifecycle-governance")
+    store = create_workspace_subspace_memory_store(tmp_path)
+    dnr_decision = _explicit_decision(
+        store, operation="SET_DO_NOT_RETRY",
+        payload={"memory_id": memory_id, "reason": "manual guard", "actor": "human", "alternative": None},
+        project="civilization-core", namespace="project-seed", target=memory_id,
+        sequence=2, decision_id="dnr-seed",
+    )
 
     exit_code, payload, stderr, _ = _run_operator(
         [
@@ -357,7 +387,8 @@ def test_approved_seed_can_be_marked_do_not_retry_with_p4_m0_6_command(tmp_path)
             "manual guard",
             "--actor",
             "human",
-        ]
+        ],
+        dnr_decision,
     )
 
     assert exit_code == 0
@@ -388,18 +419,41 @@ def test_no_pyproject_entry_point_is_added_for_project_seed():
     assert "p4_m0_subspace_project_seed" not in entry_points
 
 
-def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
+def _run_operator(argv: list[str], decision=None) -> tuple[int, dict[str, object], str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    command = _adapt_mutation_argv(argv, decision) if decision is not None else argv
+    exit_code = run_operator_command(command, stdout=stdout, stderr=stderr)
 
     stdout_value = stdout.getvalue()
     payload = json.loads(stdout_value) if stdout_value.startswith("{") else {}
     return exit_code, payload, stderr.getvalue(), stdout_value
 
 
+def _seed_propose_decision(tmp_path: Path, seed_id: str, actor: str, *, sequence: int):
+    seed = get_project_memory_seed(seed_id)
+    store = create_workspace_subspace_memory_store(tmp_path)
+    payload = {
+        "project": seed.project,
+        "namespace": seed.namespace,
+        "content": seed.content,
+        "source": f"{seed.source}:proposed-by:{actor}",
+        "tags": list(seed.tags),
+        "confidence": seed.confidence,
+    }
+    from tests.test_p4_m0_subspace_memory import _logical_sha256
+
+    return _explicit_decision(
+        store, operation="PROPOSE_MEMORY", payload=payload,
+        project=seed.project, namespace=seed.namespace,
+        target=f"proposal:{_logical_sha256(payload)[:32]}", sequence=sequence,
+        decision_id=f"seed-propose-{seed_id}-{sequence}",
+    )
+
+
 def _propose_seed(tmp_path: Path, seed_id: str) -> str:
+    decision = _seed_propose_decision(tmp_path, seed_id, "human", sequence=0)
     exit_code, payload, stderr, _ = _run_operator(
         [
             "project-seed",
@@ -410,7 +464,8 @@ def _propose_seed(tmp_path: Path, seed_id: str) -> str:
             seed_id,
             "--actor",
             "human",
-        ]
+        ],
+        decision,
     )
     assert exit_code == 0
     assert stderr == ""
@@ -419,6 +474,13 @@ def _propose_seed(tmp_path: Path, seed_id: str) -> str:
 
 def _approve_seed(tmp_path: Path, seed_id: str) -> str:
     proposal_id = _propose_seed(tmp_path, seed_id)
+    store = create_workspace_subspace_memory_store(tmp_path)
+    decision = _explicit_decision(
+        store, operation="APPROVE_PROPOSAL",
+        payload={"proposal_id": proposal_id, "approver": "human", "note": None},
+        project="civilization-core", namespace="project-seed", target=proposal_id,
+        sequence=1, decision_id="approve-seed",
+    )
     exit_code, payload, stderr, _ = _run_operator(
         [
             "approve",
@@ -428,7 +490,8 @@ def _approve_seed(tmp_path: Path, seed_id: str) -> str:
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        decision,
     )
     assert exit_code == 0
     assert stderr == ""
@@ -436,4 +499,8 @@ def _approve_seed(tmp_path: Path, seed_id: str) -> str:
 
 
 def _line_count(path: Path) -> int:
-    return len(path.read_text(encoding="utf-8").splitlines()) if path.exists() else 0
+    snapshot_path = path.parent / "snapshot.json"
+    if not snapshot_path.exists():
+        return 0
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    return len(snapshot[{"proposals.jsonl": "proposals", "memories.jsonl": "memories"}[path.name]])
