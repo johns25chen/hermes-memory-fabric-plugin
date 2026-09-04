@@ -608,6 +608,7 @@ from .p4_m0_subspace_seed_approval_runbook import (
     seed_approval_runbook_as_dicts,
 )
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
+from .r8_local_persistence_governance import GovernanceError
 from .r7_project_continuity_control_surface import (
     run_r7_real_use_observation,
     run_r7_project_continuity_control_surface,
@@ -641,18 +642,21 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     propose.add_argument("--source", default="local")
     propose.add_argument("--tag", action="append", default=[])
     propose.add_argument("--confidence", type=float, default=1.0)
+    propose.add_argument("--mutation-decision-json", required=True)
 
     approve = subparsers.add_parser("approve")
     _add_workspace_root(approve)
     approve.add_argument("--proposal-id", required=True)
     approve.add_argument("--approver", required=True)
     approve.add_argument("--note")
+    approve.add_argument("--mutation-decision-json", required=True)
 
     reject = subparsers.add_parser("reject")
     _add_workspace_root(reject)
     reject.add_argument("--proposal-id", required=True)
     reject.add_argument("--reviewer", required=True)
     reject.add_argument("--reason", required=True)
+    reject.add_argument("--mutation-decision-json", required=True)
 
     recall = subparsers.add_parser("recall")
     _add_workspace_root(recall)
@@ -669,6 +673,7 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     lifecycle.add_argument("--state", choices=VALID_LIFECYCLE_STATES, required=True)
     lifecycle.add_argument("--actor", required=True)
     lifecycle.add_argument("--reason")
+    lifecycle.add_argument("--mutation-decision-json", required=True)
 
     do_not_retry = subparsers.add_parser("do-not-retry")
     do_not_retry_subparsers = do_not_retry.add_subparsers(dest="do_not_retry_command", required=True)
@@ -679,12 +684,14 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     do_not_retry_set.add_argument("--reason", required=True)
     do_not_retry_set.add_argument("--actor", required=True)
     do_not_retry_set.add_argument("--alternative")
+    do_not_retry_set.add_argument("--mutation-decision-json", required=True)
 
     do_not_retry_clear = do_not_retry_subparsers.add_parser("clear")
     _add_workspace_root(do_not_retry_clear)
     do_not_retry_clear.add_argument("--memory-id", required=True)
     do_not_retry_clear.add_argument("--actor", required=True)
     do_not_retry_clear.add_argument("--reason")
+    do_not_retry_clear.add_argument("--mutation-decision-json", required=True)
 
     project_seed = subparsers.add_parser("project-seed")
     project_seed_subparsers = project_seed.add_subparsers(dest="project_seed_command", required=True)
@@ -711,6 +718,7 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     _add_workspace_root(project_seed_propose)
     project_seed_propose.add_argument("--seed-id", required=True)
     project_seed_propose.add_argument("--actor", required=True)
+    project_seed_propose.add_argument("--mutation-decision-json", required=True)
 
     memory_loop = subparsers.add_parser("memory-loop")
     memory_loop_subparsers = memory_loop.add_subparsers(dest="memory_loop_command", required=True)
@@ -1885,6 +1893,9 @@ def run_operator_command(
         payload = _run_parsed_command(args)
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 2
+    except GovernanceError as exc:
+        _write_compact_json(err, {"code": exc.code, "disposition": "BLOCK"})
+        return 2
     except (OSError, ValueError) as exc:
         err.write(f"{exc}\n")
         return 1
@@ -1968,6 +1979,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             source=args.source,
             tags=args.tag,
             confidence=args.confidence,
+            decision=args.mutation_decision_json,
         )
         return {
             "proposal_id": proposal.id,
@@ -1984,6 +1996,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             args.proposal_id,
             approver=args.approver,
             note=args.note,
+            decision=args.mutation_decision_json,
         )
         return {
             "memory_id": memory.id,
@@ -1999,6 +2012,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             args.proposal_id,
             reviewer=args.reviewer,
             reason=args.reason,
+            decision=args.mutation_decision_json,
         )
         return {
             "proposal_id": rejected.id,
@@ -2034,6 +2048,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
             args.state,
             actor=args.actor,
             reason=args.reason,
+            decision=args.mutation_decision_json,
         )
         previous_lifecycle = _latest_lifecycle_audit_previous(store, memory.id)
         return {
@@ -2053,6 +2068,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 reason=args.reason,
                 actor=args.actor,
                 alternative=args.alternative,
+                decision=args.mutation_decision_json,
             )
             return {
                 "memory_id": memory.id,
@@ -2066,6 +2082,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 args.memory_id,
                 actor=args.actor,
                 reason=args.reason,
+                decision=args.mutation_decision_json,
             )
             previous = _latest_do_not_retry_clear_previous(store, memory.id)
             return {
@@ -2116,6 +2133,7 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
                 source=f"{seed.source}:proposed-by:{actor}",
                 tags=seed.tags,
                 confidence=seed.confidence,
+                decision=args.mutation_decision_json,
             )
             return {
                 "seed_id": seed.seed_id,

@@ -7,6 +7,12 @@ import tomllib
 from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_operator import build_parser, run_operator_command
+from tests.test_p4_m0_subspace_memory import (
+    _Contract21TestStore,
+    _adapt_mutation_argv,
+    _explicit_decision,
+    _logical_sha256,
+)
 from hermes_memory_fabric.p4_m1_human_gated_lifecycle_verification_status import (
     HUMAN_GATED_LIFECYCLE_VERIFICATION_STATUS_BOUNDARY,
     HumanGatedLifecycleVerificationStatusItem,
@@ -512,7 +518,28 @@ def test_existing_p4_m0_lifecycle_state_still_passes_through_focused_suite(tmp_p
             proposal_id,
             "--approver",
             "human",
-        ]
+        ],
+        _approve_decision(tmp_path, proposal_id),
+    )
+    memory_id = str(approve_payload["memory_id"])
+    lifecycle_payload_input = {
+        "memory_id": memory_id,
+        "lifecycle": "stale",
+        "actor": "human",
+        "reason": "focused suite compatibility check",
+    }
+    store = _Contract21TestStore(
+        tmp_path / ".local" / "subspace_memory", workspace_root=tmp_path
+    )
+    lifecycle_decision = _explicit_decision(
+        store,
+        operation="SET_MEMORY_LIFECYCLE",
+        payload=lifecycle_payload_input,
+        project="hermes-memory-fabric",
+        namespace="operator",
+        target=memory_id,
+        sequence=2,
+        decision_id="lifecycle-1",
     )
     lifecycle_code, lifecycle_payload, lifecycle_stderr, _ = _run_operator(
         [
@@ -520,14 +547,15 @@ def test_existing_p4_m0_lifecycle_state_still_passes_through_focused_suite(tmp_p
             "--workspace-root",
             str(tmp_path),
             "--memory-id",
-            str(approve_payload["memory_id"]),
+            memory_id,
             "--state",
             "stale",
             "--actor",
             "human",
             "--reason",
             "focused suite compatibility check",
-        ]
+        ],
+        lifecycle_decision,
     )
 
     assert approve_code == 0
@@ -580,11 +608,13 @@ def test_custom_markdown_render_accepts_read_only_items():
     assert "Can the human review the custom lifecycle verification item?" in markdown
 
 
-def _run_operator(argv: list[str]) -> tuple[int, dict[str, object], str, str]:
+def _run_operator(argv: list[str], decision=None) -> tuple[int, dict[str, object], str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
 
-    exit_code = run_operator_command(argv, stdout=stdout, stderr=stderr)
+    exit_code = run_operator_command(
+        _adapt_mutation_argv(argv, decision), stdout=stdout, stderr=stderr
+    )
 
     stdout_value = stdout.getvalue()
     payload = json.loads(stdout_value) if stdout_value.startswith("{") else {}
@@ -607,6 +637,27 @@ def _memory_loop_commands() -> set[str]:
 
 
 def _propose(tmp_path: Path, content: str) -> str:
+    store = _Contract21TestStore(
+        tmp_path / ".local" / "subspace_memory", workspace_root=tmp_path
+    )
+    logical_payload = {
+        "project": "hermes-memory-fabric",
+        "namespace": "operator",
+        "content": content,
+        "source": "operator-test",
+        "tags": [],
+        "confidence": 1.0,
+    }
+    decision = _explicit_decision(
+        store,
+        operation="PROPOSE_MEMORY",
+        payload=logical_payload,
+        project="hermes-memory-fabric",
+        namespace="operator",
+        target=f"proposal:{_logical_sha256(logical_payload)[:32]}",
+        sequence=0,
+        decision_id="propose-1",
+    )
     exit_code, payload, stderr, _ = _run_operator(
         [
             "propose",
@@ -620,8 +671,26 @@ def _propose(tmp_path: Path, content: str) -> str:
             content,
             "--source",
             "operator-test",
-        ]
+        ],
+        decision,
     )
     assert exit_code == 0
     assert stderr == ""
     return str(payload["proposal_id"])
+
+
+def _approve_decision(tmp_path: Path, proposal_id: str):
+    store = _Contract21TestStore(
+        tmp_path / ".local" / "subspace_memory", workspace_root=tmp_path
+    )
+    logical_payload = {"proposal_id": proposal_id, "approver": "human", "note": None}
+    return _explicit_decision(
+        store,
+        operation="APPROVE_PROPOSAL",
+        payload=logical_payload,
+        project="hermes-memory-fabric",
+        namespace="operator",
+        target=proposal_id,
+        sequence=1,
+        decision_id="approve-1",
+    )

@@ -29,7 +29,7 @@ def resolve_workspace_subspace_memory_root(
     if workspace_root is None:
         raise ValueError("workspace_root_must_be_explicit")
 
-    workspace = Path(workspace_root).expanduser().resolve(strict=False)
+    workspace = Path(workspace_root).expanduser().absolute()
     if not workspace.exists():
         raise ValueError("workspace_root_must_exist")
     if not workspace.is_dir():
@@ -41,7 +41,7 @@ def resolve_workspace_subspace_memory_root(
     if any(part == ".." for part in storage_path.parts):
         raise ValueError("storage_dir_must_not_escape_workspace")
 
-    resolved = (workspace / storage_path).resolve(strict=False)
+    resolved = (workspace / storage_path).absolute()
     try:
         resolved.relative_to(workspace)
     except ValueError as exc:
@@ -57,5 +57,6 @@ def create_workspace_subspace_memory_store(
         resolve_workspace_subspace_memory_root(
             workspace_root,
             storage_dir=storage_dir,
-        )
+        ),
+        workspace_root=workspace_root,
     )

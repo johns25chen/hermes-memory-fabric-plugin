@@ -2,11 +2,23 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from itertools import islice
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable, Mapping
+
+from .r8_local_persistence_governance import (
+    GovernedSnapshotStore,
+    GovernanceError,
+    MAX_BUSINESS_STRING_CHARS,
+    MAX_IDENTIFIER_CHARS,
+    MAX_TAGS,
+    MutationReceipt,
+    proposal_target,
+)
 
 
 SCHEMA_VERSION = "p4-m0.subspace-memory.v1"
@@ -120,16 +132,25 @@ class AuditEvent:
 class SubspaceMemoryStore:
     """P4-M0 local file-backed Subspace Memory runtime."""
 
-    def __init__(self, storage_root: str | Path):
-        if storage_root is None:
-            raise ValueError("storage_root_must_be_explicit")
-        self.storage_root = Path(storage_root).expanduser()
-        self.storage_root.mkdir(parents=True, exist_ok=True)
-        if not self.storage_root.is_dir():
-            raise ValueError("storage_root_must_be_directory")
-        self._proposals_path = self.storage_root / _PROPOSALS_FILE
-        self._memories_path = self.storage_root / _MEMORIES_FILE
-        self._audit_path = self.storage_root / _AUDIT_FILE
+    def __init__(
+        self,
+        storage_root: str | Path,
+        *,
+        workspace_root: str | Path | None = None,
+        clock: Callable[[], datetime] | None = None,
+    ):
+        self._governance = GovernedSnapshotStore(
+            storage_root, workspace_root=workspace_root, clock=clock
+        )
+        self.storage_root = self._governance.storage_root
+
+    @property
+    def last_receipt(self) -> MutationReceipt | None:
+        return self._governance.last_receipt
+
+    @property
+    def current_sequence(self) -> int:
+        return self._governance.current_sequence()
 
     def propose_memory(
         self,
@@ -140,122 +161,122 @@ class SubspaceMemoryStore:
         source: str = "local",
         tags: Iterable[str] | None = None,
         confidence: float = 1.0,
+        decision: Mapping[str, Any] | str | bytes | None = None,
     ) -> MemoryProposal:
         project_value = _required_text(project, "project")
         namespace_value = _required_text(namespace, "namespace")
         content_value = _required_text(content, "content")
-        source_value = _clean_text(source) or "local"
+        source_value = _required_text(source, "source")
         tag_values = _normalize_tags(tags)
         confidence_value = _normalize_confidence(confidence)
-        now = _utc_now()
-        proposal = MemoryProposal(
-            schema_version=SCHEMA_VERSION,
-            id=_stable_id(
-                "proposal",
-                {
-                    "project": project_value,
-                    "namespace": namespace_value,
-                    "content": content_value,
-                    "source": source_value,
-                    "tags": tag_values,
-                    "confidence": confidence_value,
-                },
-            ),
-            project=project_value,
-            namespace=namespace_value,
-            kind=PROPOSAL_KIND,
-            content=content_value,
-            source=source_value,
-            tags=tag_values,
-            confidence=confidence_value,
-            status="pending",
-            created_at=now,
-            updated_at=now,
+        payload = {
+            "project": project_value, "namespace": namespace_value, "content": content_value,
+            "source": source_value, "tags": list(tag_values), "confidence": confidence_value,
+        }
+        target = proposal_target(payload)
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> MemoryProposal:
+            self._assert_decision_scope(parsed, project_value, namespace_value)
+            proposal = MemoryProposal(
+                schema_version=SCHEMA_VERSION, id=target, project=project_value,
+                namespace=namespace_value, kind=PROPOSAL_KIND, content=content_value,
+                source=source_value, tags=tag_values, confidence=confidence_value,
+                status="pending", created_at=mutation_at, updated_at=mutation_at,
+            )
+            snapshot["proposals"].append(asdict(proposal))
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="proposal_created", target_id=proposal.id, project=proposal.project,
+                namespace=proposal.namespace, actor=proposal.source, detail={"status": proposal.status},
+                created_at=mutation_at,
+            )))
+            return proposal
+        result, _ = self._governance.transact(
+            decision, operation="PROPOSE_MEMORY", project=project_value,
+            namespace=namespace_value, target=target, payload=payload, mutate=mutate,
         )
-        self._append_record(self._proposals_path, proposal)
-        self._append_audit_event(
-            event_type="proposal_created",
-            target_id=proposal.id,
-            project=proposal.project,
-            namespace=proposal.namespace,
-            actor=proposal.source,
-            detail={"status": proposal.status},
-        )
-        return proposal
+        return result
 
     def approve_proposal(
         self,
         proposal_id: str,
         approver: str,
         note: str | None = None,
+        *,
+        decision: Mapping[str, Any] | str | bytes | None = None,
     ) -> ApprovedMemory:
-        proposal = self._pending_proposal_or_raise(proposal_id)
+        clean_id = _required_text(proposal_id, "proposal_id")
         approver_value = _required_text(approver, "approver")
         note_value = _optional_text(note)
-        now = _utc_now()
-        approved_proposal = MemoryProposal(
-            **{
-                **asdict(proposal),
-                "status": "approved",
-                "updated_at": now,
-                "approver": approver_value,
-                "note": note_value,
-            }
+        payload = {"proposal_id": clean_id, "approver": approver_value, "note": note_value}
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> ApprovedMemory:
+            proposal = self._pending_proposal_from_records(snapshot["proposals"], clean_id)
+            self._assert_decision_scope(parsed, proposal.project, proposal.namespace)
+            approved_proposal = MemoryProposal(
+                **{
+                    **asdict(proposal), "status": "approved", "updated_at": mutation_at,
+                    "approver": approver_value, "note": note_value,
+                }
+            )
+            memory = ApprovedMemory(
+                schema_version=SCHEMA_VERSION,
+                id=_stable_id("memory", {"proposal_id": proposal.id}),
+                proposal_id=proposal.id, project=proposal.project,
+                namespace=proposal.namespace, kind=APPROVED_MEMORY_KIND,
+                content=proposal.content, source=proposal.source, tags=proposal.tags,
+                confidence=proposal.confidence, status="approved", lifecycle="active",
+                created_at=mutation_at, updated_at=mutation_at,
+                approver=approver_value, note=note_value,
+            )
+            snapshot["proposals"].append(asdict(approved_proposal))
+            snapshot["memories"].append(asdict(memory))
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="proposal_approved", target_id=proposal.id, project=proposal.project,
+                namespace=proposal.namespace, actor=approver_value,
+                detail={"memory_id": memory.id, "note": note_value, "status": "approved"},
+                created_at=mutation_at,
+            )))
+            return memory
+        result, _ = self._governance.transact(
+            decision, operation="APPROVE_PROPOSAL", project=None,
+            namespace=None, target=clean_id, payload=payload, mutate=mutate,
         )
-        memory = ApprovedMemory(
-            schema_version=SCHEMA_VERSION,
-            id=_stable_id("memory", {"proposal_id": proposal.id}),
-            proposal_id=proposal.id,
-            project=proposal.project,
-            namespace=proposal.namespace,
-            kind=APPROVED_MEMORY_KIND,
-            content=proposal.content,
-            source=proposal.source,
-            tags=proposal.tags,
-            confidence=proposal.confidence,
-            status="approved",
-            lifecycle="active",
-            created_at=now,
-            updated_at=now,
-            approver=approver_value,
-            note=note_value,
-        )
-        self._append_record(self._proposals_path, approved_proposal)
-        self._append_record(self._memories_path, memory)
-        self._append_audit_event(
-            event_type="proposal_approved",
-            target_id=proposal.id,
-            project=proposal.project,
-            namespace=proposal.namespace,
-            actor=approver_value,
-            detail={"memory_id": memory.id, "note": note_value, "status": "approved"},
-        )
-        return memory
+        return result
 
-    def reject_proposal(self, proposal_id: str, reviewer: str, reason: str) -> MemoryProposal:
-        proposal = self._pending_proposal_or_raise(proposal_id)
+    def reject_proposal(
+        self, proposal_id: str, reviewer: str, reason: str, *,
+        decision: Mapping[str, Any] | str | bytes | None = None,
+    ) -> MemoryProposal:
+        clean_id = _required_text(proposal_id, "proposal_id")
         reviewer_value = _required_text(reviewer, "reviewer")
         reason_value = _required_text(reason, "reason")
-        now = _utc_now()
-        rejected = MemoryProposal(
-            **{
-                **asdict(proposal),
-                "status": "rejected",
-                "updated_at": now,
-                "reviewer": reviewer_value,
-                "reason": reason_value,
-            }
+        payload = {"proposal_id": clean_id, "reviewer": reviewer_value, "reason": reason_value}
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> MemoryProposal:
+            proposal = self._pending_proposal_from_records(snapshot["proposals"], clean_id)
+            self._assert_decision_scope(parsed, proposal.project, proposal.namespace)
+            rejected = MemoryProposal(
+                **{
+                    **asdict(proposal), "status": "rejected", "updated_at": mutation_at,
+                    "reviewer": reviewer_value, "reason": reason_value,
+                }
+            )
+            snapshot["proposals"].append(asdict(rejected))
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="proposal_rejected", target_id=proposal.id, project=proposal.project,
+                namespace=proposal.namespace, actor=reviewer_value,
+                detail={"reason": reason_value, "status": "rejected"},
+                created_at=mutation_at,
+            )))
+            return rejected
+        result, _ = self._governance.transact(
+            decision, operation="REJECT_PROPOSAL", project=None,
+            namespace=None, target=clean_id, payload=payload, mutate=mutate,
         )
-        self._append_record(self._proposals_path, rejected)
-        self._append_audit_event(
-            event_type="proposal_rejected",
-            target_id=proposal.id,
-            project=proposal.project,
-            namespace=proposal.namespace,
-            actor=reviewer_value,
-            detail={"reason": reason_value, "status": "rejected"},
-        )
-        return rejected
+        return result
 
     def set_memory_lifecycle(
         self,
@@ -264,45 +285,38 @@ class SubspaceMemoryStore:
         *,
         actor: str,
         reason: str | None = None,
+        decision: Mapping[str, Any] | str | bytes | None = None,
     ) -> ApprovedMemory:
         clean_id = _required_text(memory_id, "memory_id")
         lifecycle_value = _normalize_lifecycle(lifecycle)
         actor_value = _required_text(actor, "actor")
         reason_value = _optional_text(reason)
-        records = self._read_jsonl(self._memories_path)
-        memory_index: int | None = None
-        memory: ApprovedMemory | None = None
-        for index, record in enumerate(records):
-            if str(record.get("id")) == clean_id:
-                memory_index = index
-                memory = _memory_from_record(record)
-        if memory is None or memory_index is None:
-            raise ValueError("memory_not_found")
-
-        previous_lifecycle = memory.lifecycle
-        now = _utc_now()
-        updated = ApprovedMemory(
-            **{
-                **asdict(memory),
-                "lifecycle": lifecycle_value,
-                "updated_at": now,
-            }
+        payload = {"memory_id": clean_id, "lifecycle": lifecycle_value, "actor": actor_value, "reason": reason_value}
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> ApprovedMemory:
+            index, memory = self._memory_record_or_raise(snapshot["memories"], clean_id)
+            self._assert_decision_scope(parsed, memory.project, memory.namespace)
+            previous_lifecycle = memory.lifecycle
+            updated = ApprovedMemory(
+                **{
+                    **asdict(memory), "lifecycle": lifecycle_value,
+                    "updated_at": mutation_at,
+                }
+            )
+            snapshot["memories"][index] = asdict(updated)
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="memory_lifecycle_updated", target_id=updated.id,
+                project=updated.project, namespace=updated.namespace, actor=actor_value,
+                detail={"previous_lifecycle": previous_lifecycle, "lifecycle": lifecycle_value, "reason": reason_value},
+                created_at=mutation_at,
+            )))
+            return updated
+        result, _ = self._governance.transact(
+            decision, operation="SET_MEMORY_LIFECYCLE", project=None,
+            namespace=None, target=clean_id, payload=payload, mutate=mutate,
         )
-        records[memory_index] = asdict(updated)
-        self._write_jsonl(self._memories_path, records)
-        self._append_audit_event(
-            event_type="memory_lifecycle_updated",
-            target_id=updated.id,
-            project=updated.project,
-            namespace=updated.namespace,
-            actor=actor_value,
-            detail={
-                "previous_lifecycle": previous_lifecycle,
-                "lifecycle": lifecycle_value,
-                "reason": reason_value,
-            },
-        )
-        return updated
+        return result
 
     def set_do_not_retry(
         self,
@@ -311,41 +325,41 @@ class SubspaceMemoryStore:
         reason: str,
         actor: str,
         alternative: str | None = None,
+        decision: Mapping[str, Any] | str | bytes | None = None,
     ) -> ApprovedMemory:
         clean_id = _required_text(memory_id, "memory_id")
         reason_value = _required_text(reason, "reason")
         actor_value = _required_text(actor, "actor")
         alternative_value = _optional_text(alternative)
-        records = self._read_jsonl(self._memories_path)
-        memory_index, memory = self._memory_record_or_raise(records, clean_id)
-        warning = DoNotRetryWarning(
-            enabled=True,
-            reason=reason_value,
-            alternative=alternative_value,
-            actor=actor_value,
-            updated_at=_utc_now(),
+        payload = {"memory_id": clean_id, "reason": reason_value, "actor": actor_value, "alternative": alternative_value}
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> ApprovedMemory:
+            index, memory = self._memory_record_or_raise(snapshot["memories"], clean_id)
+            self._assert_decision_scope(parsed, memory.project, memory.namespace)
+            warning = DoNotRetryWarning(
+                enabled=True, reason=reason_value, alternative=alternative_value,
+                actor=actor_value, updated_at=mutation_at,
+            )
+            updated = ApprovedMemory(
+                **{
+                    **asdict(memory), "do_not_retry": warning,
+                    "updated_at": mutation_at,
+                }
+            )
+            snapshot["memories"][index] = asdict(updated)
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="memory_do_not_retry_set", target_id=updated.id,
+                project=updated.project, namespace=updated.namespace, actor=actor_value,
+                detail={"reason": reason_value, "alternative": alternative_value},
+                created_at=mutation_at,
+            )))
+            return updated
+        result, _ = self._governance.transact(
+            decision, operation="SET_DO_NOT_RETRY", project=None,
+            namespace=None, target=clean_id, payload=payload, mutate=mutate,
         )
-        updated = ApprovedMemory(
-            **{
-                **asdict(memory),
-                "do_not_retry": warning,
-                "updated_at": warning.updated_at,
-            }
-        )
-        records[memory_index] = asdict(updated)
-        self._write_jsonl(self._memories_path, records)
-        self._append_audit_event(
-            event_type="memory_do_not_retry_set",
-            target_id=updated.id,
-            project=updated.project,
-            namespace=updated.namespace,
-            actor=actor_value,
-            detail={
-                "reason": reason_value,
-                "alternative": alternative_value,
-            },
-        )
-        return updated
+        return result
 
     def clear_do_not_retry(
         self,
@@ -353,34 +367,37 @@ class SubspaceMemoryStore:
         *,
         actor: str,
         reason: str | None = None,
+        decision: Mapping[str, Any] | str | bytes | None = None,
     ) -> ApprovedMemory:
         clean_id = _required_text(memory_id, "memory_id")
         actor_value = _required_text(actor, "actor")
         reason_value = _optional_text(reason)
-        records = self._read_jsonl(self._memories_path)
-        memory_index, memory = self._memory_record_or_raise(records, clean_id)
-        previous = asdict(memory.do_not_retry) if memory.do_not_retry is not None else None
-        updated = ApprovedMemory(
-            **{
-                **asdict(memory),
-                "do_not_retry": None,
-                "updated_at": _utc_now(),
-            }
+        payload = {"memory_id": clean_id, "actor": actor_value, "reason": reason_value}
+        def mutate(
+            snapshot: dict[str, Any], mutation_at: str, parsed: Mapping[str, Any]
+        ) -> ApprovedMemory:
+            index, memory = self._memory_record_or_raise(snapshot["memories"], clean_id)
+            self._assert_decision_scope(parsed, memory.project, memory.namespace)
+            previous = asdict(memory.do_not_retry) if memory.do_not_retry is not None else None
+            updated = ApprovedMemory(
+                **{
+                    **asdict(memory), "do_not_retry": None,
+                    "updated_at": mutation_at,
+                }
+            )
+            snapshot["memories"][index] = asdict(updated)
+            snapshot["audit_events"].append(asdict(self._audit_event(
+                event_type="memory_do_not_retry_cleared", target_id=updated.id,
+                project=updated.project, namespace=updated.namespace, actor=actor_value,
+                detail={"previous_do_not_retry": previous, "reason": reason_value},
+                created_at=mutation_at,
+            )))
+            return updated
+        result, _ = self._governance.transact(
+            decision, operation="CLEAR_DO_NOT_RETRY", project=None,
+            namespace=None, target=clean_id, payload=payload, mutate=mutate,
         )
-        records[memory_index] = asdict(updated)
-        self._write_jsonl(self._memories_path, records)
-        self._append_audit_event(
-            event_type="memory_do_not_retry_cleared",
-            target_id=updated.id,
-            project=updated.project,
-            namespace=updated.namespace,
-            actor=actor_value,
-            detail={
-                "previous_do_not_retry": previous,
-                "reason": reason_value,
-            },
-        )
-        return updated
+        return result
 
     def recall(
         self,
@@ -452,7 +469,7 @@ class SubspaceMemoryStore:
         return results
 
     def list_audit_events(self) -> list[AuditEvent]:
-        return [AuditEvent(**record) for record in self._read_jsonl(self._audit_path)]
+        return [AuditEvent(**record) for record in self._governance.read_snapshot()["audit_events"]]
 
     def _pending_proposal_or_raise(self, proposal_id: str) -> MemoryProposal:
         clean_id = _required_text(proposal_id, "proposal_id")
@@ -463,14 +480,34 @@ class SubspaceMemoryStore:
             raise ValueError(f"proposal_not_pending:{proposal.status}")
         return proposal
 
+    def _pending_proposal_from_records(
+        self, records: list[dict[str, Any]], proposal_id: str
+    ) -> MemoryProposal:
+        proposal: MemoryProposal | None = None
+        for record in records:
+            if str(record.get("id")) == proposal_id:
+                proposal = _proposal_from_record(record)
+        if proposal is None:
+            raise ValueError("proposal_not_found")
+        if proposal.status != "pending":
+            raise ValueError(f"proposal_not_pending:{proposal.status}")
+        return proposal
+
+    @staticmethod
+    def _assert_decision_scope(
+        parsed: Mapping[str, Any], project: str, namespace: str
+    ) -> None:
+        if parsed["project"] != project or parsed["namespace"] != namespace:
+            raise GovernanceError("BLOCK_DECISION_BINDING_MISMATCH")
+
     def _latest_proposals(self) -> dict[str, MemoryProposal]:
         proposals: dict[str, MemoryProposal] = {}
-        for record in self._read_jsonl(self._proposals_path):
+        for record in self._governance.read_snapshot()["proposals"]:
             proposals[str(record["id"])] = _proposal_from_record(record)
         return proposals
 
     def _read_memories(self) -> list[ApprovedMemory]:
-        return [_memory_from_record(record) for record in self._read_jsonl(self._memories_path)]
+        return [_memory_from_record(record) for record in self._governance.read_snapshot()["memories"]]
 
     def _memory_record_or_raise(
         self,
@@ -487,7 +524,7 @@ class SubspaceMemoryStore:
             raise ValueError("memory_not_found")
         return memory_index, memory
 
-    def _append_audit_event(
+    def _audit_event(
         self,
         *,
         event_type: str,
@@ -496,8 +533,8 @@ class SubspaceMemoryStore:
         namespace: str,
         actor: str,
         detail: dict[str, Any],
+        created_at: str,
     ) -> AuditEvent:
-        now = _utc_now()
         event = AuditEvent(
             schema_version=SCHEMA_VERSION,
             id=_stable_id(
@@ -506,7 +543,7 @@ class SubspaceMemoryStore:
                     "event_type": event_type,
                     "target_id": target_id,
                     "actor": actor,
-                    "created_at": now,
+                    "created_at": created_at,
                     "detail": detail,
                 },
             ),
@@ -516,72 +553,66 @@ class SubspaceMemoryStore:
             project=project,
             namespace=namespace,
             actor=actor,
-            created_at=now,
+            created_at=created_at,
             detail=dict(detail),
         )
-        self._append_record(self._audit_path, event)
         return event
 
-    def _append_record(self, path: Path, record: Any) -> None:
-        self._assert_store_path(path)
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write(_stable_json(asdict(record)))
-            handle.write("\n")
-
-    def _write_jsonl(self, path: Path, records: list[dict[str, Any]]) -> None:
-        self._assert_store_path(path)
-        with path.open("w", encoding="utf-8") as handle:
-            for record in records:
-                handle.write(_stable_json(record))
-                handle.write("\n")
-
-    def _read_jsonl(self, path: Path) -> list[dict[str, Any]]:
-        self._assert_store_path(path)
-        if not path.exists():
-            return []
-        records: list[dict[str, Any]] = []
-        with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                if line.strip():
-                    records.append(json.loads(line))
-        return records
-
-    def _assert_store_path(self, path: Path) -> None:
-        allowed = {
-            self._proposals_path.resolve(strict=False),
-            self._memories_path.resolve(strict=False),
-            self._audit_path.resolve(strict=False),
-        }
-        if path.resolve(strict=False) not in allowed:
-            raise ValueError("path_outside_subspace_memory_store")
-
+    def _utc_now(self) -> str:
+        return self._governance._clock().astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 def _required_text(value: str, field: str) -> str:
-    cleaned = _clean_text(value)
-    if not cleaned:
+    if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field}_must_be_non_empty")
-    return cleaned
+    limit = MAX_IDENTIFIER_CHARS if field in {
+        "project", "namespace", "proposal_id", "memory_id"
+    } else MAX_BUSINESS_STRING_CHARS
+    if len(value) > limit:
+        raise ValueError(f"{field}_exceeds_character_limit")
+    return value
 
 
 def _optional_text(value: str | None) -> str | None:
     if value is None:
         return None
-    cleaned = _clean_text(value)
-    return cleaned or None
+    if not isinstance(value, str):
+        raise ValueError("optional_text_must_be_string_or_none")
+    if len(value) > MAX_BUSINESS_STRING_CHARS:
+        raise ValueError("optional_text_exceeds_character_limit")
+    return value
 
 
 def _clean_text(value: Any) -> str:
     if value is None:
         return ""
-    return str(value).strip()
+    if not isinstance(value, str):
+        raise ValueError("text_must_be_string")
+    return value
 
 
 def _normalize_tags(tags: Iterable[str] | None) -> tuple[str, ...]:
-    return tuple(sorted({_clean_text(tag) for tag in tags or [] if _clean_text(tag)}))
+    if tags is None:
+        return ()
+    if isinstance(tags, (str, bytes)):
+        raise ValueError("tags_must_be_an_iterable_of_strings")
+    try:
+        values = tuple(islice(tags, MAX_TAGS + 1))
+    except Exception:
+        raise ValueError("tags_must_be_an_iterable_of_strings") from None
+    if len(values) > MAX_TAGS:
+        raise ValueError("tags_exceed_count_limit")
+    for value in values:
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("tag_must_be_non_empty_string")
+        if len(value) > MAX_BUSINESS_STRING_CHARS:
+            raise ValueError("tag_exceeds_character_limit")
+    return values
 
 
 def _normalize_confidence(confidence: float) -> float:
-    value = float(confidence)
+    if type(confidence) not in {int, float} or not math.isfinite(confidence):
+        raise ValueError("confidence_must_be_finite_number")
+    value = confidence
     if value < 0.0 or value > 1.0:
         raise ValueError("confidence_must_be_between_0_and_1")
     return value

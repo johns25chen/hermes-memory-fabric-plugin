@@ -272,7 +272,6 @@ CONTAMINATION_TERMS = (
     "test_governance_" + "improvement_planner",
     "test_governance_" + "improvement_planner_activation",
     "test_governance_" + "plan_writer",
-    "uv" + ".lock",
 )
 
 
@@ -717,7 +716,38 @@ def test_no_unrelated_planner_or_lock_references_exist():
                 if path.is_file() and path.suffix in {".py", ".toml"}
             )
 
+    _assert_no_root_uv_lock(PROJECT_ROOT)
+
     for path in files:
         text = path.read_text(encoding="utf-8")
         for forbidden in CONTAMINATION_TERMS:
             assert forbidden not in text, path
+
+
+def _assert_no_root_uv_lock(project_root: Path) -> None:
+    try:
+        (project_root / "uv.lock").lstat()
+    except FileNotFoundError:
+        return
+    raise AssertionError("repository root must not contain a uv.lock directory entry")
+
+
+@pytest.mark.parametrize("entry_kind", ["file", "directory", "valid-symlink", "broken-symlink"])
+def test_root_uv_lock_policy_rejects_every_directory_entry_kind(tmp_path, entry_kind):
+    entry = tmp_path / "uv.lock"
+    if entry_kind == "file":
+        entry.write_text("", encoding="utf-8")
+    elif entry_kind == "directory":
+        entry.mkdir()
+    else:
+        target = tmp_path / "target"
+        if entry_kind == "valid-symlink":
+            target.write_text("", encoding="utf-8")
+        entry.symlink_to(target)
+
+    with pytest.raises(AssertionError):
+        _assert_no_root_uv_lock(tmp_path)
+
+
+def test_root_uv_lock_policy_allows_absent_entry(tmp_path):
+    _assert_no_root_uv_lock(tmp_path)

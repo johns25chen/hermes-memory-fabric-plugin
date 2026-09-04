@@ -9,6 +9,7 @@ from pathlib import Path
 
 from hermes_memory_fabric.p4_m0_subspace_recall_pack import run_recall_pack_export
 from hermes_memory_fabric.p4_m0_subspace_workspace import create_workspace_subspace_memory_store
+from tests.test_p4_m0_subspace_memory import _Contract21TestStore, _approve, _propose
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +27,7 @@ def _run(argv: list[str]) -> tuple[int, str, str]:
 def test_recall_pack_includes_query_scope_result_metadata_and_content(tmp_path):
     memory_id = _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="boundary",
         content="Recall pack export keeps approved boundary memory human-copyable.",
@@ -66,6 +68,7 @@ def test_recall_pack_includes_query_scope_result_metadata_and_content(tmp_path):
 def test_recall_pack_is_deterministic_for_same_store_and_query(tmp_path):
     _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="determinism",
         content="Deterministic pack output repeats approved context.",
@@ -95,18 +98,21 @@ def test_recall_pack_is_deterministic_for_same_store_and_query(tmp_path):
 def test_recall_pack_respects_project_and_namespace_filters(tmp_path):
     matching_id = _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="recall-pack",
         content="Filter keyword belongs to the recall pack namespace.",
     )
     _approved_memory(
         tmp_path,
+        sequence=2,
         project="other-project",
         namespace="recall-pack",
         content="Filter keyword belongs to another project.",
     )
     _approved_memory(
         tmp_path,
+        sequence=4,
         project="civilization-core",
         namespace="other-namespace",
         content="Filter keyword belongs to another namespace.",
@@ -135,12 +141,14 @@ def test_recall_pack_respects_project_and_namespace_filters(tmp_path):
 def test_limit_is_respected(tmp_path):
     first_id = _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="limit",
         content="Limit keyword alpha beta.",
     )
     _approved_memory(
         tmp_path,
+        sequence=2,
         project="civilization-core",
         namespace="limit",
         content="Limit keyword alpha.",
@@ -220,6 +228,7 @@ def test_non_positive_limit_returns_nonzero_with_stderr(tmp_path):
 def test_recall_pack_export_does_not_create_proposal_memory_or_audit_records(tmp_path):
     _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="read-only",
         content="Read only recall pack export uses approved memory.",
@@ -257,6 +266,7 @@ def test_recall_pack_export_does_not_create_proposal_memory_or_audit_records(tmp
 def test_default_workspace_root_uses_local_subspace_memory(tmp_path, monkeypatch):
     _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="default-root",
         content="Default root approved memory is recallable.",
@@ -284,6 +294,7 @@ def test_explicit_workspace_root_works(tmp_path):
     workspace.mkdir()
     _approved_memory(
         workspace,
+        sequence=0,
         project="civilization-core",
         namespace="explicit-root",
         content="Explicit root approved memory is recallable.",
@@ -310,6 +321,7 @@ def test_explicit_workspace_root_works(tmp_path):
 def test_manual_python_module_execution_is_safe(tmp_path):
     _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="manual",
         content="Manual module execution exports approved recall context.",
@@ -346,6 +358,7 @@ def test_manual_python_module_execution_is_safe(tmp_path):
 def test_output_file_is_only_written_when_explicitly_requested(tmp_path):
     _approved_memory(
         tmp_path,
+        sequence=0,
         project="civilization-core",
         namespace="output",
         content="Explicit output file receives the recall pack.",
@@ -397,17 +410,18 @@ def test_no_pyproject_entry_point_is_added_for_recall_pack():
 def _approved_memory(
     workspace_root: Path,
     *,
+    sequence: int,
     project: str,
     namespace: str,
     content: str,
     source: str = "recall-pack-test",
 ) -> str:
     store = create_workspace_subspace_memory_store(workspace_root)
-    proposal = store.propose_memory(
+    proposal = _propose(store, sequence, f"propose-{sequence}",
         project=project,
         namespace=namespace,
         content=content,
         source=source,
     )
-    memory = store.approve_proposal(proposal.id, approver="human")
+    memory = _approve(store, proposal, sequence + 1, f"approve-{sequence + 1}", approver="human")
     return memory.id

@@ -5,7 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from hermes_memory_fabric.p4_m0_subspace_memory import SubspaceMemoryStore
+from tests.test_p4_m0_subspace_memory import (
+    _Contract21TestStore as SubspaceMemoryStore,
+    _approve,
+    _propose,
+)
 from hermes_memory_fabric.p4_m0_subspace_workspace import (
     WorkspaceSubspaceMemoryConfig,
     create_workspace_subspace_memory_store,
@@ -80,13 +84,13 @@ def test_workspace_store_propose_approve_recall_and_audit(tmp_path):
     workspace.mkdir()
     store = create_workspace_subspace_memory_store(workspace)
 
-    proposal = store.propose_memory(
+    proposal = _propose(store, 0, "workspace-propose",
         project="hermes-memory-fabric",
         namespace="workspace",
         content="Workspace store persists approved memory locally.",
         source="workspace-test",
     )
-    memory = store.approve_proposal(proposal.id, approver="human")
+    memory = _approve(store, proposal, 1, "workspace-approve", approver="human")
     results = store.recall("workspace approved", project="hermes-memory-fabric")
     events = store.list_audit_events()
 
@@ -101,18 +105,14 @@ def test_workspace_store_writes_no_files_outside_storage_root(tmp_path):
     workspace.mkdir()
     storage_root = workspace / ".local" / "subspace_memory"
     store = create_workspace_subspace_memory_store(workspace)
-    proposal = store.propose_memory(project="p", namespace="n", content="workspace-only files")
-    store.approve_proposal(proposal.id, approver="human")
+    proposal = _propose(store, 0, "workspace-propose", project="p", namespace="n", content="workspace-only files")
+    _approve(store, proposal, 1, "workspace-approve", approver="human")
 
     all_files = [path for path in workspace.rglob("*") if path.is_file()]
     outside_files = [path for path in all_files if not path.is_relative_to(storage_root)]
 
     assert outside_files == []
-    assert sorted(path.name for path in storage_root.iterdir()) == [
-        "audit.jsonl",
-        "memories.jsonl",
-        "proposals.jsonl",
-    ]
+    assert sorted(path.name for path in storage_root.iterdir()) == [".snapshot.lock", "snapshot.json"]
 
 
 def test_no_uv_lock_is_created():
