@@ -97,8 +97,12 @@ def _parse_candidate_line(
         return None
 
     try:
-        value = json.loads(line)
-    except json.JSONDecodeError:
+        value = json.loads(
+            line,
+            object_pairs_hook=_reject_duplicate_object_keys,
+            parse_constant=_reject_nonfinite_number,
+        )
+    except (json.JSONDecodeError, ValueError):
         return None if ignore_invalid_lines else _STRICT_INVALID
 
     if not isinstance(value, Mapping):
@@ -109,6 +113,19 @@ def _parse_candidate_line(
         return None if ignore_invalid_lines else _STRICT_INVALID
 
     return candidate
+
+
+def _reject_duplicate_object_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("candidate_json_duplicate_key")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_number(value: str) -> None:
+    raise ValueError("candidate_json_nonfinite_number")
 
 
 def _local_existing_file_path(path: Any) -> Path | None:

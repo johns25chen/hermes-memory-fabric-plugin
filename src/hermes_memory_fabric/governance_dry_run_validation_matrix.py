@@ -57,7 +57,16 @@ HASH_INPUT_CONTRACT = {
 def build_governance_dry_run_validation_matrix() -> dict[str, Any]:
     """Build a deterministic expected-vs-observed fixture matrix."""
 
-    fixture_pack = build_governance_dry_run_fixture_pack()
+    return _build_validation_matrix_from_fixture_pack(
+        build_governance_dry_run_fixture_pack()
+    )
+
+
+def _build_validation_matrix_from_fixture_pack(
+    fixture_pack: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build a matrix from an already-built, isolated fixture snapshot."""
+
     fixture_names = _fixture_names(fixture_pack)
     fixtures = fixture_pack.get("fixtures")
     if not isinstance(fixtures, Mapping):

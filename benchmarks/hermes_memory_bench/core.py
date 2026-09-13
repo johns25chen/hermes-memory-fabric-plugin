@@ -50,6 +50,7 @@ from hermes_memory_fabric.memory_human_review_outcome_gate import (
     create_human_review_outcome_candidate,
     summarize_human_review_outcomes,
 )
+
 from hermes_memory_fabric.memory_real_proposal_creation_plan import (
     MEMORY_REAL_PROPOSAL_CREATION_PLAN_POLICY,
     create_real_proposal_creation_plan,
@@ -162,6 +163,10 @@ from hermes_memory_fabric.memory_subspace_index import (
 )
 
 
+BENCHMARK_ADMISSION_WORKSPACE = "/workspace/hermes-memory-bench"
+BENCHMARK_ADMISSION_NAMESPACE = "benchmark-evaluation"
+BENCHMARK_ADMISSION_PROVIDER_ID = "internal-hermes-memory-bench"
+BENCHMARK_ADMISSION_SOURCE_INSTANCE = "benchmark-runner"
 BENCHMARK_TYPE = "hermes_memory_bench_v0.1"
 BENCHMARK_TYPE_V02 = "hermes_memory_bench_v0.2"
 DIMENSIONS = (
@@ -617,6 +622,32 @@ def _run_provider_runtime_integration_case(
     provider_initialize_kwargs = case.get("provider_initialize_kwargs")
     if isinstance(provider_initialize_kwargs, Mapping):
         init_kwargs.update(dict(provider_initialize_kwargs))
+    project_scope = case.get("project_scope")
+    provider_runtime_config = deepcopy(dict(init_kwargs.get("provider_runtime_config", {})))
+    provider_runtime_config.update(
+        {
+            "admission_scope": {
+                "project": project_scope,
+                "workspace": BENCHMARK_ADMISSION_WORKSPACE,
+                "namespace": BENCHMARK_ADMISSION_NAMESPACE,
+            },
+            "provider_registry_snapshot": {
+                BENCHMARK_ADMISSION_PROVIDER_ID: {
+                    "enabled": True,
+                    "source_classes": ["LOCAL_CALLER"],
+                    "capabilities": ["READ_CANDIDATE"],
+                    "review_only": False,
+                    "trusted_ingestion": True,
+                }
+            },
+            "direct_candidate_source": {
+                "provider_id": BENCHMARK_ADMISSION_PROVIDER_ID,
+                "source_class": "LOCAL_CALLER",
+                "source_instance": BENCHMARK_ADMISSION_SOURCE_INSTANCE,
+            },
+        }
+    )
+    init_kwargs["provider_runtime_config"] = provider_runtime_config
     provider.initialize(str(case.get("session_id") or "bench-provider-runtime"), **init_kwargs)
 
     build_kwargs: dict[str, Any] = {

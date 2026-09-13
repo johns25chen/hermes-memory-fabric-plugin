@@ -11,6 +11,25 @@ from hermes_memory_fabric.memory_subspace_index import create_subspace_descripto
 
 
 NOW = "2026-05-26T00:00:00Z"
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/hermes-memory-fabric",
+    "namespace": "memory",
+}
+DIRECT_SOURCE = {
+    "provider_id": "direct-local-caller",
+    "source_class": "LOCAL_CALLER",
+    "source_instance": "provider:direct",
+}
+PROVIDER_REGISTRY = {
+    "direct-local-caller": {
+        "enabled": True,
+        "source_classes": ["LOCAL_CALLER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
 
 
 def _project_subspace(
@@ -104,6 +123,9 @@ def _build_packet(provider: MemoryFabricProvider | None = None, **overrides):
         "project_scope": "hermes-memory-fabric",
         "entity_ids": ["hermes-memory-fabric"],
         "now": NOW,
+        "admission_scope": ADMISSION_SCOPE,
+        "provider_registry_snapshot": PROVIDER_REGISTRY,
+        "candidate_source_descriptor": DIRECT_SOURCE,
     }
     args.update(overrides)
     return active_provider.build_active_context(**args)
@@ -148,7 +170,9 @@ def test_build_active_context_returns_valid_packet_with_matching_project_memory(
     assert "Provider Runtime Integration v0.1 prepares bounded read-only context packets" in (
         packet["compact_context_text"]
     )
-    assert packet["selected_memories"][0]["id"] == "provider-target"
+    assert len(packet["selected_memories"]) == 1
+    selected_id = packet["selected_memories"][0]["id"]
+    assert selected_id == "provider-target"
 
 
 def test_provider_rejects_unrelated_project_memory_and_explains_ids():
@@ -156,8 +180,12 @@ def test_provider_rejects_unrelated_project_memory_and_explains_ids():
     packet = _build_packet(provider)
     explanation = provider.explain_active_context(packet)
 
-    assert "provider-target" in explanation["selected_memory_ids"]
-    assert "provider-lovart" in explanation["rejected_memory_ids"]
+    assert explanation["selected_memory_ids"] == ["provider-target"]
+    assert set(explanation["rejected_memory_ids"]) == {
+        "provider-lovart",
+        "provider-archived",
+    }
+    assert set(explanation["selected_memory_ids"]).isdisjoint(explanation["rejected_memory_ids"])
     assert "project:lovart" in explanation["rejected_subspace_ids"]
     assert "Lovart provider runtime memory" not in packet["compact_context_text"]
 
@@ -237,6 +265,9 @@ def test_provider_runtime_defaults_exclude_archived_and_high_risk_until_allowed(
         project_scope="hermes-memory-fabric",
         now=NOW,
         memory_limit=2,
+        admission_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+        candidate_source_descriptor=DIRECT_SOURCE,
     )
     blocked_reasons = {item["id"]: item["reason"] for item in blocked["rejected_memories"]}
 
@@ -251,6 +282,9 @@ def test_provider_runtime_defaults_exclude_archived_and_high_risk_until_allowed(
         memory_limit=2,
         include_archived=True,
         allowed_risk_levels=["low", "medium", "high"],
+        admission_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+        candidate_source_descriptor=DIRECT_SOURCE,
     )
     allowed_ids = {item["id"] for item in allowed["selected_memories"]}
 
@@ -274,6 +308,190 @@ def test_provider_runtime_config_supplies_active_context_defaults():
     assert len(packet["selected_memories"]) == 1
     assert packet["budget"]["memory_limit"] == 1
     assert packet["budget"]["context_budget_chars"] == 180
+
+
+def test_direct_candidates_without_admission_configuration_fail_closed():
+    provider = MemoryFabricProvider()
+    packet = provider.build_active_context(
+        query="SECRET DIRECT CANDIDATE",
+        memory_candidates=[_candidate("untrusted", content="SECRET DIRECT CANDIDATE")],
+        project_scope="hermes-memory-fabric",
+        now=NOW,
+    )
+
+    assert packet["selected_memories"] == []
+    assert "SECRET DIRECT CANDIDATE" not in packet["compact_context_text"]
+
+
+def test_provider_projection_preserves_business_id_and_overwrites_spoofed_security_identity():
+    provider = MemoryFabricProvider()
+    payload = _candidate(
+        "business-memory-id",
+        provider_federation_identity={
+            "provider_id": "spoofed-provider",
+            "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+            "source_instance": "spoofed:instance",
+            "candidate_id": "spoofed-candidate",
+            "request_id": "spoofed-request",
+            "payload_digest": "sha256:" + "0" * 64,
+            "request_scope_digest": "sha256:" + "0" * 64,
+        },
+    )
+    original = deepcopy(payload)
+
+    admitted = provider._admit_candidate_sources(
+        sources=[(DIRECT_SOURCE, [payload])],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+
+    assert payload == original
+    assert admitted[0]["id"] == "business-memory-id"
+    identity = admitted[0]["provider_federation_identity"]
+    assert identity["provider_id"] == "direct-local-caller"
+    assert identity["source_class"] == "LOCAL_CALLER"
+    assert identity["source_instance"] == "provider:direct"
+    assert identity["candidate_id"] != "spoofed-candidate"
+    assert identity["request_id"] != "spoofed-request"
+    assert identity["payload_digest"] != "sha256:" + "0" * 64
+    assert identity["request_scope_digest"] != "sha256:" + "0" * 64
+
+
+def test_candidate_identity_is_stable_when_source_order_changes_and_payload_updates_digest():
+    provider = MemoryFabricProvider()
+    first = _candidate("stable-source-key", content="first content")
+    second = _candidate("other-source-key", content="other content")
+
+    ordered = provider._admit_candidate_sources(
+        sources=[(DIRECT_SOURCE, [first, second])],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+    reordered = provider._admit_candidate_sources(
+        sources=[(DIRECT_SOURCE, [second, first])],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+    updated = provider._admit_candidate_sources(
+        sources=[(DIRECT_SOURCE, [_candidate("stable-source-key", content="updated content")])],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+
+    ordered_identity = {item["id"]: item["provider_federation_identity"] for item in ordered}
+    reordered_identity = {item["id"]: item["provider_federation_identity"] for item in reordered}
+    assert ordered_identity["stable-source-key"]["candidate_id"] == "stable-source-key"
+    assert reordered_identity["stable-source-key"]["candidate_id"] == "stable-source-key"
+    assert updated[0]["provider_federation_identity"]["candidate_id"] == "stable-source-key"
+    assert updated[0]["provider_federation_identity"]["payload_digest"] != ordered_identity["stable-source-key"]["payload_digest"]
+
+
+def test_missing_or_invalid_candidate_source_key_is_rejected_before_downstream():
+    provider = MemoryFabricProvider()
+    admitted = provider._admit_candidate_sources(
+        sources=[(DIRECT_SOURCE, [_candidate("", content="invalid"), {"content": "missing"}])],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+    assert admitted == []
+
+
+def test_same_source_key_with_different_payloads_is_blocked_as_compound_conflict():
+    provider = MemoryFabricProvider()
+    admitted = provider._admit_candidate_sources(
+        sources=[
+            (
+                DIRECT_SOURCE,
+                [
+                    _candidate("conflict-key", content="first"),
+                    _candidate("conflict-key", content="second"),
+                ],
+            )
+        ],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=PROVIDER_REGISTRY,
+    )
+    assert admitted == []
+
+
+def test_explicit_empty_candidate_descriptor_does_not_fall_back_to_runtime_default():
+    provider = MemoryFabricProvider(
+        runtime_config={
+            "admission_scope": ADMISSION_SCOPE,
+            "provider_registry_snapshot": PROVIDER_REGISTRY,
+            "direct_candidate_source": DIRECT_SOURCE,
+        }
+    )
+    packet = provider.build_active_context(
+        query="explicit empty descriptor",
+        memory_candidates=[_candidate("empty-descriptor", content="must be rejected")],
+        project_scope="hermes-memory-fabric",
+        now=NOW,
+        candidate_source_descriptor={},
+    )
+    assert packet["selected_memories"] == []
+    assert "must be rejected" not in packet["compact_context_text"]
+
+
+def test_same_business_id_from_different_authoritative_sources_remains_two_candidates():
+    provider = MemoryFabricProvider()
+    second_source = {
+        "provider_id": "second-local-provider",
+        "source_class": "LOCAL_PROVIDER",
+        "source_instance": "provider:second",
+    }
+    registry = deepcopy(PROVIDER_REGISTRY)
+    registry["second-local-provider"] = {
+        "enabled": True,
+        "source_classes": ["LOCAL_PROVIDER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+
+    admitted = provider._admit_candidate_sources(
+        sources=[
+            (DIRECT_SOURCE, [_candidate("shared-business-id", content="first source")]),
+            (second_source, [_candidate("shared-business-id", content="second source")]),
+        ],
+        request_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=registry,
+    )
+
+    assert [candidate["id"] for candidate in admitted] == [
+        "shared-business-id",
+        "shared-business-id",
+    ]
+    identities = [candidate["provider_federation_identity"] for candidate in admitted]
+    assert len({(item["provider_id"], item["source_instance"], item["candidate_id"]) for item in identities}) == 2
+
+
+def test_external_review_candidate_cannot_reach_direct_context_composition():
+    external_registry = {
+        "external-review": {
+            "enabled": True,
+            "source_classes": ["EXTERNAL_FEDERATED_CANDIDATE"],
+            "capabilities": ["READ_CANDIDATE"],
+            "review_only": True,
+            "trusted_ingestion": False,
+        }
+    }
+    packet = MemoryFabricProvider().build_active_context(
+        query="SECRET REVIEW CANDIDATE",
+        memory_candidates=[_candidate("review", content="SECRET REVIEW CANDIDATE")],
+        project_scope="hermes-memory-fabric",
+        now=NOW,
+        admission_scope=ADMISSION_SCOPE,
+        provider_registry_snapshot=external_registry,
+        candidate_source_descriptor={
+            "provider_id": "external-review",
+            "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+            "source_instance": "external:review",
+        },
+    )
+
+    assert packet["selected_memories"] == []
+    assert "SECRET REVIEW CANDIDATE" not in packet["compact_context_text"]
 
 
 def test_top_level_module_register_adds_memory_provider_without_tools():

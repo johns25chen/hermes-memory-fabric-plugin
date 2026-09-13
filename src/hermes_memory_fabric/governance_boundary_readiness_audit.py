@@ -22,7 +22,7 @@ from .governance_dry_run_fixture_pack import (
 from .governance_dry_run_validation_matrix import (
     GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_SCHEMA_VERSION,
     GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION,
-    build_governance_dry_run_validation_matrix,
+    _build_validation_matrix_from_fixture_pack,
 )
 from .governance_event_canonicalizer import (
     CANONICAL_EVENT_SCHEMA_VERSION as CANONICALIZER_EVENT_SCHEMA_VERSION,
@@ -181,13 +181,15 @@ _SENSITIVE_BLOCKED_TERMS = (
 def build_governance_boundary_readiness_audit() -> dict[str, Any]:
     """Build deterministic local readiness metadata for governance handoff."""
 
-    matrix = _detached_json_value(build_governance_dry_run_validation_matrix())
-    matrix_repeat = _detached_json_value(
-        build_governance_dry_run_validation_matrix()
-    )
     fixture_pack = _detached_json_value(build_governance_dry_run_fixture_pack())
     fixture_pack_repeat = _detached_json_value(
         build_governance_dry_run_fixture_pack()
+    )
+    matrix = _detached_json_value(
+        _build_validation_matrix_from_fixture_pack(fixture_pack)
+    )
+    matrix_repeat = _detached_json_value(
+        _build_validation_matrix_from_fixture_pack(fixture_pack_repeat)
     )
 
     checks = _build_readiness_checks(

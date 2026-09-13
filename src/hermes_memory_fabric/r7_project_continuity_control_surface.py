@@ -27,6 +27,10 @@ from hermes_memory_fabric.provider import MemoryFabricProvider
 R7_PROJECT_CONTINUITY_CONTROL_SURFACE_VERSION = "0.1"
 R7_PROJECT_ID = "CIVILIZATION-CORE"
 R7_OPERATOR = "FOUNDER-OPERATOR"
+R7_ADMISSION_WORKSPACE = "/workspace/r7-project-continuity"
+R7_ADMISSION_NAMESPACE = "r7-value-signal"
+R7_ADMISSION_PROVIDER_ID = "internal-r7-project-continuity"
+R7_ADMISSION_SOURCE_INSTANCE = "governed-value-signal"
 
 _RUNTIME_SURFACE = "r7_project_continuity_control_surface"
 _WORKFLOW = (
@@ -98,6 +102,30 @@ class R7ProjectContinuityControlSurfaceError(ValueError):
         )
 
 
+def _r7_admission_config(project: str) -> tuple[dict[str, str], dict[str, Any], dict[str, str]]:
+    return (
+        {
+            "project": project,
+            "workspace": R7_ADMISSION_WORKSPACE,
+            "namespace": R7_ADMISSION_NAMESPACE,
+        },
+        {
+            R7_ADMISSION_PROVIDER_ID: {
+                "enabled": True,
+                "source_classes": ["LOCAL_CALLER"],
+                "capabilities": ["READ_CANDIDATE"],
+                "review_only": False,
+                "trusted_ingestion": True,
+            }
+        },
+        {
+            "provider_id": R7_ADMISSION_PROVIDER_ID,
+            "source_class": "LOCAL_CALLER",
+            "source_instance": R7_ADMISSION_SOURCE_INSTANCE,
+        },
+    )
+
+
 def run_r7_project_continuity_control_surface(
     candidate: Mapping[str, Any],
     *,
@@ -139,6 +167,9 @@ def run_r7_project_continuity_control_surface(
             real_use_result_snapshot
         )
 
+    admission_scope, provider_registry_snapshot, candidate_source_descriptor = (
+        _r7_admission_config(project_id)
+    )
     provider = MemoryFabricProvider()
     active_context_packet = provider.build_active_context(
         query=query,
@@ -146,6 +177,9 @@ def run_r7_project_continuity_control_surface(
         project_scope=R7_PROJECT_ID,
         entity_ids=[R7_PROJECT_ID],
         memory_limit=1,
+        admission_scope=admission_scope,
+        provider_registry_snapshot=provider_registry_snapshot,
+        candidate_source_descriptor=candidate_source_descriptor,
     )
     active_context_validation = deepcopy(
         provider.validate_active_context(active_context_packet)

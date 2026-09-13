@@ -3,9 +3,31 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 
 from hermes_memory_fabric import MemoryFabricProvider
+
+
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/jsonl-candidate-source-smoke",
+    "namespace": "jsonl-candidate-source-smoke",
+}
+SOURCE_DESCRIPTOR = {
+    "provider_id": "jsonl-candidate-source-smoke",
+    "source_class": "LOCAL_PROVIDER",
+    "source_instance": "provider:jsonl-candidate-source-smoke",
+}
+PROVIDER_REGISTRY = {
+    "jsonl-candidate-source-smoke": {
+        "enabled": True,
+        "source_classes": ["LOCAL_PROVIDER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
 
 
 def main() -> int:
@@ -18,6 +40,9 @@ def main() -> int:
             "candidate_jsonl_required_fields": ["id", "content"],
             "memory_limit": 5,
             "context_budget_chars": 1600,
+            "admission_scope": ADMISSION_SCOPE,
+            "candidate_jsonl_source": SOURCE_DESCRIPTOR,
+            "provider_registry_snapshot": deepcopy(PROVIDER_REGISTRY),
         }
     )
 

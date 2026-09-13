@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+import hermes_memory_fabric.governance_boundary_readiness_audit as readiness_module
+
 from hermes_memory_fabric.governance_boundary_readiness_audit import (
     GOVERNANCE_BOUNDARY_READINESS_AUDIT_HASH_ALGORITHM,
     GOVERNANCE_BOUNDARY_READINESS_AUDIT_SCHEMA_VERSION,
@@ -131,6 +133,53 @@ def test_readiness_audit_shape_is_deterministic():
     assert first["validation_matrix_version"] == "6.9.0"
     assert len(first["validation_matrix_hash"]) == 64
     assert len(first["deterministic_readiness_audit_hash"]) == 64
+
+
+def test_readiness_builds_two_independent_fixture_snapshots(monkeypatch):
+    original_fixture_builder = readiness_module.build_governance_dry_run_fixture_pack
+    original_matrix_builder = readiness_module._build_validation_matrix_from_fixture_pack
+    fixture_calls = []
+    matrix_inputs = []
+
+    def fixture_spy():
+        fixture_calls.append(True)
+        return original_fixture_builder()
+
+    def matrix_spy(fixture_pack):
+        matrix_inputs.append(fixture_pack)
+        return original_matrix_builder(fixture_pack)
+
+    monkeypatch.setattr(
+        readiness_module,
+        "build_governance_dry_run_fixture_pack",
+        fixture_spy,
+    )
+    monkeypatch.setattr(
+        readiness_module,
+        "_build_validation_matrix_from_fixture_pack",
+        matrix_spy,
+    )
+
+    audit = readiness_module.build_governance_boundary_readiness_audit()
+
+    assert audit["readiness_audit_status"] == "pass"
+    assert len(fixture_calls) == 2
+    assert len(matrix_inputs) == 2
+    assert matrix_inputs[0] is not matrix_inputs[1]
+
+
+def test_readiness_fixture_builder_failure_is_propagated(monkeypatch):
+    def fail_fixture_builder():
+        raise RuntimeError("fixture-builder-sentinel")
+
+    monkeypatch.setattr(
+        readiness_module,
+        "build_governance_dry_run_fixture_pack",
+        fail_fixture_builder,
+    )
+
+    with pytest.raises(RuntimeError, match="fixture-builder-sentinel"):
+        readiness_module.build_governance_boundary_readiness_audit()
 
 
 def test_readiness_check_names_are_stable_and_complete():

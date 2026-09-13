@@ -7,6 +7,27 @@ import pytest
 from hermes_memory_fabric import MemoryFabricProvider
 
 
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/hermes-memory-fabric",
+    "namespace": "memory",
+}
+RUNTIME_SOURCE = {
+    "provider_id": "runtime-local-caller",
+    "source_class": "LOCAL_CALLER",
+    "source_instance": "provider:runtime",
+}
+PROVIDER_REGISTRY = {
+    "runtime-local-caller": {
+        "enabled": True,
+        "source_classes": ["LOCAL_CALLER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
+
+
 def _candidate(memory_id: str, **overrides):
     base = {
         "id": memory_id,
@@ -25,7 +46,12 @@ def _candidate(memory_id: str, **overrides):
 
 
 def _provider(*, candidates=None, runtime_config=None, **runtime_config_overrides):
-    config = {"project_scope": "hermes-memory-fabric"}
+    config = {
+        "project_scope": "hermes-memory-fabric",
+        "admission_scope": ADMISSION_SCOPE,
+        "provider_registry_snapshot": PROVIDER_REGISTRY,
+        "runtime_candidate_source": RUNTIME_SOURCE,
+    }
     if runtime_config:
         config.update(runtime_config)
     config.update(runtime_config_overrides)
@@ -135,7 +161,7 @@ def test_prefetch_failure_returns_empty_string_and_does_not_raise(monkeypatch):
     def fail(*args, **kwargs):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(provider, "build_active_context", fail)
+    monkeypatch.setattr(provider, "_compose_active_context", fail)
 
     assert provider.prefetch("Hermes injection") == ""
 
@@ -167,6 +193,15 @@ def test_provider_get_tool_schemas_remains_empty():
     provider = _provider(candidates=[_candidate("selected")])
 
     assert provider.get_tool_schemas() == []
+
+
+def test_runtime_candidates_without_admission_configuration_fail_closed():
+    provider = MemoryFabricProvider(
+        runtime_memory_candidates=[_candidate("untrusted", content="SECRET UNTRUSTED RUNTIME")],
+        runtime_config={"project_scope": "hermes-memory-fabric"},
+    )
+
+    assert provider.prefetch("SECRET UNTRUSTED RUNTIME") == ""
 
 
 def test_prefetch_writes_no_files_to_temp_hermes_home_or_temp_directory(tmp_path, monkeypatch):

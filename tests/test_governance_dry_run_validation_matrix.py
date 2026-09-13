@@ -12,6 +12,7 @@ from hermes_memory_fabric.governance_dry_run_validation_matrix import (
     GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_TYPE,
     GOVERNANCE_DRY_RUN_VALIDATION_MATRIX_VERSION,
     SAFETY_BOUNDARIES,
+    _build_validation_matrix_from_fixture_pack,
     _validation_matrix_hash,
     build_governance_dry_run_validation_matrix,
     get_governance_dry_run_validation_matrix_row,
@@ -143,6 +144,20 @@ def test_validation_matrix_shape_is_deterministic():
     assert first["blocked_count"] == 7
     assert first["mismatch_count"] == 0
     assert len(first["deterministic_validation_matrix_hash"]) == 64
+
+
+def test_validation_matrix_projection_matches_public_builder_and_is_detached():
+    from hermes_memory_fabric.governance_dry_run_fixture_pack import (
+        build_governance_dry_run_fixture_pack,
+    )
+
+    fixture_pack = build_governance_dry_run_fixture_pack()
+    projected = _build_validation_matrix_from_fixture_pack(deepcopy(fixture_pack))
+    public = build_governance_dry_run_validation_matrix()
+
+    assert projected == public
+    fixture_pack["fixtures"]["valid_full_sequence"]["fixture_status"] = "mutated"  # type: ignore[index]
+    assert projected == public
 
 
 def test_matrix_fixture_names_are_stable_and_complete():

@@ -1397,6 +1397,88 @@ def test_provider_packet_and_governed_chain_are_reused(monkeypatch):
     assert governed["non_persisted"] is True
 
 
+def test_r7_internal_caller_admission_uses_canonical_scope_and_overwrites_payload_spoofing(
+    monkeypatch,
+):
+    candidate = _candidate()
+    candidate.update(
+        {
+            "provider_id": "spoofed-provider",
+            "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+            "source_instance": "spoofed-instance",
+            "candidate_id": "spoofed-candidate",
+            "request_id": "spoofed-request",
+            "workspace": "spoofed-workspace",
+            "namespace": "spoofed-namespace",
+            "provider_federation_identity": {
+                "provider_id": "spoofed-provider",
+                "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+                "source_instance": "spoofed-instance",
+                "candidate_id": "spoofed-candidate",
+            },
+        }
+    )
+    original = deepcopy(candidate)
+    captured: dict[str, Any] = {}
+    original_build = surface_module.MemoryFabricProvider.build_active_context
+
+    def capture_build(self: Any, **kwargs: Any) -> dict[str, Any]:
+        captured.update(deepcopy(kwargs))
+        return original_build(self, **kwargs)
+
+    monkeypatch.setattr(
+        surface_module.MemoryFabricProvider,
+        "build_active_context",
+        capture_build,
+    )
+
+    admitted_batches: list[list[dict[str, Any]]] = []
+    original_admit = surface_module.MemoryFabricProvider._admit_candidate_sources
+
+    def capture_admit(self: Any, **kwargs: Any) -> list[dict[str, Any]]:
+        admitted = original_admit(self, **kwargs)
+        admitted_batches.append(deepcopy(admitted))
+        return admitted
+
+    monkeypatch.setattr(
+        surface_module.MemoryFabricProvider,
+        "_admit_candidate_sources",
+        capture_admit,
+    )
+
+    result = _run(candidate)
+
+    selected = result["active_context_packet"]["selected_memories"]
+    assert candidate == original
+    assert [item["id"] for item in selected] == [_candidate()["id"]]
+    assert len(admitted_batches) == 1
+    admitted_matches = [
+        item for item in admitted_batches[0] if item["id"] == selected[0]["id"]
+    ]
+    assert len(admitted_matches) == 1
+    assert admitted_matches[0]["id"] == candidate["id"]
+    identity = admitted_matches[0]["provider_federation_identity"]
+    assert identity["provider_id"] == "internal-r7-project-continuity"
+    assert identity["source_class"] == "LOCAL_CALLER"
+    assert identity["source_instance"] == "governed-value-signal"
+    assert identity["candidate_id"] != "spoofed-candidate"
+    assert identity["request_id"] != "spoofed-request"
+    assert captured["admission_scope"] == {
+        "project": PROJECT_ID,
+        "workspace": "/workspace/r7-project-continuity",
+        "namespace": "r7-value-signal",
+    }
+    assert captured["provider_registry_snapshot"] == {
+        "internal-r7-project-continuity": {
+            "enabled": True,
+            "source_classes": ["LOCAL_CALLER"],
+            "capabilities": ["READ_CANDIDATE"],
+            "review_only": False,
+            "trusted_ingestion": True,
+        }
+    }
+
+
 def test_correction_record_supersedes_prior_outcome():
     result = _run()
     governed_outcome = result["governed_memory_learning_slice"][
