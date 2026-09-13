@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -12,6 +13,27 @@ from hermes_memory_fabric.codex_task_summary_ingestion import (
     generate_codex_task_summary_candidates,
     write_candidates_jsonl,
 )
+
+
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/codex-task-summary-ingestion-smoke",
+    "namespace": "codex-task-summary-ingestion-smoke",
+}
+SOURCE_DESCRIPTOR = {
+    "provider_id": "codex-task-summary-smoke",
+    "source_class": "LOCAL_PROVIDER",
+    "source_instance": "provider:codex-task-summary-smoke",
+}
+PROVIDER_REGISTRY = {
+    "codex-task-summary-smoke": {
+        "enabled": True,
+        "source_classes": ["LOCAL_PROVIDER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
 
 
 def main() -> int:
@@ -70,6 +92,9 @@ Safety-negative boundary terms remain low risk.
                 "candidate_jsonl_required_fields": ["id", "content"],
                 "memory_limit": 5,
                 "context_budget_chars": 2000,
+                "admission_scope": ADMISSION_SCOPE,
+                "candidate_jsonl_source": SOURCE_DESCRIPTOR,
+                "provider_registry_snapshot": deepcopy(PROVIDER_REGISTRY),
             }
         )
         context = provider.prefetch("bounded read-only memory candidates from candidate_jsonl_path")

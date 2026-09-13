@@ -477,8 +477,12 @@ def _candidate_id(*, source: str, project_id: str, kind: str, content: str) -> s
         sort_keys=True,
         separators=(",", ":"),
     )
-    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
-    return f"{_slug(source)}:{_slug(project_id)}:{_slug(kind)}:{digest}"
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    candidate_id = f"{_slug(source)}:{_slug(project_id)}:{_slug(kind)}:{digest[:16]}"
+    if len(candidate_id) <= 256:
+        return candidate_id
+    # Hash the complete identity inputs, not truncated source/project slugs.
+    return f"codex-task-summary:sha256:{digest}"
 
 
 def _candidate_tags(kind: str, section_keys: Iterable[str]) -> list[str]:

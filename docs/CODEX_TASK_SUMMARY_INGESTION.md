@@ -134,3 +134,29 @@ context = provider.prefetch("Codex task summary ingestion dry run")
 
 The provider still performs the existing bounded read, relevance selection,
 risk gating, context budget enforcement, and no-provider-tool checks.
+
+## Record Identity and Admission
+
+IDs use the complete trimmed source and project (with existing empty-value
+fallbacks), candidate kind, and grounded section content. Existing IDs of at
+most 256 characters retain their exact slug-based representation and 16-hex
+SHA256 suffix. Only overlength IDs use `codex-task-summary:sha256:` followed by
+the full 64-hex SHA256 of the same canonical JSON identity inputs. No source or
+project suffix is dropped from that input, even when display slugs coincide.
+This changes only IDs that previously exceeded admission's limit. It adds no
+identity mapping, replay, or update protocol; hash identity is not a mathematical
+collision-free guarantee.
+
+These are content-derived records, not mutable task-name identities. Repeated
+generation and JSONL reload/reordering preserve identity; changed grounded
+content derives a new ID. Provenance (including whole-input hash and line
+ranges) and `created_at` are outside ID derivation. They can change while the ID
+stays fixed and the payload digest changes. Within one admission batch, the
+same provider/source-instance/ID with different payloads blocks both records;
+separate batches do not imply historical conflict detection. Distinct trusted
+source instances can carry the same record ID as separate compound identities.
+
+JSONL loading is separate from admission. Default loading permits missing or
+invalid IDs; required-field loading checks presence, not ID validity. Provider
+admission still rejects missing, non-string, empty, illegal-character, or
+overlength IDs. Loading successfully does not establish admission eligibility.

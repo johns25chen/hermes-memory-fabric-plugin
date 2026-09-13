@@ -24,6 +24,22 @@ HARNESS_VERSION = "0.9.0"
 HARNESS_TYPE = "active_context_quality_harness_v0.9.0"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CASES_PATH = REPO_ROOT / "benchmarks" / "active_context_quality" / "fixtures" / "v09_cases.json"
+DEFAULT_ADMISSION_WORKSPACE = "/workspace/active-context-quality-harness"
+DEFAULT_ADMISSION_NAMESPACE = "active-context-quality"
+DEFAULT_ADMISSION_SOURCE = {
+    "provider_id": "quality-harness-local-caller",
+    "source_class": "LOCAL_CALLER",
+    "source_instance": "harness:v09",
+}
+DEFAULT_ADMISSION_PROVIDER_REGISTRY = {
+    "quality-harness-local-caller": {
+        "enabled": True,
+        "source_classes": ["LOCAL_CALLER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
 
 REQUIRED_SAFETY_POLICY = {
     "read_only": True,
@@ -69,7 +85,11 @@ def load_cases(path: str | Path = DEFAULT_CASES_PATH) -> list[dict[str, Any]]:
 
 def run_harness(cases_path: str | Path = DEFAULT_CASES_PATH) -> dict[str, Any]:
     fixture_path = Path(cases_path)
-    case_results = [_evaluate_case(case) for case in load_cases(fixture_path)]
+    uses_builtin_fixture = fixture_path.resolve() == DEFAULT_CASES_PATH.resolve()
+    case_results = [
+        _evaluate_case(case, use_builtin_admission=uses_builtin_fixture)
+        for case in load_cases(fixture_path)
+    ]
     aggregate = _aggregate(case_results)
     return {
         "harness_type": HARNESS_TYPE,
@@ -128,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _evaluate_case(case: Mapping[str, Any]) -> dict[str, Any]:
+def _evaluate_case(case: Mapping[str, Any], *, use_builtin_admission: bool = False) -> dict[str, Any]:
     provider = MemoryFabricProvider()
     init_kwargs: dict[str, Any] = {
         "hermes_home": str(case.get("hermes_home") or os.environ.get("HERMES_HOME", "")),
@@ -136,6 +156,17 @@ def _evaluate_case(case: Mapping[str, Any]) -> dict[str, Any]:
     provider_runtime_config = case.get("provider_runtime_config")
     if isinstance(provider_runtime_config, Mapping):
         init_kwargs["provider_runtime_config"] = deepcopy(dict(provider_runtime_config))
+    elif use_builtin_admission:
+        project_scope = case.get("project_scope")
+        init_kwargs["provider_runtime_config"] = {
+            "admission_scope": {
+                "project": project_scope,
+                "workspace": DEFAULT_ADMISSION_WORKSPACE,
+                "namespace": DEFAULT_ADMISSION_NAMESPACE,
+            },
+            "provider_registry_snapshot": deepcopy(DEFAULT_ADMISSION_PROVIDER_REGISTRY),
+            "direct_candidate_source": deepcopy(DEFAULT_ADMISSION_SOURCE),
+        }
     provider.initialize(str(case.get("session_id") or f"active-context-quality:{case['id']}"), **init_kwargs)
 
     registry = _subspace_registry(case.get("subspaces", []))

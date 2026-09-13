@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+import benchmarks.hermes_memory_bench.core as bench_module
 from benchmarks.hermes_memory_bench.core import V02_QUALITY_METRICS, load_cases, run_benchmark
 
 
@@ -67,6 +70,86 @@ def test_v02_aggregate_includes_quality_metrics_and_scores_one():
     for metric in V02_QUALITY_METRICS:
         assert metric in report["aggregate"]
         assert report["aggregate"][metric] == 1.0
+
+
+def test_benchmark_internal_caller_admission_uses_canonical_scope_and_overwrites_payload_spoofing():
+    case = deepcopy(
+        next(
+            item
+            for item in load_cases("v02")
+            if item["dimension"] == "memory_provider_runtime_integration"
+        )
+    )
+    candidate = case["memories"][0]
+    candidate.update(
+        {
+            "provider_id": "spoofed-provider",
+            "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+            "source_instance": "spoofed-instance",
+            "candidate_id": "spoofed-candidate",
+            "request_id": "spoofed-request",
+            "workspace": "spoofed-workspace",
+            "namespace": "spoofed-namespace",
+            "provider_federation_identity": {
+                "provider_id": "spoofed-provider",
+                "source_class": "EXTERNAL_FEDERATED_CANDIDATE",
+                "source_instance": "spoofed-instance",
+                "candidate_id": "spoofed-candidate",
+            },
+        }
+    )
+    original = deepcopy(case)
+    registry = bench_module._v02_subspace_registry(case.get("subspaces", []))
+
+    from pytest import MonkeyPatch
+
+    admitted_batches = []
+    original_admit = bench_module.MemoryFabricProvider._admit_candidate_sources
+
+    def capture_admit(self, **kwargs):
+        admitted = original_admit(self, **kwargs)
+        admitted_batches.append(deepcopy(admitted))
+        return admitted
+
+    with MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(
+            bench_module.MemoryFabricProvider,
+            "_admit_candidate_sources",
+            capture_admit,
+        )
+        passed, evidence = bench_module._run_provider_runtime_integration_case(case, registry)
+
+    assert passed is True
+    assert case == original
+    selected = evidence["active_context_packet"]["selected_memories"]
+    assert [item["id"] for item in selected] == [case["expected_top_selected_memory_id"]]
+    assert len(admitted_batches) == 1
+    admitted_matches = [
+        item for item in admitted_batches[0] if item["id"] == selected[0]["id"]
+    ]
+    assert len(admitted_matches) == 1
+    assert admitted_matches[0]["id"] == candidate["id"]
+    identity = admitted_matches[0]["provider_federation_identity"]
+    assert identity["provider_id"] == "internal-hermes-memory-bench"
+    assert identity["source_class"] == "LOCAL_CALLER"
+    assert identity["source_instance"] == "benchmark-runner"
+    assert identity["candidate_id"] != "spoofed-candidate"
+    assert identity["request_id"] != "spoofed-request"
+    runtime_config = evidence["provider_runtime_config"]
+    assert runtime_config["admission_scope"] == {
+        "project": case["project_scope"],
+        "workspace": "/workspace/hermes-memory-bench",
+        "namespace": "benchmark-evaluation",
+    }
+    assert runtime_config["provider_registry_snapshot"] == {
+        "internal-hermes-memory-bench": {
+            "enabled": True,
+            "source_classes": ["LOCAL_CALLER"],
+            "capabilities": ["READ_CANDIDATE"],
+            "review_only": False,
+            "trusted_ingestion": True,
+        }
+    }
 
 
 def test_v02_includes_recall_fusion_selection_and_rejection_cases():

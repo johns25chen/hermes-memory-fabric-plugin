@@ -3,7 +3,30 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from hermes_memory_fabric import MemoryFabricProvider
+
+
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/real-active-context-injection-smoke",
+    "namespace": "real-active-context-injection-smoke",
+}
+SOURCE_DESCRIPTOR = {
+    "provider_id": "real-active-context-injection-smoke",
+    "source_class": "LOCAL_CALLER",
+    "source_instance": "provider:real-active-context-injection-smoke",
+}
+PROVIDER_REGISTRY = {
+    "real-active-context-injection-smoke": {
+        "enabled": True,
+        "source_classes": ["LOCAL_CALLER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    }
+}
 
 
 def _candidate(memory_id: str, **overrides):
@@ -43,6 +66,9 @@ def main() -> int:
             "project_scope": "hermes-memory-fabric",
             "memory_limit": 3,
             "context_budget_chars": 800,
+            "admission_scope": ADMISSION_SCOPE,
+            "runtime_candidate_source": SOURCE_DESCRIPTOR,
+            "provider_registry_snapshot": deepcopy(PROVIDER_REGISTRY),
         },
     )
 

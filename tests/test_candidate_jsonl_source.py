@@ -145,3 +145,28 @@ def test_loaded_candidates_are_defensively_copied(tmp_path):
     second = load_candidate_jsonl_source(path)
 
     assert second[0]["governance"]["nested"]["safe"] is True
+
+
+def test_rejects_duplicate_keys_at_any_raw_json_depth(tmp_path):
+    path = tmp_path / "duplicates.jsonl"
+    path.write_text(
+        '{"id":"first","id":"lost","content":"top"}\n'
+        '{"id":"nested","content":"nested","meta":{"safe":true,"safe":false}}\n',
+        encoding="utf-8",
+    )
+
+    assert load_candidate_jsonl_source(path) == []
+    assert load_candidate_jsonl_source(path, ignore_invalid_lines=False) == []
+
+
+def test_rejects_nonfinite_numbers_during_raw_json_parsing(tmp_path):
+    path = tmp_path / "nonfinite.jsonl"
+    path.write_text(
+        '{"id":"nan","content":"value","score":NaN}\n'
+        '{"id":"infinity","content":"value","score":Infinity}\n'
+        '{"id":"negative-infinity","content":"value","score":-Infinity}\n',
+        encoding="utf-8",
+    )
+
+    assert load_candidate_jsonl_source(path) == []
+    assert load_candidate_jsonl_source(path, ignore_invalid_lines=False) == []

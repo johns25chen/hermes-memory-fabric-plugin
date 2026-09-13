@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from typing import Any, Iterable, Mapping
+import re
+import uuid
 
 try:
     from agent.memory_provider import MemoryProvider
@@ -25,6 +27,7 @@ from .memory_active_context_composer import (
     summarize_active_context_packet,
     validate_active_context_packet,
 )
+from .provider_federation_boundary import admit_candidate_batch, canonical_payload_digest
 
 
 PROVIDER_RUNTIME_INTEGRATION_POLICY = {
@@ -55,6 +58,11 @@ DEFAULT_PROVIDER_RUNTIME_CONFIG = {
     "candidate_jsonl_max_bytes": DEFAULT_CANDIDATE_JSONL_MAX_BYTES,
     "candidate_jsonl_required_fields": None,
     "candidate_jsonl_ignore_invalid_lines": DEFAULT_CANDIDATE_JSONL_IGNORE_INVALID_LINES,
+    "admission_scope": None,
+    "provider_registry_snapshot": None,
+    "runtime_candidate_source": None,
+    "candidate_jsonl_source": None,
+    "direct_candidate_source": None,
 }
 PROVIDER_RUNTIME_CONFIG_FIELDS = tuple(DEFAULT_PROVIDER_RUNTIME_CONFIG)
 
@@ -119,6 +127,9 @@ class MemoryFabricProvider(MemoryProvider):
         allowed_risk_levels: Iterable[str] | None = None,
         required_tags: Iterable[str] | None = None,
         include_rejected: bool = False,
+        admission_scope: Mapping[str, Any] | None = None,
+        provider_registry_snapshot: Mapping[str, Any] | None = None,
+        candidate_source_descriptor: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build a deterministic, read-only active context packet."""
         runtime_config = self._active_context_runtime_config(
@@ -131,6 +142,52 @@ class MemoryFabricProvider(MemoryProvider):
             allowed_risk_levels=allowed_risk_levels,
             required_tags=required_tags,
         )
+        candidates = _copy_runtime_memory_candidates(memory_candidates)
+        admitted_candidates = self._admit_candidate_sources(
+            sources=[
+                (
+                    (
+                        candidate_source_descriptor
+                        if candidate_source_descriptor is not None
+                        else self.runtime_config.get("direct_candidate_source")
+                    ),
+                    candidates,
+                )
+            ],
+            request_scope=(
+                admission_scope
+                if admission_scope is not None
+                else self.runtime_config.get("admission_scope")
+            ),
+            provider_registry_snapshot=(
+                provider_registry_snapshot
+                if provider_registry_snapshot is not None
+                else self.runtime_config.get("provider_registry_snapshot")
+            ),
+        )
+        return self._compose_active_context(
+            query=query,
+            memory_candidates=admitted_candidates,
+            subspace_registry=subspace_registry,
+            context=context,
+            entity_ids=entity_ids,
+            now=now,
+            include_rejected=include_rejected,
+            runtime_config=runtime_config,
+        )
+
+    def _compose_active_context(
+        self,
+        *,
+        query: str,
+        memory_candidates: Iterable[Mapping[str, Any]],
+        subspace_registry: Mapping[str, Any] | None,
+        context: Mapping[str, Any] | None,
+        entity_ids: Iterable[str] | None,
+        now: Any | None,
+        include_rejected: bool,
+        runtime_config: Mapping[str, Any],
+    ) -> dict[str, Any]:
         return compose_active_context(
             query=query,
             memory_candidates=memory_candidates,
@@ -167,11 +224,25 @@ class MemoryFabricProvider(MemoryProvider):
             if not candidates:
                 return ""
 
-            packet = self.build_active_context(
+            runtime_config = self._active_context_runtime_config(
+                project_scope=self.runtime_config.get("project_scope"),
+                agent_scope=None,
+                max_active_subspaces=None,
+                memory_limit=None,
+                context_budget_chars=None,
+                include_archived=None,
+                allowed_risk_levels=None,
+                required_tags=None,
+            )
+            packet = self._compose_active_context(
                 query=str(query),
                 memory_candidates=candidates,
-                project_scope=self.runtime_config.get("project_scope"),
-                agent_scope=self.runtime_config.get("agent_scope"),
+                subspace_registry=None,
+                context=None,
+                entity_ids=None,
+                now=None,
+                include_rejected=False,
+                runtime_config=runtime_config,
             )
             validity = self.validate_active_context(packet)
             if validity != {"valid": True, "errors": []}:
@@ -252,10 +323,66 @@ class MemoryFabricProvider(MemoryProvider):
         return deepcopy(self._runtime_memory_candidates)
 
     def _prefetch_memory_candidates_snapshot(self) -> list[dict[str, Any]]:
-        return _merge_candidate_sources(
-            jsonl_candidates=self._candidate_jsonl_candidates_snapshot(),
-            runtime_candidates=self._runtime_memory_candidates_snapshot(),
+        admitted = self._admit_candidate_sources(
+            sources=[
+                (
+                    self.runtime_config.get("candidate_jsonl_source"),
+                    self._candidate_jsonl_candidates_snapshot(),
+                ),
+                (
+                    self.runtime_config.get("runtime_candidate_source"),
+                    self._runtime_memory_candidates_snapshot(),
+                ),
+            ],
+            request_scope=self.runtime_config.get("admission_scope"),
+            provider_registry_snapshot=self.runtime_config.get("provider_registry_snapshot"),
         )
+        return _merge_candidate_sources(admitted_candidates=admitted)
+
+    def _admit_candidate_sources(
+        self,
+        *,
+        sources: Iterable[tuple[Any, Iterable[Mapping[str, Any]]]],
+        request_scope: Any,
+        provider_registry_snapshot: Any,
+    ) -> list[dict[str, Any]]:
+        prepared: list[dict[str, Any]] = []
+        for descriptor, candidates in sources:
+            for candidate in candidates:
+                prepared.append(
+                    _candidate_admission_item(
+                        payload=candidate,
+                        source_descriptor=descriptor,
+                        request_scope=request_scope,
+                    )
+                )
+        if not prepared:
+            return []
+        result = admit_candidate_batch(
+            request_scope=request_scope if isinstance(request_scope, Mapping) else {},
+            provider_registry_snapshot=(
+                provider_registry_snapshot
+                if isinstance(provider_registry_snapshot, Mapping)
+                else {}
+            ),
+            items=prepared,
+        )
+        allowed: list[dict[str, Any]] = []
+        for prepared_item, receipt in zip(prepared, result["receipts"], strict=True):
+            if receipt["decision"] != "ALLOW":
+                continue
+            candidate = deepcopy(prepared_item["payload"])
+            candidate["provider_federation_identity"] = {
+                "provider_id": receipt["provider_id"],
+                "source_class": receipt["source_class"],
+                "source_instance": receipt["source_instance"],
+                "candidate_id": receipt["candidate_id"],
+                "request_id": receipt["request_id"],
+                "payload_digest": receipt["payload_digest"],
+                "request_scope_digest": receipt["request_scope_digest"],
+            }
+            allowed.append(candidate)
+        return allowed
 
     def _candidate_jsonl_candidates_snapshot(self) -> list[dict[str, Any]]:
         path = self.runtime_config.get("candidate_jsonl_path")
@@ -325,6 +452,11 @@ def _normalize_provider_runtime_config(values: Mapping[str, Any] | None) -> dict
                 DEFAULT_PROVIDER_RUNTIME_CONFIG["candidate_jsonl_ignore_invalid_lines"],
             )
         ),
+        "admission_scope": _optional_mapping(raw.get("admission_scope")),
+        "provider_registry_snapshot": _optional_mapping(raw.get("provider_registry_snapshot")),
+        "runtime_candidate_source": _optional_mapping(raw.get("runtime_candidate_source")),
+        "candidate_jsonl_source": _optional_mapping(raw.get("candidate_jsonl_source")),
+        "direct_candidate_source": _optional_mapping(raw.get("direct_candidate_source")),
     }
 
 
@@ -346,6 +478,10 @@ def _optional_text(value: Any) -> str | None:
     return text or None
 
 
+def _optional_mapping(value: Any) -> dict[str, Any] | None:
+    return deepcopy(dict(value)) if isinstance(value, Mapping) else None
+
+
 def _copy_runtime_memory_candidates(candidates: Iterable[Mapping[str, Any]] | None) -> list[dict[str, Any]]:
     if candidates is None:
         return []
@@ -356,40 +492,72 @@ def _copy_runtime_memory_candidates(candidates: Iterable[Mapping[str, Any]] | No
     return copied
 
 
-def _merge_candidate_sources(
-    *,
-    jsonl_candidates: Iterable[Mapping[str, Any]],
-    runtime_candidates: Iterable[Mapping[str, Any]],
-) -> list[dict[str, Any]]:
+def _merge_candidate_sources(*, admitted_candidates: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     merged: list[dict[str, Any]] = []
-    positions_by_id: dict[str, int] = {}
-
-    for candidate in jsonl_candidates:
-        _merge_candidate(candidate, merged, positions_by_id, replace_existing=False)
-    for candidate in runtime_candidates:
-        _merge_candidate(candidate, merged, positions_by_id, replace_existing=True)
-
+    positions_by_identity: dict[tuple[str, str, str], int] = {}
+    for candidate in admitted_candidates:
+        identity_map = candidate.get("provider_federation_identity")
+        if not isinstance(identity_map, Mapping):
+            continue
+        identity = tuple(
+            str(identity_map.get(field, ""))
+            for field in ("provider_id", "source_instance", "candidate_id")
+        )
+        copied = deepcopy(dict(candidate))
+        if identity in positions_by_identity:
+            merged[positions_by_identity[identity]] = copied
+        else:
+            positions_by_identity[identity] = len(merged)
+            merged.append(copied)
     return deepcopy(merged)
 
 
-def _merge_candidate(
-    candidate: Mapping[str, Any],
-    merged: list[dict[str, Any]],
-    positions_by_id: dict[str, int],
+def _candidate_admission_item(
     *,
-    replace_existing: bool,
-) -> None:
-    if not isinstance(candidate, Mapping):
-        return
-    copied = deepcopy(dict(candidate))
-    candidate_id = _optional_text(copied.get("id"))
-    if candidate_id and candidate_id in positions_by_id:
-        if replace_existing:
-            merged[positions_by_id[candidate_id]] = copied
-        return
-    if candidate_id:
-        positions_by_id[candidate_id] = len(merged)
-    merged.append(copied)
+    payload: Mapping[str, Any],
+    source_descriptor: Any,
+    request_scope: Any,
+) -> dict[str, Any]:
+    copied_payload = deepcopy(dict(payload))
+    if not isinstance(source_descriptor, Mapping) or not isinstance(request_scope, Mapping):
+        return {"envelope": {}, "payload": copied_payload}
+    provider_id = source_descriptor.get("provider_id")
+    source_class = source_descriptor.get("source_class")
+    source_instance = source_descriptor.get("source_instance")
+    if not all(isinstance(value, str) for value in (provider_id, source_class, source_instance)):
+        return {"envelope": {}, "payload": copied_payload}
+    candidate_source_key = copied_payload.get("id")
+    if (
+        not isinstance(candidate_source_key, str)
+        or not 1 <= len(candidate_source_key) <= 256
+        or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", candidate_source_key) is None
+    ):
+        return {"envelope": {}, "payload": copied_payload}
+    try:
+        payload_digest = canonical_payload_digest(copied_payload)
+        scope_material = canonical_payload_digest(
+            {field: request_scope.get(field) for field in ("project", "workspace", "namespace")}
+        )
+    except (TypeError, ValueError):
+        payload_digest = "sha256:" + ("0" * 64)
+        scope_material = "invalid-scope"
+    identity_material = f"{provider_id}|{source_instance}|{candidate_source_key}"
+    candidate_id = candidate_source_key
+    request_material = f"{identity_material}|{scope_material}|{payload_digest}"
+    request_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"request|{request_material}"))
+    envelope = {
+        "provider_id": provider_id,
+        "source_class": source_class,
+        "source_instance": source_instance,
+        "candidate_id": candidate_id,
+        "project": request_scope.get("project"),
+        "workspace": request_scope.get("workspace"),
+        "namespace": request_scope.get("namespace"),
+        "capabilities": ["READ_CANDIDATE"],
+        "payload_digest": payload_digest,
+        "request_id": request_id,
+    }
+    return {"envelope": envelope, "payload": copied_payload}
 
 
 def _non_negative_int(value: Any, default: int) -> int:

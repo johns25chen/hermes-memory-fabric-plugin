@@ -13,6 +13,37 @@ FIXTURE_PATH = (
     / "fixtures"
     / "v11_candidates.jsonl"
 )
+ADMISSION_SCOPE = {
+    "project": "hermes-memory-fabric",
+    "workspace": "/workspace/hermes-memory-fabric",
+    "namespace": "memory",
+}
+JSONL_SOURCE = {
+    "provider_id": "configured-jsonl",
+    "source_class": "LOCAL_PROVIDER",
+    "source_instance": "provider:jsonl",
+}
+RUNTIME_SOURCE = {
+    "provider_id": "runtime-local-caller",
+    "source_class": "LOCAL_CALLER",
+    "source_instance": "provider:runtime",
+}
+PROVIDER_REGISTRY = {
+    "configured-jsonl": {
+        "enabled": True,
+        "source_classes": ["LOCAL_PROVIDER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    },
+    "runtime-local-caller": {
+        "enabled": True,
+        "source_classes": ["LOCAL_CALLER"],
+        "capabilities": ["READ_CANDIDATE"],
+        "review_only": False,
+        "trusted_ingestion": True,
+    },
+}
 
 
 def _candidate(memory_id: str, **overrides):
@@ -39,6 +70,10 @@ def _provider(*, runtime_candidates=None, runtime_config=None, **runtime_config_
         "candidate_jsonl_required_fields": ["id", "content"],
         "memory_limit": 5,
         "context_budget_chars": 1600,
+        "admission_scope": ADMISSION_SCOPE,
+        "provider_registry_snapshot": PROVIDER_REGISTRY,
+        "candidate_jsonl_source": JSONL_SOURCE,
+        "runtime_candidate_source": RUNTIME_SOURCE,
     }
     if runtime_config:
         config.update(runtime_config)
@@ -85,7 +120,7 @@ def test_high_risk_jsonl_memory_rejected_unless_runtime_config_allows_it():
     assert "High risk JSONL candidate source memory" in allowed_result
 
 
-def test_explicit_runtime_candidates_dedupe_and_prefer_over_jsonl_candidates():
+def test_same_bare_id_from_runtime_and_jsonl_remains_distinct_by_compound_identity():
     provider = _provider(
         runtime_candidates=[
             _candidate(
@@ -99,7 +134,7 @@ def test_explicit_runtime_candidates_dedupe_and_prefer_over_jsonl_candidates():
     result = provider.prefetch("Runtime override JSONL candidate source should win")
 
     assert "Runtime override JSONL candidate source should win over fixture content" in result
-    assert "selected project memory proves bounded read-only candidate loading" not in result
+    assert "selected project memory proves bounded read-only candidate loading" in result
 
 
 def test_provider_get_tool_schemas_remains_empty_with_jsonl_source():
@@ -139,6 +174,9 @@ def test_provider_prefetch_writes_no_files_under_temp_hermes_home_or_candidate_d
             "candidate_jsonl_path": str(candidate_path),
             "memory_limit": 3,
             "context_budget_chars": 800,
+            "admission_scope": ADMISSION_SCOPE,
+            "provider_registry_snapshot": PROVIDER_REGISTRY,
+            "candidate_jsonl_source": JSONL_SOURCE,
         }
     )
     provider.initialize("session-jsonl-no-writes", hermes_home=str(hermes_home))
@@ -149,3 +187,19 @@ def test_provider_prefetch_writes_no_files_under_temp_hermes_home_or_candidate_d
 
     assert "Hermes temp JSONL candidate source selected context" in result
     assert after == before
+
+
+def test_jsonl_candidates_without_admission_configuration_fail_closed(tmp_path):
+    candidate_path = tmp_path / "untrusted.jsonl"
+    candidate_path.write_text(
+        json.dumps({"id": "untrusted", "content": "SECRET UNTRUSTED JSONL"}) + "\n",
+        encoding="utf-8",
+    )
+    provider = MemoryFabricProvider(
+        runtime_config={
+            "project_scope": "hermes-memory-fabric",
+            "candidate_jsonl_path": str(candidate_path),
+        }
+    )
+
+    assert provider.prefetch("SECRET UNTRUSTED JSONL") == ""
