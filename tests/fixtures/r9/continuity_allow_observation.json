@@ -1,0 +1,28 @@
+{
+  "candidate": {
+    "id": "cc-r9-candidate-allow-1",
+    "content": "R9 bounded synthetic continuity candidate.",
+    "project_id": "CIVILIZATION-CORE",
+    "entity_ids": ["CIVILIZATION-CORE"],
+    "source": "declared-test-input",
+    "source_id": "cc-r9-source-allow-1",
+    "provenance": {"kind": "declared-operator-input", "reference": "cc-r9-source-allow-1"},
+    "risk_level": "low",
+    "governance": {"dry_run": true, "read_only": true, "proposal_governed": true},
+    "created_at": "2026-09-14T00:00:00Z",
+    "tags": ["project-continuity"]
+  },
+  "query": "R9 synthetic continuity",
+  "input_classification": "SYNTHETIC",
+  "human_review": {"outcome": "defer", "rationale": "Synthetic human review."},
+  "correction": {"corrected_outcome": "request_changes", "rationale": "Synthetic correction."},
+  "revocation": {"rationale": "Synthetic terminal revocation."},
+  "measurement": {
+    "human_correction_count": 0,
+    "recovery_time_seconds": 10,
+    "measurement_scope": "SYNTHETIC-COMMAND-INVOCATION-TO-TERMINAL",
+    "caller_observed": true
+  },
+  "governance_burden_worthwhile": true,
+  "baseline": {"available": false}
+}
