@@ -2,8 +2,10 @@
 
 This package exposes `MemoryFabricProvider` through Python entry points, but
 Hermes memory provider runtime also uses a directory-based loader in
-`plugins.memory`. The v0.8.0 shim makes those two discovery paths agree without
-changing Memory Fabric provider behavior.
+`plugins.memory`. The shim, first introduced with an older package release,
+makes those two discovery paths agree without changing Memory Fabric provider
+behavior. The shim has no independent runtime version: `6.16.0` below is the
+`hermes-memory-fabric-plugin` distribution version, not a Hermes version.
 
 ## Why The Shim Exists
 
@@ -34,7 +36,7 @@ the directory-based memory provider loader.
 Hermes memory provider runtime uses `plugins.memory.discover_memory_providers()`
 and `plugins.memory.load_memory_provider("memory-fabric")`. That loader scans
 bundled memory provider directories and user-installed directories under
-`$HERMES_HOME/plugins/`. The v0.8.0 shim gives this loader a concrete
+`$HERMES_HOME/plugins/`. The shim gives this loader a concrete
 `memory-fabric` directory provider that delegates to the installed package.
 
 The package also keeps the memory-provider entry point:
@@ -76,18 +78,34 @@ The installer creates or updates:
 
 ## Smoke
 
-Run the local smoke script after installing the package and shim:
+For the current `6.16.0` repository state, use a normally built wheel installed
+in an isolated environment. The interpreter must also resolve a real local
+Hermes `plugins.memory` loader and its already-installed dependencies. Keep the
+isolated environment's site-packages ahead of any reused dependency path, and
+verify module origins before running:
 
 ```bash
-PYTHON=/Users/han/.hermes/hermes-agent/.venv/bin/python bash scripts/smoke_memory_fabric_hermes.sh
+r9_hermes_home="/exclusive/evidence/directory/hermes-home"
+r9_python="/exclusive/evidence/directory/hermes-isolated-venv/bin/python"
+PYTHONDONTWRITEBYTECODE=1 "$r9_python" \
+  scripts/install_memory_fabric_shim.py --hermes-home "$r9_hermes_home"
+HERMES_HOME="$r9_hermes_home" EXPECTED_VERSION=6.16.0 \
+  PYTHON="$r9_python" PYTHONPATH= \
+  bash scripts/smoke_memory_fabric_hermes.sh
 ```
 
-The smoke checks package version `0.8.0`, both declared entry points, the shim
+The smoke checks package version `6.16.0`, both declared entry points, the shim
 files, Hermes `plugins.memory` discovery, provider loading, provider name,
 empty provider tool schemas, and the `build_active_context` method. It does not
-call a real model.
+call a real model. A successful isolated run on 2026-09-14 loaded package
+metadata and `hermes_memory_fabric` from the isolated installation while
+loading `plugins.memory` from the existing local Hermes checkout. That Hermes
+runtime reported `hermes-agent==0.18.2`; it is distinct from the plugin package
+version `6.16.0`. Importing the Hermes loader also created its default
+`SOUL.md` under the fresh `HERMES_HOME`; no default Hermes home was used.
 
-Optional real chat smoke:
+The following optional real-chat check is outside isolated/no-model validation
+and requires separate model and network authorization:
 
 ```bash
 hermes chat -Q -q "Reply exactly and only with this token: MEMORY_FABRIC_CHATQ_OK"
