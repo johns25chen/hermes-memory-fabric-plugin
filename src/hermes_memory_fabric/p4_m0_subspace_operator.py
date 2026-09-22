@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from io import StringIO
 from contextlib import redirect_stderr
 from dataclasses import asdict
 from pathlib import Path
@@ -610,10 +611,14 @@ from .p4_m0_subspace_seed_approval_runbook import (
 from .p4_m0_subspace_workspace import create_workspace_subspace_memory_store
 from .r8_local_persistence_governance import GovernanceError
 from .r7_project_continuity_control_surface import (
+    R7ProjectContinuityControlSurfaceError,
+    run_ordinary_handoff_record,
     run_r7_real_use_observation,
     run_r7_project_continuity_control_surface,
 )
 from .r8_security_governance import (
+    HANDOFF_OPERATION,
+    build_handoff_payload,
     LEGACY_OPERATION,
     OBSERVATION_OPERATION,
     R8StructuralError,
@@ -1838,6 +1843,14 @@ def build_parser(*, continuity_legacy_required: bool = True) -> argparse.Argumen
     _add_workspace_root(audit)
     audit.add_argument("--limit", type=int, default=50)
 
+    handoff = subparsers.add_parser("ordinary-handoff", allow_abbrev=False)
+    handoff.add_argument("--workspace-root", required=True)
+    handoff.add_argument("--project-id", required=True)
+    handoff.add_argument("--operator", required=True)
+    handoff.add_argument("--record-json", required=True)
+    handoff.add_argument("--security-envelope-json", required=True)
+    handoff.add_argument("--confirm-ordinary-handoff", action="store_true")
+
     continuity = subparsers.add_parser("continuity")
     _add_workspace_root(continuity)
     continuity.add_argument("--project-id", required=True)
@@ -1885,13 +1898,18 @@ def run_operator_command(
     )
     parser = build_parser(continuity_legacy_required=not observation_cli)
 
+    handoff_cli = bool(argv) and argv[0] == "ordinary-handoff"
     try:
-        with redirect_stderr(err):
+        with redirect_stderr(StringIO() if handoff_cli else err):
             args = parser.parse_args(argv)
+        if args.command == "ordinary-handoff":
+            return _run_ordinary_handoff_command(args, stdout=out, stderr=err)
         if args.command == "continuity":
             return _run_r8_continuity_command(args, stdout=out, stderr=err)
         payload = _run_parsed_command(args)
     except SystemExit as exc:
+        if handoff_cli and exc.code:
+            _write_compact_json(err, {"code": "handoff_arguments_invalid", "disposition": "BLOCK"})
         return int(exc.code) if isinstance(exc.code, int) else 2
     except GovernanceError as exc:
         _write_compact_json(err, {"code": exc.code, "disposition": "BLOCK"})
@@ -4097,6 +4115,43 @@ def _run_parsed_command(args: argparse.Namespace) -> dict[str, Any] | str:
         }
 
     raise ValueError(f"unsupported_command:{args.command}")
+
+
+def _run_ordinary_handoff_command(
+    args: argparse.Namespace, *, stdout: TextIO, stderr: TextIO,
+) -> int:
+    try:
+        record = parse_strict_json_object(args.record_json, field="handoff_record")
+        envelope = parse_strict_json_object(args.security_envelope_json, field="security_envelope_json")
+        decision = evaluate_security_envelope(
+            envelope, selected_operation=HANDOFF_OPERATION,
+            payload=build_handoff_payload(vars(args), record),
+            input_classification=record.get("input_classification"),
+        )
+    except R8StructuralError as exc:
+        _write_compact_json(stderr, structural_error_output(exc))
+        return 2
+    if decision.disposition != "ALLOW":
+        _write_compact_json(stderr, policy_error_output(decision))
+        return 3 if decision.disposition == "REVIEW" else 2
+    try:
+        downstream = run_ordinary_handoff_record(
+            record, project_id=args.project_id, operator=args.operator,
+            workspace=args.workspace_root, confirm_ordinary_handoff=args.confirm_ordinary_handoff,
+        )
+        result = minimized_operator_projection(decision, downstream, selected_operation=HANDOFF_OPERATION)
+    except R7ProjectContinuityControlSurfaceError as exc:
+        review = exc.code == "handoff_candidate_review"
+        _write_compact_json(stderr, {
+            "code": "handoff_candidate_review" if review else "handoff_record_rejected",
+            "disposition": "REVIEW" if review else "BLOCK",
+        })
+        return 3 if review else 1
+    except Exception:
+        _write_compact_json(stderr, {"code": "handoff_record_rejected", "disposition": "BLOCK"})
+        return 1
+    _write_compact_json(stdout, result)
+    return 0
 
 
 def _run_r8_continuity_command(
