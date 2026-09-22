@@ -14,7 +14,9 @@ SCHEMA_NAME = "GOVERNED-MEMORY-SECURITY-DECISION-ENVELOPE"
 CONTRACT_VERSION = "1.3"
 LEGACY_OPERATION = "R7_PROJECT_CONTINUITY"
 OBSERVATION_OPERATION = "R7_REAL_USE_OBSERVATION_VALIDATION"
-OPERATIONS = frozenset({LEGACY_OPERATION, OBSERVATION_OPERATION})
+HANDOFF_OPERATION = "R10_ORDINARY_HANDOFF_RECORD_VALIDATION"
+HANDOFF_CONTRACT_VERSION = "1.4"
+OPERATIONS = frozenset({LEGACY_OPERATION, OBSERVATION_OPERATION, HANDOFF_OPERATION})
 MEASUREMENT_SCOPES = frozenset(
     {
         "SYNTHETIC-COMMAND-INVOCATION-TO-TERMINAL",
@@ -212,6 +214,18 @@ def build_observation_payload(args: Mapping[str, Any], observation: Mapping[str,
     }
 
 
+def build_handoff_payload(args: Mapping[str, Any], record: Mapping[str, Any]) -> dict[str, Any]:
+    """Bind the entire record, logical workspace and explicit execution consent."""
+    return {
+        "operation": HANDOFF_OPERATION,
+        "project_id": args.get("project_id"),
+        "operator": args.get("operator"),
+        "workspace": args.get("workspace_root"),
+        "record": deepcopy(dict(record)),
+        "confirm_ordinary_handoff": args.get("confirm_ordinary_handoff"),
+    }
+
+
 def evaluate_security_envelope(
     envelope: Mapping[str, Any],
     *,
@@ -270,6 +284,33 @@ def minimized_operator_projection(
         },
         "sanitized_receipt": deepcopy(decision.receipt),
     }
+    if selected_operation == HANDOFF_OPERATION:
+        # A new operation must not expose legacy completion/value projections.
+        expected_flags = {
+            "record_accepted": True, "terminal": True,
+            "non_authoritative": True, "non_applied": True, "non_persisted": True,
+            "candidate_use_authorized": False, "continuation_authorized": False,
+            "automatic_collection": False, "automatic_write": False,
+            "automatic_approval": False, "automatic_adoption": False,
+            "automatic_execution": False, "automatic_continuation": False,
+            "benefit_inference_allowed": False,
+        }
+        if (decision.disposition != "ALLOW"
+                or downstream.get("status") != "ordinary-handoff-record-accepted"
+                or any(downstream.get(k) is not v for k, v in expected_flags.items())):
+            raise R8StructuralError("handoff_result_invalid")
+        result.update(status="ordinary-handoff-record-accepted", **expected_flags)
+        for field, allowed in {
+            "correction_status": ("NOT_OCCURRED", "UNKNOWN", "OCCURRED"),
+            "revocation_status": ("NOT_OCCURRED", "UNKNOWN", "OCCURRED"),
+            "measurement_status": ("NOT_MEASURED", "MEASURED"),
+            "value_evaluation_status": ("NOT_PROVIDED", "PROVIDED"),
+        }.items():
+            value = downstream.get(field)
+            if type(value) is not str or value not in allowed:
+                raise R8StructuralError("handoff_result_invalid")
+            result[field] = value
+        return result
     status = downstream.get("status")
     if isinstance(status, str) and status in _SAFE_R7_STATUS_VALUES:
         result["status"] = status
@@ -393,13 +434,14 @@ def _validate_envelope_structure(
     if not isinstance(envelope, Mapping):
         raise R8StructuralError("security_envelope_not_object")
     source = dict(envelope)
-    allowed = set(_COMMON_FIELDS)
+    extra = {"workspace"} if selected_operation == HANDOFF_OPERATION else set()
+    allowed = set(_COMMON_FIELDS) | extra
     if selected_operation == OBSERVATION_OPERATION:
         allowed.update({"measurement_scope", "baseline_measurement_scope"})
     missing = allowed - set(source)
     if missing:
         raise R8StructuralError("security_envelope_missing_fields")
-    for field in _COMMON_FIELDS - {"authority_attestation"}:
+    for field in (_COMMON_FIELDS - {"authority_attestation"}) | extra:
         value = source.get(field)
         if not isinstance(value, str) or not value.strip():
             raise R8StructuralError("security_envelope_field_invalid")
@@ -420,9 +462,9 @@ def _validate_envelope_structure(
     attestation = source.get("authority_attestation")
     if not isinstance(attestation, dict):
         raise R8StructuralError("authority_attestation_invalid")
-    if set(attestation) != set(_ATTESTATION_FIELDS):
+    if set(attestation) != set(_ATTESTATION_FIELDS) | extra:
         raise R8StructuralError("authority_attestation_field_set_invalid")
-    for field in _ATTESTED_FIELDS | {"attestation_type", "attestation_version"}:
+    for field in _ATTESTED_FIELDS | extra | {"attestation_type", "attestation_version"}:
         value = attestation.get(field)
         if not isinstance(value, str) or not value.strip():
             raise R8StructuralError("authority_attestation_field_invalid")
@@ -440,7 +482,9 @@ def _runtime_policy_code(
     measurement_scope: Any,
     baseline_available: Any,
 ) -> str:
-    if set(source) != set(_COMMON_FIELDS) | (
+    extra = {"workspace"} if selected_operation == HANDOFF_OPERATION else set()
+    version = HANDOFF_CONTRACT_VERSION if selected_operation == HANDOFF_OPERATION else CONTRACT_VERSION
+    if set(source) != set(_COMMON_FIELDS) | extra | (
         {"measurement_scope", "baseline_measurement_scope"}
         if selected_operation == OBSERVATION_OPERATION
         else set()
@@ -449,18 +493,26 @@ def _runtime_policy_code(
     if source.get("operation") != selected_operation:
         return "operation_route_mismatch"
     for field, expected in _FIXED_VALUES.items():
+        if field == "version":
+            expected = version
         if source.get(field) != expected:
             return f"{field}_mismatch"
     attestation = source["authority_attestation"]
     if (
         attestation.get("attestation_type") != "CALLER_AUTHORITY_ATTESTATION"
-        or attestation.get("attestation_version") != CONTRACT_VERSION
+        or attestation.get("attestation_version") != version
         or attestation.get("attested") is not True
-        or any(attestation.get(field) != source.get(field) for field in _ATTESTED_FIELDS)
+        or any(attestation.get(field) != source.get(field) for field in _ATTESTED_FIELDS | extra)
     ):
         return "authority_attestation_mismatch"
     if source.get("payload_binding_sha256") != canonical_payload_binding_sha256(payload):
         return "payload_binding_mismatch"
+    if selected_operation == HANDOFF_OPERATION:
+        if (payload.get("operation") != HANDOFF_OPERATION
+                or payload.get("project_id") != source.get("project_id")
+                or payload.get("operator") != source.get("operator_role")
+                or payload.get("workspace") != source.get("workspace")):
+            return "handoff_scope_binding_mismatch"
     if source.get("security_classification") != input_classification:
         return "security_classification_binding_mismatch"
     if selected_operation == OBSERVATION_OPERATION:
@@ -517,7 +569,7 @@ def _build_receipt(
     safe_code = code if code in _STABLE_POLICY_CODES else "unsupported_policy_value"
     body = {
         "schema_name": "R8-SANITIZED-SECURITY-RECEIPT",
-        "version": CONTRACT_VERSION,
+        "version": HANDOFF_CONTRACT_VERSION if safe_operation == HANDOFF_OPERATION else CONTRACT_VERSION,
         "operation": safe_operation,
         "disposition": disposition,
         "code": safe_code,
@@ -535,6 +587,7 @@ def _build_receipt(
 
 _STABLE_POLICY_CODES = frozenset(
     {
+        "handoff_scope_binding_mismatch",
         "security_policy_evaluated",
         "route_field_set_mismatch",
         "operation_route_mismatch",

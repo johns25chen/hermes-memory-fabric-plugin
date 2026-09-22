@@ -21,7 +21,8 @@ from hermes_memory_fabric.memory_human_review_outcome_gate import (
 from hermes_memory_fabric.memory_candidate_proposal_dry_run import (
     validate_candidate_for_proposal_dry_run,
 )
-from hermes_memory_fabric.provider import MemoryFabricProvider
+from hermes_memory_fabric.provider import MemoryFabricProvider, _candidate_admission_item
+from hermes_memory_fabric.provider_federation_boundary import admit_candidate_batch
 
 
 R7_PROJECT_CONTINUITY_CONTROL_SURFACE_VERSION = "0.1"
@@ -124,6 +125,139 @@ def _r7_admission_config(project: str) -> tuple[dict[str, str], dict[str, Any], 
             "source_instance": R7_ADMISSION_SOURCE_INSTANCE,
         },
     )
+
+
+def run_ordinary_handoff_record(
+    record: Mapping[str, Any], *, project_id: str, operator: str,
+    workspace: str, confirm_ordinary_handoff: bool,
+) -> dict[str, Any]:
+    """Validate a caller-declared record, never authorize or compose its content.
+
+    Security-envelope validation belongs to the CLI boundary, as with R7.
+    This function also retains candidate/source admission and fixed scope checks.
+    """
+    _require_confirmation(confirm_ordinary_handoff, "confirm_ordinary_handoff", "handoff")
+    source = _exact_mapping(record, frozenset({
+        "candidate", "scope", "input_classification", "human_review", "correction",
+        "revocation", "measurement", "value_evaluation",
+    }), "handoff")
+    source = deepcopy(source)
+    scope, registry, descriptor = _r7_admission_config(R7_PROJECT_ID)
+    if (project_id != R7_PROJECT_ID or operator != R7_OPERATOR
+            or workspace != R7_ADMISSION_WORKSPACE or source["scope"] != scope):
+        _fail("handoff_scope_mismatch", "handoff")
+    if source["input_classification"] not in ALLOWED_INPUT_CLASSIFICATIONS:
+        _fail("handoff_classification_invalid", "handoff")
+    candidate = source["candidate"]
+    if (not isinstance(candidate, Mapping)
+            or candidate.get("project_id") != project_id
+            or not isinstance(candidate.get("provenance"), Mapping)
+            or not candidate["provenance"]
+            or any(key in candidate and candidate[key] != value for key, value in scope.items())
+            or validate_candidate_for_proposal_dry_run(candidate).get("disposition") != "accepted"):
+        _fail("handoff_candidate_rejected", "handoff")
+
+    review = _handoff_state(source["human_review"], "review", {
+        "NOT_PROVIDED": (), "PROVIDED": ("outcome", "rationale"),
+    })
+    correction = _handoff_state(source["correction"], "correction", {
+        "NOT_OCCURRED": (), "UNKNOWN": (),
+        "OCCURRED": ("corrected_outcome", "rationale"),
+    })
+    revocation = _handoff_state(source["revocation"], "revocation", {
+        "NOT_OCCURRED": (), "UNKNOWN": (),
+        "OCCURRED": ("target", "target_candidate_id", "rationale"),
+    })
+    measurement = _handoff_state(source["measurement"], "measurement", {
+        "NOT_MEASURED": (), "MEASURED": ("seconds", "caller_observed"),
+    })
+    evaluation = _handoff_state(source["value_evaluation"], "value_evaluation", {
+        "NOT_PROVIDED": (), "PROVIDED": ("worthwhile",),
+    })
+    if measurement["status"] == "MEASURED" and (
+        not _valid_nonnegative_number(measurement["seconds"])
+        or measurement["caller_observed"] is not True
+    ):
+        _fail("handoff_measurement_invalid", "handoff")
+    if evaluation["status"] == "PROVIDED" and type(evaluation["worthwhile"]) is not bool:
+        _fail("handoff_evaluation_invalid", "handoff")
+    if review["status"] == "PROVIDED" and (
+        review["outcome"] not in SUPPORTED_HUMAN_REVIEW_OUTCOMES
+        or not _non_blank(review["rationale"])
+    ):
+        _fail("handoff_review_invalid", "handoff")
+    if correction["status"] == "OCCURRED" and (
+        review["status"] != "PROVIDED"
+        or correction["corrected_outcome"] not in SUPPORTED_HUMAN_REVIEW_OUTCOMES
+        or correction["corrected_outcome"] == review["outcome"]
+        or not _non_blank(correction["rationale"])
+    ):
+        _fail("handoff_correction_invalid", "handoff")
+    if revocation["status"] == "OCCURRED":
+        # A revocation targets the effective declared review, never an invented correction.
+        expected_target = "CORRECTION" if correction["status"] == "OCCURRED" else "HUMAN_REVIEW"
+        if (review["status"] != "PROVIDED" or correction["status"] == "UNKNOWN"
+                or revocation["target"] != expected_target
+                or revocation["target_candidate_id"] != candidate["id"]
+                or not _non_blank(revocation["rationale"])):
+            _fail("handoff_revocation_invalid", "handoff")
+
+    admission = admit_candidate_batch(
+        request_scope=scope, provider_registry_snapshot=registry,
+        items=[_candidate_admission_item(
+            payload=candidate, source_descriptor=descriptor, request_scope=source["scope"],
+        )],
+    )
+    decisions = [receipt["decision"] for receipt in admission["receipts"]]
+    if decisions == ["REVIEW"]:
+        _fail("handoff_candidate_review", "handoff")
+    if decisions != ["ALLOW"] or admission["allowed_candidates"] != [candidate]:
+        _fail("handoff_candidate_rejected", "handoff")
+
+    # Reuse real review/correction validators only for events supplied by the caller.
+    # Even UNKNOWN/revoked records are record-only: no active context is constructed.
+    if review["status"] == "PROVIDED":
+        governed = run_governed_memory_learning_slice(
+            candidate, project_id=project_id, reviewer=operator,
+            outcome=review["outcome"], rationale=review["rationale"],
+            input_classification=source["input_classification"],
+        )
+        _validate_governed_slice(governed)
+        outcome = governed["human_review_outcome_candidate"]
+        if validate_human_review_outcome_candidate(outcome) != {"valid": True, "errors": []}:
+            _fail("handoff_review_invalid", "handoff")
+        if correction["status"] == "OCCURRED":
+            corrected = create_correction_record(
+                outcome, project_id=project_id, operator=operator,
+                corrected_outcome=correction["corrected_outcome"], rationale=correction["rationale"],
+            )
+            if revocation["status"] == "OCCURRED":
+                create_revocation_record(corrected, rationale=revocation["rationale"])
+        # Without a correction, the validated original outcome is the revocation target.
+        # The input's target kind and candidate identity bind it within this record;
+        # this operation grants no reuse of either original or corrected outcomes.
+
+    return {
+        "status": "ordinary-handoff-record-accepted", "record_accepted": True,
+        "correction_status": correction["status"], "revocation_status": revocation["status"],
+        "measurement_status": measurement["status"],
+        "value_evaluation_status": evaluation["status"],
+        "terminal": True, "non_authoritative": True, "non_applied": True,
+        "non_persisted": True, "candidate_use_authorized": False,
+        "continuation_authorized": False, "benefit_inference_allowed": False,
+        "automatic_collection": False, "automatic_write": False,
+        "automatic_approval": False, "automatic_adoption": False,
+        "automatic_execution": False, "automatic_continuation": False,
+    }
+
+
+def _handoff_state(value: Any, field: str, states: Mapping[str, tuple[str, ...]]) -> dict[str, Any]:
+    if not isinstance(value, Mapping) or type(value.get("status")) is not str:
+        _fail("handoff_state_invalid", "handoff")
+    state = value["status"]
+    if state not in states:
+        _fail("handoff_state_invalid", "handoff")
+    return _exact_mapping(value, frozenset({"status", *states[state]}), field)
 
 
 def run_r7_project_continuity_control_surface(
